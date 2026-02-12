@@ -17,7 +17,7 @@ spec:
     - match: Host(`traefik-public.cl.tafu.casa`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
       kind: Rule
       services:
-        - name: api@internal
-          kind: TraefikService
+        - name: traefik-public-dashboard
+          port: 8080
   tls:
     secretName: wildcard-cl-tafu-casa-tls

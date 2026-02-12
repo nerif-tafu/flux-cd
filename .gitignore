@@ -1,0 +1,9 @@
+
+# SOPS/age local keys (never commit private keys)
+*.agekey
+**/keys.txt
+
+# kube/helm local files
+*.log
+.DS_Store
+

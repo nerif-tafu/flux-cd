@@ -18,6 +18,6 @@ spec:
       kind: Rule
       services:
         - name: traefik-public-dashboard
-          port: 8080
+          port: 9000
   tls:
     secretName: wildcard-cl-tafu-casa-tls

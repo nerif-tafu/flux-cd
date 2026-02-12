@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: longhorn-ui
   namespace: longhorn-system
+  labels:
+    traefik.tafu.casa/instance: internal
 spec:
   ingressClassName: traefik-internal
   tls:

@@ -21,3 +21,5 @@ spec:
     providers:
       kubernetesCRD:
         labelSelector: "traefik.tafu.casa/instance=internal"
+      kubernetesIngress:
+        labelSelector: "traefik.tafu.casa/instance=internal"

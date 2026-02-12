@@ -21,6 +21,8 @@ spec:
     providers:
       kubernetesCRD:
         labelSelector: "traefik.tafu.casa/instance=public"
+      kubernetesIngress:
+        labelSelector: "traefik.tafu.casa/instance=public"
     ingressRoute:
       dashboard:
         labels:

@@ -8,7 +8,7 @@ spec:
   tls:
     - hosts:
         - longhorn.cl.tafu.casa
-      secretName: wildcard-cl-tafu-casa-tls
+      secretName: longhorn-cl-tafu-casa-tls
   rules:
     - host: longhorn.cl.tafu.casa
       http:

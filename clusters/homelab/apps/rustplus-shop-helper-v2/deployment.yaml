@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rustplus-shop-helper-v2
+  namespace: rustplus-shop-helper-v2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rustplus-shop-helper-v2
+  template:
+    metadata:
+      labels:
+        app: rustplus-shop-helper-v2
+    spec:
+      containers:
+        - name: rustplus-shop-helper-v2
+          image: ghcr.io/nerif-tafu/rustplus-shop-helper-v2:v1.0.0 # {"$imagepolicy": "flux-system:rustplus-shop-helper-v2"}
+          ports:
+            - containerPort: 3001

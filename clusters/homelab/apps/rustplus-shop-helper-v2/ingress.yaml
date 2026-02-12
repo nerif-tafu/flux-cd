@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rustplus-shop-helper-v2
+  namespace: rustplus-shop-helper-v2
+  labels:
+    traefik.tafu.casa/instance: public
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+spec:
+  ingressClassName: traefik-public
+  rules:
+    - host: spermket.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rustplus-shop-helper-v2
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - spermket.tafu.casa
+      secretName: rustplus-shop-helper-v2-tls

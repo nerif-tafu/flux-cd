@@ -7,4 +7,5 @@ resources:
   - ./rust-plus-provider
   - ./pipe-dreams
   - ./rust-booter
+  - ./rustplus-shop-helper-v2
 

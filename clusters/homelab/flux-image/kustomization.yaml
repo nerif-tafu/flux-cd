@@ -11,4 +11,6 @@ resources:
   - pipe-dreams-imagepolicy.yaml
   - rust-booter-imagerepository.yaml
   - rust-booter-imagepolicy.yaml
+  - rustplus-shop-helper-v2-imagerepository.yaml
+  - rustplus-shop-helper-v2-imagepolicy.yaml
   - imageupdateautomation.yaml

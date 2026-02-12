@@ -1,0 +1,16 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard
+  namespace: traefik
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`traefik.cl.tafu.casa`)
+      kind: Rule
+      services:
+        - name: api@internal
+          kind: TraefikService
+  tls:
+    secretName: wildcard-cl-tafu-casa-tls

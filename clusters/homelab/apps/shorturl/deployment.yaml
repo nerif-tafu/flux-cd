@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
         - name: shorturl
-          image: ghcr.io/nerif-tafu/shorturl:latest
+          image: ghcr.io/nerif-tafu/shorturl:v1.0.0
           ports:
             - containerPort: 3000

@@ -6,4 +6,5 @@ resources:
   - ./rust-api
   - ./rust-plus-provider
   - ./pipe-dreams
+  - ./rust-booter
 

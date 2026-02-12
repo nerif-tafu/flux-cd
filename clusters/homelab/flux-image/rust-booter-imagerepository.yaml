@@ -1,0 +1,8 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: rust-booter
+  namespace: flux-system
+spec:
+  image: ghcr.io/nerif-tafu/rust-booter
+  interval: 1m

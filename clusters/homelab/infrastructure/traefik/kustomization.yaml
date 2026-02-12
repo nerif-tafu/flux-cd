@@ -6,4 +6,4 @@ resources:
   - helmrelease.yaml
   - wildcard-cert.yaml
   - dashboard-ingressroute.yaml
-  - ../traefik-lan-proxy
+  - routes

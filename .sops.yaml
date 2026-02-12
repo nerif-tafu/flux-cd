@@ -1,0 +1,4 @@
+creation_rules:
+  - path_regex: clusters/homelab/.*/.*secret.*\.ya?ml$
+    encrypted_regex: "^(data|stringData)$"
+    age: age1zxpvrp778wzdh73fq5k2yln24aechr8n69n66smtjvepd56q9g9sa0xw5g

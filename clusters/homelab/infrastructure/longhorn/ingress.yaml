@@ -4,7 +4,7 @@ metadata:
   name: longhorn-ui
   namespace: longhorn-system
 spec:
-  ingressClassName: traefik
+  ingressClassName: traefik-internal
   tls:
     - hosts:
         - longhorn.cl.tafu.casa

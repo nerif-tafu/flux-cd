@@ -7,4 +7,6 @@ resources:
   - helmrelease-public.yaml
   - wildcard-cert.yaml
   - dashboard-ingressroute.yaml
+  - dashboard-public-ipallowlist-middleware.yaml
+  - dashboard-public-ingressroute.yaml
   - routes

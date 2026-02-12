@@ -7,3 +7,6 @@
 *.log
 .DS_Store
 
+
+# legacy folder (replaced by traefik/routes)
+clusters/homelab/infrastructure/traefik-lan-proxy/

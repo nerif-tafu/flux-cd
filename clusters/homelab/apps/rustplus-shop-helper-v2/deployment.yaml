@@ -13,6 +13,8 @@ spec:
       labels:
         app: rustplus-shop-helper-v2
     spec:
+      imagePullSecrets:
+        - name: ghcr-pull-secret
       containers:
         - name: rustplus-shop-helper-v2
           image: ghcr.io/nerif-tafu/rustplus-shop-helper-v2:v1.0.0 # {"$imagepolicy": "flux-system:rustplus-shop-helper-v2"}

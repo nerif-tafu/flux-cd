@@ -3,9 +3,8 @@ kind: Ingress
 metadata:
   name: longhorn-ui
   namespace: longhorn-system
-  annotations:
-    kubernetes.io/ingress.class: traefik
 spec:
+  ingressClassName: traefik
   tls:
     - hosts:
         - longhorn.cl.tafu.casa

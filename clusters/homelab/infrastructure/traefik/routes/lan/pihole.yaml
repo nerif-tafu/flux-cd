@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lan-pihole
+  namespace: traefik
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: lan-pihole
+  namespace: traefik
+subsets:
+  - addresses:
+      - ip: 192.168.3.2
+    ports:
+      - name: http
+        port: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: lan-pihole
+  namespace: traefik
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`pihole.cl.tafu.casa`)
+      kind: Rule
+      services:
+        - name: lan-pihole
+          port: 80
+  tls:
+    secretName: wildcard-cl-tafu-casa-tls

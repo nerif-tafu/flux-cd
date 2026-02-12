@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-api
+  namespace: rust-api
+spec:
+  selector:
+    app: rust-api
+  ports:
+    - port: 80
+      targetPort: 3100

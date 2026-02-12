@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fitv2
+  namespace: fitv2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fitv2
+  template:
+    metadata:
+      labels:
+        app: fitv2
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      containers:
+        - name: fitv2
+          image: ghcr.io/nerif-tafu/fitv2:v1.0.0 # {"$imagepolicy": "flux-system:fitv2"}
+          ports:
+            - containerPort: 3000

@@ -13,4 +13,6 @@ resources:
   - rust-booter-imagepolicy.yaml
   - rustplus-shop-helper-v2-imagerepository.yaml
   - rustplus-shop-helper-v2-imagepolicy.yaml
+  - fitv2-imagerepository.yaml
+  - fitv2-imagepolicy.yaml
   - imageupdateautomation.yaml

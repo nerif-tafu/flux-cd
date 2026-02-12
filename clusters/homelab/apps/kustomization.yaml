@@ -8,4 +8,5 @@ resources:
   - ./pipe-dreams
   - ./rust-booter
   - ./rustplus-shop-helper-v2
+  - ./fitv2
 

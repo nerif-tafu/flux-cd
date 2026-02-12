@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: rust-api
-          image: ghcr.io/nerif-tafu/rust-api:v1.0.0
+          image: ghcr.io/nerif-tafu/rust-api:v1.0.0 # {"$imagepolicy": "flux-system:rust-api"}
           ports:
             - containerPort: 3100
           env:

@@ -1,0 +1,11 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: rust-plus-provider
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: rust-plus-provider
+  policy:
+    semver:
+      range: ">=1.0.0"

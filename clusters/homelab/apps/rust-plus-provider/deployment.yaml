@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rust-plus-provider
+  namespace: rust-plus-provider
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rust-plus-provider
+  template:
+    metadata:
+      labels:
+        app: rust-plus-provider
+    spec:
+      containers:
+        - name: rust-plus-provider
+          image: ghcr.io/nerif-tafu/rust-plus-provider:v1.0.0 # {"$imagepolicy": "flux-system:rust-plus-provider"}
+          ports:
+            - containerPort: 9443

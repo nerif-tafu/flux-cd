@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rust-plus-provider
+  namespace: rust-plus-provider
+  labels:
+    traefik.tafu.casa/instance: public
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+spec:
+  ingressClassName: traefik-public
+  rules:
+    - host: rust-plus-api.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rust-plus-provider
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - rust-plus-api.tafu.casa
+      secretName: rust-plus-provider-tls

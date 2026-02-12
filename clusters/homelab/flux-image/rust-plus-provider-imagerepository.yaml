@@ -1,0 +1,8 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: rust-plus-provider
+  namespace: flux-system
+spec:
+  image: ghcr.io/nerif-tafu/rust-plus-provider
+  interval: 1m

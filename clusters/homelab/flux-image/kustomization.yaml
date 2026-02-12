@@ -5,4 +5,6 @@ resources:
   - shorturl-imagepolicy.yaml
   - rust-api-imagerepository.yaml
   - rust-api-imagepolicy.yaml
+  - rust-plus-provider-imagerepository.yaml
+  - rust-plus-provider-imagepolicy.yaml
   - imageupdateautomation.yaml

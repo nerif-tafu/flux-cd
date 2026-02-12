@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-plus-provider
+  namespace: rust-plus-provider
+spec:
+  selector:
+    app: rust-plus-provider
+  ports:
+    - port: 80
+      targetPort: 9443

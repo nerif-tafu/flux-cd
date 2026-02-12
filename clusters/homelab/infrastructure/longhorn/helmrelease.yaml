@@ -14,5 +14,9 @@ spec:
         kind: HelmRepository
         name: longhorn
         namespace: flux-system
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
   values: {}
 

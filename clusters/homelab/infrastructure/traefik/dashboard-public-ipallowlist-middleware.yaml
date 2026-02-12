@@ -6,7 +6,7 @@ metadata:
   labels:
     traefik.tafu.casa/instance: public
 spec:
-  ipAllowList:
+  ipWhiteList:
     sourceRange:
       - 192.168.0.0/16
       - 10.0.0.0/8

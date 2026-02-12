@@ -1,0 +1,35 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflare-ddns
+  namespace: cloudflare-ddns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudflare-ddns
+  template:
+    metadata:
+      labels:
+        app: cloudflare-ddns
+    spec:
+      containers:
+        - name: cloudflare-ddns
+          image: oznu/cloudflare-ddns:latest
+          env:
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflare-ddns-secret
+                  key: API_KEY
+            - name: ZONE
+              value: "tafu.casa"
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+

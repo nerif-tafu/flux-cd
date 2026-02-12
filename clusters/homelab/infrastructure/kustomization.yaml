@@ -6,4 +6,5 @@ resources:
   - ./traefik
   - ./longhorn
   - ./metallb
+  - ./cloudflare-ddns
 

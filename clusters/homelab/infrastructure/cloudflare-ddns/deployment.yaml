@@ -23,11 +23,6 @@ spec:
                 secretKeyRef:
                   name: cloudflare-ddns-secret
                   key: API_KEY
-            - name: EMAIL
-              valueFrom:
-                secretKeyRef:
-                  name: cloudflare-ddns-secret
-                  key: EMAIL
             - name: ZONE
               value: "tafu.casa"
           resources:

@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
         - name: shorturl
-          image: ghcr.io/nerif-tafu/shorturl:v1.0.0
+          image: ghcr.io/nerif-tafu/shorturl:v1.0.0 # {"$imagepolicy": "flux-system:shorturl"}
           ports:
             - containerPort: 3000

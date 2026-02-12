@@ -3,6 +3,8 @@ kind: IngressRoute
 metadata:
   name: traefik-dashboard
   namespace: traefik
+  labels:
+    traefik.tafu.casa/instance: internal
 spec:
   entryPoints:
     - websecure

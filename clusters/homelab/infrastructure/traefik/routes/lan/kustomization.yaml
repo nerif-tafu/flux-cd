@@ -6,3 +6,5 @@ resources:
   - switch.yaml
   - kvm1.yaml
   - kvm2.yaml
+commonLabels:
+  traefik.tafu.casa/instance: internal

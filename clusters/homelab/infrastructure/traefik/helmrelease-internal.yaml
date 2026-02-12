@@ -1,8 +1,7 @@
-
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: traefik
+  name: traefik-internal
   namespace: traefik
 spec:
   interval: 15m
@@ -18,5 +17,7 @@ spec:
     service:
       type: LoadBalancer
       spec:
-        loadBalancerIP: 192.168.3.61
-
+        loadBalancerIP: 192.168.3.62
+    providers:
+      kubernetesCRD:
+        labelSelector: "traefik.tafu.casa/instance=internal"

@@ -3,7 +3,8 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - helmrepository.yaml
-  - helmrelease.yaml
+  - helmrelease-internal.yaml
+  - helmrelease-public.yaml
   - wildcard-cert.yaml
   - dashboard-ingressroute.yaml
   - routes

@@ -7,4 +7,6 @@ resources:
   - rust-api-imagepolicy.yaml
   - rust-plus-provider-imagerepository.yaml
   - rust-plus-provider-imagepolicy.yaml
+  - pipe-dreams-imagerepository.yaml
+  - pipe-dreams-imagepolicy.yaml
   - imageupdateautomation.yaml

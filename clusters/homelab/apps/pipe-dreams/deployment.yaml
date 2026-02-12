@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pipe-dreams
+  namespace: pipe-dreams
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pipe-dreams
+  template:
+    metadata:
+      labels:
+        app: pipe-dreams
+    spec:
+      containers:
+        - name: pipe-dreams
+          image: ghcr.io/nerif-tafu/pipe-dreams:v1.0.0 # {"$imagepolicy": "flux-system:pipe-dreams"}
+          ports:
+            - containerPort: 3000

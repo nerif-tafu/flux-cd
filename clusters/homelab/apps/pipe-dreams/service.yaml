@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pipe-dreams
+  namespace: pipe-dreams
+spec:
+  selector:
+    app: pipe-dreams
+  ports:
+    - port: 80
+      targetPort: 3000

@@ -5,6 +5,8 @@ metadata:
   namespace: rustplus-shop-helper-v2
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: rustplus-shop-helper-v2

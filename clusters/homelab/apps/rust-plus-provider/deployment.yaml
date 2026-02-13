@@ -5,6 +5,8 @@ metadata:
   namespace: rust-plus-provider
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: rust-plus-provider

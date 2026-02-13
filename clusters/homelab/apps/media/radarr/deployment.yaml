@@ -28,7 +28,7 @@ spec:
               mountPath: /media
       containers:
         - name: radarr
-          image: lscr.io/linuxserver/radarr:0.0.5312 # {"$imagepolicy": "flux-system:radarr"}
+          image: lscr.io/linuxserver/radarr:latest # {"$imagepolicy": "flux-system:radarr"}
           env:
             - name: PUID
               value: "1000"

@@ -20,8 +20,7 @@ spec:
       containers:
         - name: mongo
           image: mongo:8
-          command:
-            - mongod
+          args:
             - --oplogSize=1024
             - --wiredTigerCacheSizeGB=1
             - --auth
@@ -44,13 +43,10 @@ spec:
             - name: data
               mountPath: /data/db
           readinessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - 'mongosh "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017" --eval "db.adminCommand(\"ping\")"'
-            initialDelaySeconds: 15
-            periodSeconds: 5
+            tcpSocket:
+              port: 27017
+            initialDelaySeconds: 30
+            periodSeconds: 10
             timeoutSeconds: 5
       volumes:
         - name: data

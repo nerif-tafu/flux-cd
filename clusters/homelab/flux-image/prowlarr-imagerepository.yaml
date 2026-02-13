@@ -4,5 +4,5 @@ metadata:
   name: prowlarr
   namespace: flux-system
 spec:
-  image: lscr.io/linuxserver/prowlarr
+  image: ghcr.io/prowlarr/prowlarr
   interval: 1m

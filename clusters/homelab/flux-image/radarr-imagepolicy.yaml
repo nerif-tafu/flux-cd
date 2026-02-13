@@ -6,6 +6,8 @@ metadata:
 spec:
   imageRepositoryRef:
     name: radarr
+  filterTags:
+    pattern: "^latest$"
   policy:
     alphabetical:
       order: desc

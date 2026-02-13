@@ -6,6 +6,8 @@ metadata:
 spec:
   imageRepositoryRef:
     name: prowlarr
+  filterTags:
+    pattern: "^latest$"
   policy:
     alphabetical:
       order: desc

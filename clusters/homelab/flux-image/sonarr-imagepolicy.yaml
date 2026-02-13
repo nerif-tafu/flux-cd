@@ -6,6 +6,8 @@ metadata:
 spec:
   imageRepositoryRef:
     name: sonarr
+  filterTags:
+    pattern: "^latest$"
   policy:
     alphabetical:
       order: desc

@@ -17,6 +17,13 @@ spec:
     spec:
       securityContext:
         fsGroup: 1000
+      initContainers:
+        - name: remove-stale-pid
+          image: busybox:1.36
+          command: ["sh", "-c", "rm -f /config/Library/Application\\ Support/Plex\\ Media\\ Server/plexmediaserver.pid; exit 0"]
+          volumeMounts:
+            - name: config
+              mountPath: /config
       containers:
         - name: plex
           image: lscr.io/linuxserver/plex:1.20.3.3483-211702a9f-ls122 # {"$imagepolicy": "flux-system:plex"}
@@ -37,6 +44,13 @@ spec:
           resources:
             limits:
               memory: "2Gi"
+          readinessProbe:
+            httpGet:
+              path: /identity
+              port: 32400
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 12
       volumes:
         - name: config
           persistentVolumeClaim:

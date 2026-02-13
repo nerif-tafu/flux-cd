@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bazarr
+  namespace: media
+  labels:
+    traefik.tafu.casa/instance: internal
+spec:
+  ingressClassName: traefik-internal
+  tls:
+    - hosts:
+        - bazarr.cl.tafu.casa
+      secretName: wildcard-cl-tafu-casa-tls
+  rules:
+    - host: bazarr.cl.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bazarr
+                port:
+                  number: 6767

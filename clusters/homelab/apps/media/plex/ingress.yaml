@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: plex
+  namespace: media
+  labels:
+    traefik.tafu.casa/instance: public
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+spec:
+  ingressClassName: traefik-public
+  rules:
+    - host: plex.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: plex
+                port:
+                  number: 32400
+  tls:
+    - hosts:
+        - plex.tafu.casa
+      secretName: plex-tls

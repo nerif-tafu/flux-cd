@@ -16,7 +16,7 @@ spec:
         app: sonarr
     spec:
       securityContext:
-        fsGroup: "1000"
+        fsGroup: 1000
       containers:
         - name: sonarr
           image: lscr.io/linuxserver/sonarr:latest

@@ -16,7 +16,7 @@ spec:
         app: overseerr
     spec:
       securityContext:
-        fsGroup: "1000"
+        fsGroup: 1000
       containers:
         - name: overseerr
           image: lscr.io/linuxserver/overseerr:latest

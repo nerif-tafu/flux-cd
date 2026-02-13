@@ -16,7 +16,7 @@ spec:
         app: qbittorrent
     spec:
       securityContext:
-        fsGroup: "1000"
+        fsGroup: 1000
       containers:
         - name: qbittorrent
           image: lscr.io/linuxserver/qbittorrent:latest

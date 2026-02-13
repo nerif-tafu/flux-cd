@@ -16,7 +16,7 @@ spec:
         app: plex
     spec:
       securityContext:
-        fsGroup: "1000"
+        fsGroup: 1000
       containers:
         - name: plex
           image: lscr.io/linuxserver/plex:latest

@@ -16,7 +16,7 @@ spec:
         app: flaresolverr
     spec:
       securityContext:
-        fsGroup: "1000"
+        fsGroup: 1000
       containers:
         - name: flaresolverr
           image: ghcr.io/flaresolverr/flaresolverr:latest

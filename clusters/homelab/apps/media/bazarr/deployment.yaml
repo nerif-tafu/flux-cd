@@ -32,7 +32,12 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+            - name: media
+              mountPath: /media
       volumes:
         - name: config
           persistentVolumeClaim:
             claimName: bazarr-config
+        - name: media
+          persistentVolumeClaim:
+            claimName: media-library

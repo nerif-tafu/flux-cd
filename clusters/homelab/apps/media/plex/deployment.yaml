@@ -43,6 +43,8 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+            - name: media
+              mountPath: /media
           resources:
             limits:
               memory: "2Gi"
@@ -61,3 +63,6 @@ spec:
         - name: config
           persistentVolumeClaim:
             claimName: plex-config
+        - name: media
+          persistentVolumeClaim:
+            claimName: media-library

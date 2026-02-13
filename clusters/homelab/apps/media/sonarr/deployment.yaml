@@ -32,7 +32,17 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+            - name: media
+              mountPath: /media
+            - name: downloads
+              mountPath: /downloads
       volumes:
         - name: config
           persistentVolumeClaim:
             claimName: sonarr-config
+        - name: media
+          persistentVolumeClaim:
+            claimName: media-library
+        - name: downloads
+          persistentVolumeClaim:
+            claimName: qbittorrent-downloads

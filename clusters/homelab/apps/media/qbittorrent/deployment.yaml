@@ -81,7 +81,7 @@ metadata:
   namespace: media
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   storageClassName: longhorn
   resources:
     requests:

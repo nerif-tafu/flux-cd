@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - wildcard-cert.yaml
+  - media-library-pvc.yaml
   - ./plex
   - ./prowlarr
   - ./sonarr

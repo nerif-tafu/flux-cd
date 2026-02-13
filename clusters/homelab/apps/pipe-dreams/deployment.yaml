@@ -18,3 +18,10 @@ spec:
           image: ghcr.io/nerif-tafu/pipe-dreams:v1.0.0 # {"$imagepolicy": "flux-system:pipe-dreams"}
           ports:
             - containerPort: 3000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: pipe-dreams-data

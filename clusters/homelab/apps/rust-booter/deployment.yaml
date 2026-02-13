@@ -18,3 +18,10 @@ spec:
           image: ghcr.io/nerif-tafu/rust-booter:v1.0.0 # {"$imagepolicy": "flux-system:rust-booter"}
           ports:
             - containerPort: 8534
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: rust-booter-data

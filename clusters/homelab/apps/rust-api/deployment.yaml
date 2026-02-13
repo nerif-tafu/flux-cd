@@ -18,6 +18,9 @@ spec:
           image: ghcr.io/nerif-tafu/rust-api:v1.0.0 # {"$imagepolicy": "flux-system:rust-api"}
           ports:
             - containerPort: 3100
+          volumeMounts:
+            - name: data
+              mountPath: /data
           env:
             - name: STEAM_USERNAME
               valueFrom:
@@ -34,3 +37,7 @@ spec:
                 secretKeyRef:
                   name: rust-api-steam
                   key: STEAM_APP_ID
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: rust-api-data

@@ -20,3 +20,10 @@ spec:
           image: ghcr.io/nerif-tafu/fitv2:v1.0.0 # {"$imagepolicy": "flux-system:fitv2"}
           ports:
             - containerPort: 3000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: fitv2-data

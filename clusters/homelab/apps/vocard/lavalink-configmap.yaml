@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lavalink-config
+  namespace: vocard
+data:
+  application.yml: |
+    server:
+      port: 3000
+      address: 0.0.0.0
+    lavalink:
+      server:
+        password: "set-via-env"
+      sources:
+        youtube: false
+        bandcamp: true
+        soundcloud: true
+        twitch: true
+        vimeo: true
+        http: true
+        local: false
+      logging:
+        file:
+          path: ./logs/
+        level:
+          root: INFO
+          lavalink: INFO

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spotify-tokener
+  namespace: vocard
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: spotify-tokener
+  template:
+    metadata:
+      labels:
+        app: spotify-tokener
+    spec:
+      containers:
+        - name: spotify-tokener
+          image: ghcr.io/topi314/spotify-tokener:master
+          ports:
+            - containerPort: 49152
+          env:
+            - name: SPOTIFY_TOKENER_ADDR
+              value: "0.0.0.0:49152"
+          livenessProbe:
+            tcpSocket:
+              port: 49152
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spotify-tokener
+  namespace: vocard
+spec:
+  selector:
+    app: spotify-tokener
+  ports:
+    - port: 49152
+      targetPort: 49152

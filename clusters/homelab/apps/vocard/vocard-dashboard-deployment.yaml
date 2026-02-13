@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vocard-dashboard
+  namespace: vocard
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: vocard-dashboard
+  template:
+    metadata:
+      labels:
+        app: vocard-dashboard
+    spec:
+      containers:
+        - name: vocard-dashboard
+          image: ghcr.io/chocomeow/vocard-dashboard:latest
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: settings
+              mountPath: /app/settings.json
+              subPath: settings.json
+      volumes:
+        - name: settings
+          secret:
+            secretName: vocard-dashboard-settings
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vocard-dashboard
+  namespace: vocard
+spec:
+  selector:
+    app: vocard-dashboard
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vocard-dashboard
+  namespace: vocard
+  labels:
+    traefik.tafu.casa/instance: public
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+spec:
+  ingressClassName: traefik-public
+  rules:
+    - host: voice.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vocard-dashboard
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - voice.tafu.casa
+      secretName: vocard-dashboard-tls

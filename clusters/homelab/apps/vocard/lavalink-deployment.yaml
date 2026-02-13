@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lavalink
+  namespace: vocard
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: lavalink
+  template:
+    metadata:
+      labels:
+        app: lavalink
+    spec:
+      containers:
+        - name: lavalink
+          image: ghcr.io/lavalink-devs/lavalink:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: SERVER_PORT
+              value: "3000"
+            - name: LAVALINK_SERVER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: lavalink-password
+                  key: LAVALINK_SERVER_PASSWORD
+          volumeMounts:
+            - name: config
+              mountPath: /opt/Lavalink/application.yml
+              subPath: application.yml
+            - name: data
+              mountPath: /opt/Lavalink/plugins
+              subPath: plugins
+            - name: data
+              mountPath: /opt/Lavalink/logs
+              subPath: logs
+      volumes:
+        - name: config
+          configMap:
+            name: lavalink-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: lavalink-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lavalink
+  namespace: vocard
+spec:
+  selector:
+    app: lavalink
+  ports:
+    - port: 3000
+      targetPort: 3000

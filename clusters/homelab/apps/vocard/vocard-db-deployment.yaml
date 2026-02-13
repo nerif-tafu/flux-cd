@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vocard-db
+  namespace: vocard
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: vocard-db
+  template:
+    metadata:
+      labels:
+        app: vocard-db
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: mongo
+          image: mongo:8
+          command:
+            - mongod
+            - --oplogSize=1024
+            - --wiredTigerCacheSizeGB=1
+            - --auth
+            - --noscripting
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: vocard-db-auth
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vocard-db-auth
+                  key: MONGO_INITDB_ROOT_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+          readinessProbe:
+            tcpSocket:
+              port: 27017
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: vocard-db-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vocard-db
+  namespace: vocard
+spec:
+  selector:
+    app: vocard-db
+  ports:
+    - port: 27017
+      targetPort: 27017

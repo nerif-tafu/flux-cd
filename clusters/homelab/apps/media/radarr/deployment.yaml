@@ -17,6 +17,15 @@ spec:
     spec:
       securityContext:
         fsGroup: 1000
+      initContainers:
+        - name: fix-media-permissions
+          image: busybox:1.36
+          command: ["sh", "-c", "mkdir -p /media/movies /media/tv /media/music && chown -R 1000:1000 /media && chmod -R 775 /media"]
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: media
+              mountPath: /media
       containers:
         - name: radarr
           image: lscr.io/linuxserver/radarr:0.0.5312 # {"$imagepolicy": "flux-system:radarr"}

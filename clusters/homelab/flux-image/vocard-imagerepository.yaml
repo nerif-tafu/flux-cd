@@ -1,0 +1,8 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: vocard
+  namespace: flux-system
+spec:
+  image: ghcr.io/chocomeow/vocard
+  interval: 1m

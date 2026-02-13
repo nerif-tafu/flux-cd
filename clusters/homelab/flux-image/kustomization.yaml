@@ -16,4 +16,14 @@ resources:
   - rustplus-shop-helper-v2-imagepolicy.yaml
   - fitv2-imagerepository.yaml
   - fitv2-imagepolicy.yaml
+  - vocard-imagerepository.yaml
+  - vocard-imagepolicy.yaml
+  - vocard-dashboard-imagerepository.yaml
+  - vocard-dashboard-imagepolicy.yaml
+  - lavalink-imagerepository.yaml
+  - lavalink-imagepolicy.yaml
+  - spotify-tokener-imagerepository.yaml
+  - spotify-tokener-imagepolicy.yaml
+  - yt-cipher-imagerepository.yaml
+  - yt-cipher-imagepolicy.yaml
   - imageupdateautomation.yaml

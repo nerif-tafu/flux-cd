@@ -21,7 +21,7 @@ spec:
           command: ["sh", "-c", "until nc -z vocard-db 27017; do echo waiting for mongo; sleep 2; done"]
       containers:
         - name: yt-cipher
-          image: ghcr.io/kikkia/yt-cipher:master
+          image: ghcr.io/kikkia/yt-cipher:master # {"$imagepolicy": "flux-system:yt-cipher"}
           ports:
             - containerPort: 8001
 ---

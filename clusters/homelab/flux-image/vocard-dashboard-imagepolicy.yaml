@@ -1,0 +1,11 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: vocard-dashboard
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: vocard-dashboard
+  policy:
+    alphabetical:
+      order: desc

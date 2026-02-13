@@ -1,0 +1,11 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: spotify-tokener
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: spotify-tokener
+  policy:
+    alphabetical:
+      order: desc

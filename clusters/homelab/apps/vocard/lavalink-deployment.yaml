@@ -21,7 +21,7 @@ spec:
           command: ["sh", "-c", "until nc -z vocard-db 27017; do echo waiting for mongo; sleep 2; done"]
       containers:
         - name: lavalink
-          image: ghcr.io/lavalink-devs/lavalink:latest
+          image: ghcr.io/lavalink-devs/lavalink:latest # {"$imagepolicy": "flux-system:lavalink"}
           ports:
             - containerPort: 3000
           env:

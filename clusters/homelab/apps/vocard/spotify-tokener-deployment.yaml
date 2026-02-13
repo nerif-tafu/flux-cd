@@ -21,7 +21,7 @@ spec:
           command: ["sh", "-c", "until nc -z vocard-db 27017; do echo waiting for mongo; sleep 2; done"]
       containers:
         - name: spotify-tokener
-          image: ghcr.io/topi314/spotify-tokener:master
+          image: ghcr.io/topi314/spotify-tokener:master # {"$imagepolicy": "flux-system:spotify-tokener"}
           ports:
             - containerPort: 49152
           env:

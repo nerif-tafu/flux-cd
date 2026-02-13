@@ -36,6 +36,8 @@ spec:
               value: "UTC"
             - name: VERSION
               value: docker
+            - name: PLEX_CLAIM
+              value: "claim-HypsfHzpTySQ68PriXfo"
           ports:
             - containerPort: 32400
           volumeMounts:
@@ -44,13 +46,17 @@ spec:
           resources:
             limits:
               memory: "2Gi"
-          readinessProbe:
-            httpGet:
-              path: /identity
+          startupProbe:
+            tcpSocket:
               port: 32400
-            initialDelaySeconds: 30
+            initialDelaySeconds: 10
             periodSeconds: 10
-            failureThreshold: 12
+            failureThreshold: 36
+          readinessProbe:
+            tcpSocket:
+              port: 32400
+            periodSeconds: 10
+            failureThreshold: 3
       volumes:
         - name: config
           persistentVolumeClaim:

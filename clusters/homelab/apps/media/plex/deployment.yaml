@@ -44,8 +44,7 @@ spec:
               value: "UTC"
             - name: VERSION
               value: docker
-            - name: PLEX_CLAIM
-              value: "claim-HypsfHzpTySQ68PriXfo"
+            # PLEX_CLAIM is one-time; remove after first successful claim or it can cause startup loop
           ports:
             - containerPort: 32400
           volumeMounts:
@@ -59,9 +58,9 @@ spec:
           startupProbe:
             tcpSocket:
               port: 32400
-            initialDelaySeconds: 10
+            initialDelaySeconds: 15
             periodSeconds: 10
-            failureThreshold: 36
+            failureThreshold: 60
           readinessProbe:
             tcpSocket:
               port: 32400

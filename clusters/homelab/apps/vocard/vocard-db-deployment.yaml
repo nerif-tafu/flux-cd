@@ -44,10 +44,13 @@ spec:
             - name: data
               mountPath: /data/db
           readinessProbe:
-            tcpSocket:
-              port: 27017
+            exec:
+              command:
+                - sh
+                - -c
+                - 'mongosh "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017" --eval "db.adminCommand(\"ping\")"'
             initialDelaySeconds: 15
-            periodSeconds: 10
+            periodSeconds: 5
             timeoutSeconds: 5
       volumes:
         - name: data

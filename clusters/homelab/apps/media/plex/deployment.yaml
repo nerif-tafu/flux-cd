@@ -44,7 +44,7 @@ spec:
               value: "UTC"
             - name: VERSION
               value: docker
-            # PLEX_CLAIM is one-time; remove after first successful claim or it can cause startup loop
+            # After config reset only: add PLEX_CLAIM from https://plex.tv/claim then remove after first successful start
           ports:
             - containerPort: 32400
           volumeMounts:

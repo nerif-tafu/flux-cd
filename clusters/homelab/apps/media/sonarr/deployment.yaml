@@ -28,7 +28,7 @@ spec:
               mountPath: /media
       containers:
         - name: sonarr
-          image: lscr.io/linuxserver/sonarr:latest # {"$imagepolicy": "flux-system:sonarr"}
+          image: lscr.io/linuxserver/sonarr:0.6.1342 # {"$imagepolicy": "flux-system:sonarr"}
           env:
             - name: PUID
               value: "1000"

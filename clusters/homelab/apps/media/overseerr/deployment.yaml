@@ -19,7 +19,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: overseerr
-          image: lscr.io/linuxserver/overseerr:latest # {"$imagepolicy": "flux-system:overseerr"}
+          image: lscr.io/linuxserver/overseerr:1.26.1 # {"$imagepolicy": "flux-system:overseerr"}
           env:
             - name: PUID
               value: "1000"

@@ -19,7 +19,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: radarr
-          image: lscr.io/linuxserver/radarr:latest
+          image: lscr.io/linuxserver/radarr:latest # {"$imagepolicy": "flux-system:radarr"}
           env:
             - name: PUID
               value: "1000"

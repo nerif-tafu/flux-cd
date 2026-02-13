@@ -19,7 +19,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: flaresolverr
-          image: ghcr.io/flaresolverr/flaresolverr:latest
+          image: ghcr.io/flaresolverr/flaresolverr:latest # {"$imagepolicy": "flux-system:flaresolverr"}
           env:
             - name: TZ
               value: "UTC"

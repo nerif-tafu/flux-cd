@@ -19,7 +19,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: plex
-          image: lscr.io/linuxserver/plex:latest
+          image: lscr.io/linuxserver/plex:latest # {"$imagepolicy": "flux-system:plex"}
           env:
             - name: PUID
               value: "1000"

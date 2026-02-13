@@ -53,7 +53,7 @@ metadata:
 spec:
   ingressClassName: traefik-public
   rules:
-    - host: voice.tafu.casa
+    - host: music.tafu.casa
       http:
         paths:
           - path: /
@@ -65,5 +65,5 @@ spec:
                   number: 80
   tls:
     - hosts:
-        - voice.tafu.casa
+        - music.tafu.casa
       secretName: vocard-dashboard-tls

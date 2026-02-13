@@ -26,6 +26,7 @@ spec:
             - --wiredTigerCacheSizeGB=1
             - --auth
             - --noscripting
+            - --bind_ip_all
           ports:
             - containerPort: 27017
           env:

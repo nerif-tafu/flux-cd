@@ -1,6 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - ghcr-registry-secret.yaml
   - shorturl-imagerepository.yaml
   - shorturl-imagepolicy.yaml
   - rust-api-imagerepository.yaml

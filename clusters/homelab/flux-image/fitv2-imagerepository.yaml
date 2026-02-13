@@ -6,3 +6,5 @@ metadata:
 spec:
   image: ghcr.io/nerif-tafu/fitv2
   interval: 1m
+  secretRef:
+    name: ghcr-registry-secret

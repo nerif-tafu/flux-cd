@@ -28,7 +28,7 @@ spec:
               mountPath: /media
       containers:
         - name: bazarr
-          image: lscr.io/linuxserver/bazarr:0.9.10 # {"$imagepolicy": "flux-system:bazarr"}
+          image: lscr.io/linuxserver/bazarr:latest # {"$imagepolicy": "flux-system:bazarr"}
           env:
             - name: PUID
               value: "1000"

@@ -19,7 +19,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: qbittorrent
-          image: lscr.io/linuxserver/qbittorrent:14.3.0.99202010231047-7094-260e48b70ubuntu18.04.1-ls100 # {"$imagepolicy": "flux-system:qbittorrent"}
+          image: lscr.io/linuxserver/qbittorrent:latest # {"$imagepolicy": "flux-system:qbittorrent"}
           env:
             - name: PUID
               value: "1000"

@@ -19,14 +19,24 @@ spec:
         - name: wait-db
           image: busybox:1.36
           command: ["sh", "-c", "until nc -z vocard-db 27017; do echo waiting for mongo; sleep 2; done"]
+        - name: copy-app-and-settings
+          image: ghcr.io/chocomeow/vocard:beta # {"$imagepolicy": "flux-system:vocard"}
+          command: ["sh", "-c", "cp -r /app/. /app-writable/ && cp /app-secret/settings.json /app-writable/settings.json"]
+          volumeMounts:
+            - name: app-data
+              mountPath: /app-writable
+            - name: settings
+              mountPath: /app-secret
+              readOnly: true
       containers:
         - name: vocard
           image: ghcr.io/chocomeow/vocard:beta # {"$imagepolicy": "flux-system:vocard"}
           volumeMounts:
-            - name: settings
-              mountPath: /app/settings.json
-              subPath: settings.json
+            - name: app-data
+              mountPath: /app
       volumes:
+        - name: app-data
+          emptyDir: {}
         - name: settings
           secret:
             secretName: vocard-settings

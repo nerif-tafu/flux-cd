@@ -21,7 +21,7 @@ spec:
           command: ["sh", "-c", "until nc -z vocard-db 27017; do echo waiting for mongo; sleep 2; done"]
       containers:
         - name: vocard
-          image: ghcr.io/chocomeow/vocard:latest # {"$imagepolicy": "flux-system:vocard"}
+          image: ghcr.io/chocomeow/vocard:beta # {"$imagepolicy": "flux-system:vocard"}
           volumeMounts:
             - name: settings
               mountPath: /app/settings.json

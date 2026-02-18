@@ -12,3 +12,5 @@ resources:
   - ./vocard
   - ./wg-easy
   - ./tafu-casa
+  - ./microbin
+  - ./filebrowser

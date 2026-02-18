@@ -1,0 +1,8 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: microbin
+  namespace: flux-system
+spec:
+  image: docker.io/danielszabo99/microbin
+  interval: 1m

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microbin
+  namespace: microbin
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: microbin
+  template:
+    metadata:
+      labels:
+        app: microbin
+    spec:
+      containers:
+        - name: microbin
+          image: docker.io/danielszabo99/microbin:2.1.0 # {"$imagepolicy": "flux-system:microbin"}
+          env:
+            - name: MICROBIN_DATA_DIR
+              value: "/data"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: microbin-data

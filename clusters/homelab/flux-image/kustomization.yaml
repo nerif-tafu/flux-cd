@@ -30,4 +30,8 @@ resources:
   - wg-easy-imagepolicy.yaml
   - tafu-casa-imagerepository.yaml
   - tafu-casa-imagepolicy.yaml
+  - microbin-imagerepository.yaml
+  - microbin-imagepolicy.yaml
+  - filebrowser-imagerepository.yaml
+  - filebrowser-imagepolicy.yaml
   - imageupdateautomation.yaml

@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - pvc.yaml
+  - microbin-secret.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml

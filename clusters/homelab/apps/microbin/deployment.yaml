@@ -18,6 +18,9 @@ spec:
       containers:
         - name: microbin
           image: docker.io/danielszabo99/microbin:2.1.0 # {"$imagepolicy": "flux-system:microbin"}
+          envFrom:
+            - secretRef:
+                name: microbin-auth
           env:
             - name: MICROBIN_DATA_DIR
               value: "/data"

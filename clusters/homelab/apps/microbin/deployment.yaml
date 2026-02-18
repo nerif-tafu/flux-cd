@@ -28,6 +28,8 @@ spec:
               value: "8080"
             - name: MICROBIN_BIND
               value: "0.0.0.0"
+            - name: MICROBIN_PUBLIC_PATH
+              value: "https://paste.tafu.casa/"
           ports:
             - containerPort: 8080
           volumeMounts:

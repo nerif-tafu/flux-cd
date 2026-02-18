@@ -30,6 +30,18 @@ spec:
               value: "0.0.0.0"
             - name: MICROBIN_PUBLIC_PATH
               value: "https://paste.tafu.casa/"
+            - name: MICROBIN_HIDE_FOOTER
+              value: "true"
+            - name: MICROBIN_PRIVATE
+              value: "true"
+            - name: MICROBIN_GC_DAYS
+              value: "0"
+            - name: MICROBIN_DEFAULT_BURN_AFTER
+              value: "0"
+            - name: MICROBIN_ETERNAL_PASTA
+              value: "true"
+            - name: MICROBIN_DEFAULT_EXPIRY
+              value: "0"
           ports:
             - containerPort: 8080
           volumeMounts:

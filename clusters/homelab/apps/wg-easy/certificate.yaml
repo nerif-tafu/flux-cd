@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wg-easy
+  namespace: wg-easy
+spec:
+  secretName: wg-easy-cl-tafu-casa-tls
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+  dnsNames:
+    - vpn.cl.tafu.casa

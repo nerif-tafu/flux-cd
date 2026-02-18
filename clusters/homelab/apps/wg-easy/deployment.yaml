@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wg-easy
+  namespace: wg-easy
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: wg-easy
+  template:
+    metadata:
+      labels:
+        app: wg-easy
+    spec:
+      containers:
+        - name: wg-easy
+          image: ghcr.io/wg-easy/wg-easy:15
+          env:
+            - name: INSECURE
+              value: "true"
+          ports:
+            - name: wireguard
+              containerPort: 51820
+              protocol: UDP
+            - name: http
+              containerPort: 51821
+          volumeMounts:
+            - name: wireguard
+              mountPath: /etc/wireguard
+            - name: lib-modules
+              mountPath: /lib/modules
+              readOnly: true
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_MODULE
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+      volumes:
+        - name: wireguard
+          persistentVolumeClaim:
+            claimName: wg-easy-wireguard
+        - name: lib-modules
+          hostPath:
+            path: /lib/modules
+            type: Directory
+      securityContext:
+        sysctl:
+          - name: net.ipv4.ip_forward
+            value: "1"
+          - name: net.ipv4.conf.all.src_valid_mark
+            value: "1"
+          - name: net.ipv6.conf.all.disable_ipv6
+            value: "0"
+          - name: net.ipv6.conf.all.forwarding
+            value: "1"
+          - name: net.ipv6.conf.default.forwarding
+            value: "1"

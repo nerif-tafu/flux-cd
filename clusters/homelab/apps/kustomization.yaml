@@ -10,4 +10,4 @@ resources:
   - ./rustplus-shop-helper-v2
   - ./fitv2
   - ./vocard
-
+  - ./wg-easy

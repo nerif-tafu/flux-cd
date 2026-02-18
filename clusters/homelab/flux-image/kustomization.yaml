@@ -26,4 +26,6 @@ resources:
   - spotify-tokener-imagepolicy.yaml
   - yt-cipher-imagerepository.yaml
   - yt-cipher-imagepolicy.yaml
+  - wg-easy-imagerepository.yaml
+  - wg-easy-imagepolicy.yaml
   - imageupdateautomation.yaml

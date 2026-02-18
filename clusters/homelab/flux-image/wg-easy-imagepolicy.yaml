@@ -1,0 +1,11 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: wg-easy
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: wg-easy
+  policy:
+    semver:
+      range: ">=15.0.0"

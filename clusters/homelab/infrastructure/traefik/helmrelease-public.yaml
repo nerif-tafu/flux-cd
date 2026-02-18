@@ -18,6 +18,10 @@ spec:
       type: LoadBalancer
       spec:
         loadBalancerIP: 192.168.3.61
+    additionalArguments:
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.web.http.redirections.entrypoint.permanent=true
     providers:
       kubernetesCRD:
         labelSelector: "traefik.tafu.casa/instance=public"

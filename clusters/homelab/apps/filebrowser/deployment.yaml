@@ -17,9 +17,9 @@ spec:
     spec:
       containers:
         - name: filebrowser
-          image: ghcr.io/gtsteffaniak/filebrowser:v1.1.2-stable # {"$imagepolicy": "flux-system:filebrowser"}
+          image: ghcr.io/gtsteffaniak/filebrowser:latest # {"$imagepolicy": "flux-system:filebrowser"}
           ports:
-            - containerPort: 80
+            - containerPort: 8080
           volumeMounts:
             - name: data
               mountPath: /data

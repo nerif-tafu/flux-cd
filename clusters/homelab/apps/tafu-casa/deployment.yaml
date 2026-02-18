@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tafu-casa
+  namespace: tafu-casa
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: tafu-casa
+  template:
+    metadata:
+      labels:
+        app: tafu-casa
+    spec:
+      containers:
+        - name: tafu-casa
+          image: ghcr.io/nerif-tafu/tafu-casa:v1.0.0 # {"$imagepolicy": "flux-system:tafu-casa"}
+          ports:
+            - containerPort: 3000

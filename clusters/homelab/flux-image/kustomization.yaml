@@ -28,4 +28,6 @@ resources:
   - yt-cipher-imagepolicy.yaml
   - wg-easy-imagerepository.yaml
   - wg-easy-imagepolicy.yaml
+  - tafu-casa-imagerepository.yaml
+  - tafu-casa-imagepolicy.yaml
   - imageupdateautomation.yaml

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tafu-casa
+  namespace: tafu-casa
+spec:
+  selector:
+    app: tafu-casa
+  ports:
+    - port: 80
+      targetPort: 3000

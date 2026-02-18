@@ -42,6 +42,10 @@ spec:
               value: "true"
             - name: MICROBIN_DEFAULT_EXPIRY
               value: "0"
+            - name: MICROBIN_HIGHLIGHTSYNTAX
+              value: "true"
+            - name: MICROBIN_ENCRYPTION_SERVER_SIDE
+              value: "true"
           ports:
             - containerPort: 8080
           volumeMounts:

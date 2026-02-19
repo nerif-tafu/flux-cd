@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: rust-breeder
-          image: ghcr.io/nerif-tafu/rust-breeder:3.1.0 # {"$imagepolicy": "flux-system:rust-breeder"}
+          image: ghcr.io/nerif-tafu/rust-breeder:v3.1.0 # {"$imagepolicy": "flux-system:rust-breeder"}
           ports:
             - containerPort: 80
           volumeMounts:

@@ -17,6 +17,6 @@ spec:
     spec:
       containers:
         - name: tafu-casa
-          image: ghcr.io/nerif-tafu/tafu-casa:v1.1.0 # {"$imagepolicy": "flux-system:tafu-casa"}
+          image: ghcr.io/nerif-tafu/tafu-casa:v1.1.1 # {"$imagepolicy": "flux-system:tafu-casa"}
           ports:
             - containerPort: 3000

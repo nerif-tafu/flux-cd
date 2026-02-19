@@ -34,4 +34,6 @@ resources:
   - microbin-imagepolicy.yaml
   - filebrowser-imagerepository.yaml
   - filebrowser-imagepolicy.yaml
+  - rust-breeder-imagerepository.yaml
+  - rust-breeder-imagepolicy.yaml
   - imageupdateautomation.yaml

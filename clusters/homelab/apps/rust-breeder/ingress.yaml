@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rust-breeder
+  namespace: rust-breeder
+  labels:
+    traefik.tafu.casa/instance: public
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+spec:
+  ingressClassName: traefik-public
+  rules:
+    - host: rustbreeder.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rust-breeder
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - rustbreeder.tafu.casa
+      secretName: rust-breeder-tls

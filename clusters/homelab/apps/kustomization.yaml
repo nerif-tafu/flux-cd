@@ -14,3 +14,4 @@ resources:
   - ./tafu-casa
   - ./microbin
   - ./filebrowser
+  - ./rust-breeder

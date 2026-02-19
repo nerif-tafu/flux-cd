@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rust-breeder
+  namespace: rust-breeder
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: rust-breeder
+  template:
+    metadata:
+      labels:
+        app: rust-breeder
+    spec:
+      containers:
+        - name: rust-breeder
+          image: ghcr.io/nerif-tafu/rust-breeder:3.1.0 # {"$imagepolicy": "flux-system:rust-breeder"}
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: rust-breeder-data

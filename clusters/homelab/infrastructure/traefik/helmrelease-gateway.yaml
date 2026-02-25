@@ -23,53 +23,44 @@ spec:
         metallb.universe.tf/allow-shared-ip: traefik-gateway
       spec:
         loadBalancerIP: 192.168.3.63
-    # Don't expose default HTTP entrypoints on this LB
+    # Chart v26 expects expose as boolean; don't expose default HTTP entrypoints
     ports:
       web:
-        expose:
-          default: false
+        expose: false
       websecure:
-        expose:
-          default: false
+        expose: false
       traefik:
-        expose:
-          default: false
+        expose: false
       metrics:
-        expose:
-          default: false
+        expose: false
       # wg-easy WireGuard
       wireguard:
         port: 51820
-        expose:
-          default: true
-          exposedPort: 51820
+        expose: true
+        exposedPort: 51820
         protocol: UDP
       # wg-easy web UI
       wgeasyhttp:
         port: 51821
-        expose:
-          default: true
-          exposedPort: 51821
+        expose: true
+        exposedPort: 51821
         protocol: TCP
       # KAG game server
       kagtcp:
         port: 50301
-        expose:
-          default: true
-          exposedPort: 50301
+        expose: true
+        exposedPort: 50301
         protocol: TCP
       kagudp:
         port: 50301
-        expose:
-          default: true
-          exposedPort: 50301
+        expose: true
+        exposedPort: 50301
         protocol: UDP
       # Minecraft
       minecraft:
         port: 25565
-        expose:
-          default: true
-          exposedPort: 25565
+        expose: true
+        exposedPort: 25565
         protocol: TCP
     providers:
       kubernetesCRD:

@@ -1,4 +1,4 @@
-# TCP/UDP gateway at 192.168.3.63 for wg-easy, KAG, Minecraft (25565/tcp)
+# TCP/UDP gateway at 192.168.3.63: WireGuard only (51820/udp), KAG (50301), Minecraft (25565). wg-easy frontend via vpn.cl.tafu.casa only.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -33,18 +33,12 @@ spec:
         expose: false
       metrics:
         expose: false
-      # wg-easy WireGuard
+      # wg-easy WireGuard only (frontend is internal at vpn.cl.tafu.casa)
       wireguard:
         port: 51820
         expose: true
         exposedPort: 51820
         protocol: UDP
-      # wg-easy web UI
-      wgeasyhttp:
-        port: 51821
-        expose: true
-        exposedPort: 51821
-        protocol: TCP
       # KAG game server
       kagtcp:
         port: 50301

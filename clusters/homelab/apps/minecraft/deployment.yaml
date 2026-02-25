@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: minecraft
-          image: docker.io/itzg/minecraft-server:2024.11.0
+          image: docker.io/itzg/minecraft-server:latest
           env:
             - name: EULA
               value: "TRUE"

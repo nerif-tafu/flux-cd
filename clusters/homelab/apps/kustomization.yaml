@@ -16,3 +16,4 @@ resources:
   - ./filebrowser
   - ./rust-breeder
   - ./kag
+  - ./minecraft

@@ -1,4 +1,4 @@
-# TCP/UDP gateway at 192.168.3.63 for wg-easy (51820/udp, 51821/tcp) and KAG (50301/tcp, 50301/udp)
+# TCP/UDP gateway at 192.168.3.63 for wg-easy, KAG, Minecraft (25565/tcp)
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -17,6 +17,10 @@ spec:
   values:
     service:
       type: LoadBalancer
+      # Separate TCP and UDP services so MetalLB can share one IP (mixed-protocol LB often broken)
+      single: false
+      annotations:
+        metallb.universe.tf/allow-shared-ip: traefik-gateway
       spec:
         loadBalancerIP: 192.168.3.63
     # Don't expose default HTTP entrypoints on this LB
@@ -60,6 +64,13 @@ spec:
           default: true
           exposedPort: 50301
         protocol: UDP
+      # Minecraft
+      minecraft:
+        port: 25565
+        expose:
+          default: true
+          exposedPort: 25565
+        protocol: TCP
     providers:
       kubernetesCRD:
         labelSelector: "traefik.tafu.casa/instance=gateway"

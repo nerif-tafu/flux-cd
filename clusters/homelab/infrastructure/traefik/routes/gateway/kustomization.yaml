@@ -5,3 +5,4 @@ resources:
   - wg-easy-tcp.yaml
   - kag-tcp.yaml
   - kag-udp.yaml
+  - minecraft-tcp.yaml

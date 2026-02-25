@@ -5,6 +5,7 @@ resources:
   - helmrepository.yaml
   - helmrelease-internal.yaml
   - helmrelease-public.yaml
+  - helmrelease-gateway.yaml
   - wildcard-cert.yaml
   - traefik-public-dashboard-service.yaml
   - dashboard-ingressroute.yaml

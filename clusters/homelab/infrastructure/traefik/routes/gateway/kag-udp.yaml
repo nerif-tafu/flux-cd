@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: kag
+  namespace: traefik
+  labels:
+    traefik.tafu.casa/instance: gateway
+spec:
+  entryPoints:
+    - kagudp
+  routes:
+    - services:
+        - name: kag
+          namespace: kag
+          port: 50301

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kag
+  namespace: kag
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: kag
+  template:
+    metadata:
+      labels:
+        app: kag
+    spec:
+      containers:
+        - name: kag
+          image: ghcr.io/nerif-tafu/kag-dedicatedserver:v1.0.1 # {"$imagepolicy": "flux-system:kag"}
+          env:
+            - name: NAME
+              value: "HopHop KAG server"
+            - name: PORT
+              value: "50301"
+          envFrom:
+            - secretRef:
+                name: kag-passwords
+          ports:
+            - name: game
+              containerPort: 50301
+              protocol: TCP
+            - name: game-udp
+              containerPort: 50301
+              protocol: UDP
+          volumeMounts:
+            - name: data
+              mountPath: /opt/KAG
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: kag-data

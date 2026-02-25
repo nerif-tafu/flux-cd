@@ -36,4 +36,6 @@ resources:
   - filebrowser-imagepolicy.yaml
   - rust-breeder-imagerepository.yaml
   - rust-breeder-imagepolicy.yaml
+  - kag-imagerepository.yaml
+  - kag-imagepolicy.yaml
   - imageupdateautomation.yaml

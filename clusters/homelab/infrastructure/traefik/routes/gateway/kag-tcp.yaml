@@ -1,0 +1,16 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: kag
+  namespace: traefik
+  labels:
+    traefik.tafu.casa/instance: gateway
+spec:
+  entryPoints:
+    - kagtcp
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: kag
+          namespace: kag
+          port: 50301

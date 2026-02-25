@@ -1,3 +1,4 @@
+# Both Traefik dashboards are internal-only (served on .62). No dashboard on public Traefik (.61).
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:

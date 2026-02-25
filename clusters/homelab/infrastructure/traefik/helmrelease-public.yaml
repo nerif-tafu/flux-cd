@@ -26,7 +26,7 @@ spec:
         labelSelector: "traefik.tafu.casa/instance=public"
       kubernetesIngress:
         labelSelector: "traefik.tafu.casa/instance=public"
+    # Dashboard must not be exposed on public instance; access via internal only (traefik-public.cl.tafu.casa on .62)
     ingressRoute:
       dashboard:
-        labels:
-          traefik.tafu.casa/instance: public
+        enabled: false

@@ -3,6 +3,5 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - kag-secret.yaml
-  - pvc.yaml
   - deployment.yaml
   - service.yaml

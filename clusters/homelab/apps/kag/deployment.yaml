@@ -28,6 +28,8 @@ spec:
       containers:
         - name: kag
           image: ghcr.io/nerif-tafu/kag-dedicatedserver:v1.2.0 # {"$imagepolicy": "flux-system:kag"}
+          command: ["/bin/sh", "./entrypoint.sh"]
+          args: ["./dedicatedserver.sh"]
           env:
             - name: NAME
               value: "HopHop KAG server"

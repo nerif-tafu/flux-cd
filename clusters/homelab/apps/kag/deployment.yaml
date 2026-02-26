@@ -1,3 +1,6 @@
+# KAG image has WORKDIR /opt/KAG and ENTRYPOINT ["./entrypoint.sh"]. Do NOT mount
+# the whole PVC at /opt/KAG or it hides entrypoint.sh and binaries. Mount only
+# Security and Mods per the image docs (subPath) so /opt/KAG stays from the image.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,6 +18,13 @@ spec:
       labels:
         app: kag
     spec:
+      initContainers:
+        - name: ensure-dirs
+          image: busybox:1.36
+          command: ["sh", "-c", "mkdir -p /data/Security /data/Mods"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
       containers:
         - name: kag
           image: ghcr.io/nerif-tafu/kag-dedicatedserver:v1.2.0 # {"$imagepolicy": "flux-system:kag"}
@@ -35,7 +45,11 @@ spec:
               protocol: UDP
           volumeMounts:
             - name: data
-              mountPath: /opt/KAG
+              mountPath: /opt/KAG/Security
+              subPath: Security
+            - name: data
+              mountPath: /opt/KAG/Mods
+              subPath: Mods
       volumes:
         - name: data
           persistentVolumeClaim:

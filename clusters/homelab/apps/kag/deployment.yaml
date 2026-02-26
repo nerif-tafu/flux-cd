@@ -27,7 +27,7 @@ spec:
               mountPath: /data
       containers:
         - name: kag
-          image: ghcr.io/nerif-tafu/kag-dedicatedserver:v1.2.0 # {"$imagepolicy": "flux-system:kag"}
+          image: ghcr.io/nerif-tafu/kag-dedicatedserver:v1.2.1 # {"$imagepolicy": "flux-system:kag"}
           command: ["/bin/sh", "./entrypoint.sh"]
           args: ["./dedicatedserver.sh"]
           env:

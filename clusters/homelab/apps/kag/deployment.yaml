@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: kag
-          image: ghcr.io/nerif-tafu/kag-dedicatedserver:v1.3.1 # {"$imagepolicy": "flux-system:kag"}
+          image: ghcr.io/nerif-tafu/kag-dedicatedserver:v1.3.2 # {"$imagepolicy": "flux-system:kag"}
           env:
             - name: NAME
               value: "HopHop KAG Server"

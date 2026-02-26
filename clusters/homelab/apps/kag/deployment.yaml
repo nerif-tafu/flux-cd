@@ -35,6 +35,8 @@ spec:
               value: "HopHop KAG server"
             - name: PORT
               value: "50301"
+            - name: SUPERADMIN_USERS
+              value: "tafu"
           envFrom:
             - secretRef:
                 name: kag-passwords

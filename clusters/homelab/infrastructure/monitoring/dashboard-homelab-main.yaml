@@ -7,7 +7,7 @@ metadata:
     grafana_dashboard: "1"
 data:
   homelab-main.json: |
-        {
+            {
       "annotations": {
         "list": [
           {
@@ -357,173 +357,6 @@ data:
             "x": 0,
             "y": 9
           },
-          "id": 107,
-          "panels": [],
-          "title": "Request map (reverse proxy)",
-          "type": "row"
-        },
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "fieldConfig": {
-            "defaults": {},
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 10,
-            "w": 6,
-            "x": 0,
-            "y": 10
-          },
-          "id": 108,
-          "options": {
-            "showHeader": true
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "loki",
-                "uid": "loki"
-              },
-              "editorMode": "code",
-              "expr": "topk(20, sum by (ClientAddr) (count_over_time({namespace=\"traefik\", container=\"traefik-public\"} | json [24h])))",
-              "queryType": "instant",
-              "refId": "A"
-            }
-          ],
-          "title": "Top client IPs (Traefik public, 24h)",
-          "type": "table"
-        },
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "fieldConfig": {
-            "defaults": {},
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 10,
-            "w": 6,
-            "x": 6,
-            "y": 10
-          },
-          "id": 110,
-          "options": {
-            "showHeader": true
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "loki",
-                "uid": "loki"
-              },
-              "editorMode": "code",
-              "expr": "topk(30, sum by (geoip_country_code) (count_over_time({namespace=\"traefik\", container=\"traefik-public\"}[24h])))",
-              "queryType": "instant",
-              "refId": "A"
-            }
-          ],
-          "title": "Requests by country (GeoIP, 24h)",
-          "type": "table"
-        },
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "custom": {
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                }
-              },
-              "mappings": []
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 10,
-            "w": 12,
-            "x": 12,
-            "y": 10
-          },
-          "id": 109,
-          "options": {
-            "basemap": {
-              "config": {},
-              "name": "Layer 0",
-              "type": "default"
-            },
-            "controls": {
-              "showAttribution": true,
-              "showDebug": false,
-              "showScale": false,
-              "showZoom": true
-            },
-            "layers": [
-              {
-                "config": {
-                  "lookup": {
-                    "gazetteer": "countries",
-                    "lookupField": "geoip_country_code"
-                  },
-                  "style": {
-                    "color": {
-                      "fixed": "green",
-                      "mode": "fixed"
-                    },
-                    "size": {
-                      "fixed": 5,
-                      "max": 15,
-                      "min": 2
-                    }
-                  },
-                  "showLegend": true
-                },
-                "name": "Requests by country",
-                "type": "markers"
-              }
-            ],
-            "tooltip": true,
-            "view": {
-              "allLayers": true,
-              "id": "standard",
-              "lat": 20,
-              "lon": 0,
-              "zoom": 2
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "loki",
-                "uid": "loki"
-              },
-              "editorMode": "code",
-              "expr": "topk(50, sum by (geoip_country_code) (count_over_time({namespace=\"traefik\", container=\"traefik-public\"}[24h])))",
-              "queryType": "instant",
-              "refId": "A"
-            }
-          ],
-          "description": "Uses geoip_country_code from Promtail GeoIP. If empty, ensure maxmind-license secret exists and Promtail has restarted.",
-          "title": "Request map: clients by country (Traefik public)",
-          "type": "geomap"
-        },
-        {
-          "collapsed": false,
-          "gridPos": {
-            "h": 1,
-            "w": 24,
-            "x": 0,
-            "y": 20
-          },
           "id": 111,
           "panels": [],
           "title": "Cluster & storage",
@@ -536,10 +369,30 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "custom": {"align": "auto"},
+              "custom": {
+                "align": "auto"
+              },
               "mappings": [
-                {"options": {"0": {"color": "red", "index": 0, "text": "Down"}}, "type": "value"},
-                {"options": {"1": {"color": "green", "index": 1, "text": "Up"}}, "type": "value"}
+                {
+                  "options": {
+                    "0": {
+                      "color": "red",
+                      "index": 0,
+                      "text": "Down"
+                    }
+                  },
+                  "type": "value"
+                },
+                {
+                  "options": {
+                    "1": {
+                      "color": "green",
+                      "index": 1,
+                      "text": "Up"
+                    }
+                  },
+                  "type": "value"
+                }
               ]
             },
             "overrides": []
@@ -548,7 +401,7 @@ data:
             "h": 5,
             "w": 8,
             "x": 0,
-            "y": 21
+            "y": 10
           },
           "id": 112,
           "options": {
@@ -590,7 +443,7 @@ data:
             "h": 5,
             "w": 8,
             "x": 8,
-            "y": 21
+            "y": 10
           },
           "id": 113,
           "options": {
@@ -669,7 +522,7 @@ data:
             "h": 5,
             "w": 8,
             "x": 16,
-            "y": 21
+            "y": 10
           },
           "id": 114,
           "options": {
@@ -725,7 +578,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 25
+            "y": 14
           },
           "id": 67,
           "panels": [],
@@ -766,7 +619,7 @@ data:
             "h": 8,
             "w": 6,
             "x": 0,
-            "y": 26
+            "y": 15
           },
           "id": 77,
           "options": {
@@ -914,7 +767,7 @@ data:
             "h": 8,
             "w": 6,
             "x": 6,
-            "y": 26
+            "y": 15
           },
           "id": 78,
           "options": {
@@ -1054,7 +907,7 @@ data:
             "h": 4,
             "w": 2,
             "x": 12,
-            "y": 26
+            "y": 15
           },
           "id": 63,
           "options": {
@@ -1159,7 +1012,7 @@ data:
             "h": 12,
             "w": 10,
             "x": 14,
-            "y": 26
+            "y": 15
           },
           "id": 52,
           "options": {
@@ -1364,7 +1217,7 @@ data:
             "h": 4,
             "w": 2,
             "x": 12,
-            "y": 30
+            "y": 19
           },
           "id": 59,
           "options": {
@@ -1427,7 +1280,7 @@ data:
             "h": 4,
             "w": 6,
             "x": 0,
-            "y": 34
+            "y": 23
           },
           "id": 37,
           "options": {
@@ -1583,7 +1436,7 @@ data:
             "h": 4,
             "w": 6,
             "x": 6,
-            "y": 34
+            "y": 23
           },
           "id": 39,
           "options": {
@@ -1735,7 +1588,7 @@ data:
             "h": 4,
             "w": 2,
             "x": 12,
-            "y": 34
+            "y": 23
           },
           "id": 62,
           "options": {
@@ -1782,7 +1635,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 38
+            "y": 27
           },
           "id": 71,
           "panels": [],
@@ -1863,7 +1716,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 39
+            "y": 28
           },
           "id": 72,
           "options": {
@@ -1993,7 +1846,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 39
+            "y": 28
           },
           "id": 55,
           "options": {
@@ -2128,7 +1981,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 47
+            "y": 36
           },
           "id": 46,
           "options": {
@@ -2235,7 +2088,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 47
+            "y": 36
           },
           "id": 50,
           "options": {
@@ -2341,7 +2194,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 55
+            "y": 44
           },
           "id": 54,
           "options": {
@@ -2460,7 +2313,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 55
+            "y": 44
           },
           "id": 73,
           "options": {
@@ -2585,7 +2438,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 63
+            "y": 52
           },
           "id": 82,
           "options": {
@@ -2695,7 +2548,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 63
+            "y": 52
           },
           "id": 83,
           "options": {
@@ -2741,7 +2594,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 71
+            "y": 60
           },
           "id": 86,
           "panels": [],
@@ -2813,7 +2666,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 72
+            "y": 61
           },
           "id": 84,
           "options": {
@@ -2930,7 +2783,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 72
+            "y": 61
           },
           "id": 85,
           "options": {
@@ -3036,7 +2889,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 81
+            "y": 70
           },
           "id": 87,
           "options": {
@@ -3142,7 +2995,7 @@ data:
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 81
+            "y": 70
           },
           "id": 88,
           "options": {
@@ -3192,7 +3045,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 90
+            "y": 79
           },
           "id": 69,
           "panels": [],
@@ -3265,7 +3118,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 91
+            "y": 80
           },
           "id": 44,
           "options": {
@@ -3405,7 +3258,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 91
+            "y": 80
           },
           "id": 53,
           "options": {
@@ -3590,7 +3443,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 99
+            "y": 88
           },
           "id": 79,
           "options": {
@@ -3702,7 +3555,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 99
+            "y": 88
           },
           "id": 80,
           "options": {
@@ -3842,7 +3695,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 107
+            "y": 96
           },
           "id": 56,
           "options": {
@@ -3983,7 +3836,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 107
+            "y": 96
           },
           "id": 81,
           "options": {

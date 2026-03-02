@@ -24,7 +24,13 @@ spec:
         retention: 15d
         retentionSize: 8GB
         serviceMonitorNamespaceSelector: {}
+        # IMPORTANT: allow selecting ServiceMonitors across the cluster (e.g. Traefik's)
+        # The chart defaults to selecting only ServiceMonitors with release=kube-prometheus-stack.
+        serviceMonitorSelectorNilUsesHelmValues: false
         serviceMonitorSelector: {}
+        podMonitorNamespaceSelector: {}
+        podMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelector: {}
     grafana:
       enabled: true
       # Change password after first login or set admin.existingSecret

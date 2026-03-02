@@ -16,6 +16,14 @@ spec:
   values:
     deploymentMode: SingleBinary
 
+    # Ensure SimpleScalable targets are disabled (chart validates this).
+    write:
+      replicas: 0
+    read:
+      replicas: 0
+    backend:
+      replicas: 0
+
     loki:
       commonConfig:
         replication_factor: 1

@@ -12,6 +12,7 @@ resources:
   - ./vocard
   - ./wg-easy
   - ./tafu-casa
+  - ./convertx
   - ./microbin
   - ./filebrowser
   - ./rust-breeder

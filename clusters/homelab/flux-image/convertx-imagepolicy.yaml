@@ -1,0 +1,14 @@
+# Track the :latest tag (updated on every release).
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: convertx
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: convertx
+  policy:
+    alphabetical:
+      order: asc
+    filterTags:
+      pattern: '^latest$'

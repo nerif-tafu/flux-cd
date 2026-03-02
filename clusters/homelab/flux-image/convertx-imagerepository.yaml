@@ -1,0 +1,8 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: convertx
+  namespace: flux-system
+spec:
+  image: ghcr.io/c4illin/convertx
+  interval: 1m

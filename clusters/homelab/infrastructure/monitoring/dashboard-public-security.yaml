@@ -48,7 +48,8 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk(15, sum by (ClientAddr) (count_over_time({namespace=\"traefik\", pod=~\"traefik-public-.*\"} | json | DownstreamStatus=~\"401|404|5..\" [5m])))",
+              "expr": "topk(15, sum by (ClientAddr) (count_over_time({namespace=\"traefik\", container=\"traefik-public\"} | json | DownstreamStatus=~\"401|404|5..\" [5m])))",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
@@ -70,7 +71,8 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "topk(15, sum by (RequestPath) (count_over_time({namespace=\"traefik\", pod=~\"traefik-public-.*\"} | json | DownstreamStatus=~\"401|404|5..\" [5m])))",
+              "expr": "topk(15, sum by (RequestPath) (count_over_time({namespace=\"traefik\", container=\"traefik-public\"} | json | DownstreamStatus=~\"401|404|5..\" [5m])))",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
@@ -92,7 +94,8 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum by (DownstreamStatus) (count_over_time({namespace=\"traefik\", pod=~\"traefik-public-.*\"} | json | DownstreamStatus!=\"\" [5m]))",
+              "expr": "sum by (DownstreamStatus) (count_over_time({namespace=\"traefik\", container=\"traefik-public\"} | json | DownstreamStatus!=\"\" [5m]))",
+              "queryType": "range",
               "refId": "A"
             }
           ],
@@ -114,7 +117,7 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "{namespace=\"traefik\", pod=~\"traefik-public-.*\"} |= \"TLS\"",
+              "expr": "{namespace=\"traefik\", container=\"traefik-public\"} |= \"TLS\"",
               "refId": "A"
             }
           ],

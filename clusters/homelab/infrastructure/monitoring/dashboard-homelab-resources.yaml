@@ -111,7 +111,8 @@ data:
               "editorMode": "code",
               "expr": "sum(kube_pod_container_resource_requests{namespace=~\"$namespace\",resource=\"cpu\",unit=\"core\"}) / sum(kube_node_status_allocatable{resource=\"cpu\",unit=\"core\"})",
               "legendFormat": "CPU requested / allocatable",
-              "range": true,
+              "instant": true,
+              "range": false,
               "refId": "A"
             }
           ],
@@ -141,7 +142,8 @@ data:
               "editorMode": "code",
               "expr": "sum(kube_pod_container_resource_requests{namespace=~\"$namespace\",resource=\"memory\",unit=\"byte\"}) / sum(kube_node_status_allocatable{resource=\"memory\",unit=\"byte\"})",
               "legendFormat": "Memory requested / allocatable",
-              "range": true,
+              "instant": true,
+              "range": false,
               "refId": "A"
             }
           ],
@@ -160,12 +162,13 @@ data:
           {
             "current": {
               "selected": false,
-              "text": ".*",
-              "value": ".*"
+              "text": "All",
+              "value": "$__all"
             },
             "definition": "label_values(kube_namespace_created, namespace)",
             "hide": 0,
-            "includeAll": false,
+            "includeAll": true,
+            "allValue": ".*",
             "multi": false,
             "name": "namespace",
             "options": [],

@@ -296,7 +296,7 @@ data:
               "refId": "StandardVariableQuery"
             },
             "refresh": 1,
-            "regex": "/traefik-(public|internal)-metrics/",
+            "regex": "/traefik-(?:public|internal)-metrics/",
             "skipUrlSync": false,
             "type": "query"
           }

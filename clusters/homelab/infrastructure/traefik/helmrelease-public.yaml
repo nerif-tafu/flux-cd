@@ -35,3 +35,11 @@ spec:
     ingressRoute:
       dashboard:
         enabled: false
+    # Prometheus metrics for monitoring stack
+    metrics:
+      prometheus:
+        entryPoint: metrics
+        service:
+          enabled: true
+        serviceMonitor:
+          enabled: true

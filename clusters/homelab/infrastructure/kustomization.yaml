@@ -7,4 +7,5 @@ resources:
   - ./traefik
   - ./cloudflare-ddns
   - ./longhorn
+  - ./monitoring
 

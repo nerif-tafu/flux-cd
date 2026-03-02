@@ -26,3 +26,11 @@ spec:
         labelSelector: "traefik.tafu.casa/instance=internal"
       kubernetesIngress:
         labelSelector: "traefik.tafu.casa/instance=internal"
+    # Prometheus metrics for monitoring stack
+    metrics:
+      prometheus:
+        entryPoint: metrics
+        service:
+          enabled: true
+        serviceMonitor:
+          enabled: true

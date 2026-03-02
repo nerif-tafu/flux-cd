@@ -37,7 +37,7 @@ data:
           },
           "id": 1,
           "options": {
-            "content": "## Homelab dashboards\\n\\n- [Traefik overview](/d/traefik-overview/traefik-overview)\\n- [Public security (Traefik logs)](/d/public-security/public-security-traefik-logs)\\n- [Certificates (cert-manager)](/d/certificates/certificates-cert-manager)\\n- [Homelab resources (namespace)](/d/homelab-resources/homelab-resources-namespace)\\n\\n## Useful UIs\\n\\n- [Longhorn UI](https://longhorn.cl.tafu.casa/)\\n- [Traefik internal dashboard](https://traefik-internal.cl.tafu.casa/dashboard/)\\n- [Traefik public dashboard](https://traefik-public.cl.tafu.casa/dashboard/)\\n\\nTip: these are relative links inside Grafana; you can also pin your favorites in the left sidebar.\\n",
+            "content": "## Homelab dashboards\n\n- [Traefik overview](/d/traefik-overview/traefik-overview)\n- [Public security (Traefik logs)](/d/public-security/public-security-traefik-logs)\n- [Certificates (cert-manager)](/d/certificates/certificates-cert-manager)\n- [Homelab resources (namespace)](/d/homelab-resources/homelab-resources-namespace)\n\n## Useful UIs\n\n- [Longhorn UI](https://longhorn.cl.tafu.casa/)\n- [Traefik internal dashboard](https://traefik-internal.cl.tafu.casa/dashboard/)\n- [Traefik public dashboard](https://traefik-public.cl.tafu.casa/dashboard/)\n\nTip: pin favorites in the left sidebar.",
             "mode": "markdown"
           },
           "title": "Home",
@@ -137,28 +137,47 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "max": 1,
-              "min": 0,
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
               "thresholds": {
-                "mode": "percentage",
+                "mode": "absolute",
                 "steps": [
                   {
                     "color": "green",
                     "value": null
-                  },
-                  {
-                    "color": "orange",
-                    "value": 0.7
-                  },
-                  {
-                    "color": "red",
-                    "value": 0.9
                   }
                 ]
               },
-              "unit": "percentunit"
+              "unit": "decgigabytes"
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Used"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Used"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Total"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Total (max)"
+                  }
+                ]
+              }
+            ]
           },
           "gridPos": {
             "h": 6,
@@ -168,30 +187,43 @@ data:
           },
           "id": 4,
           "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
                 "lastNotNull"
               ],
               "fields": "",
-              "values": false
+              "values": true
             },
-            "showThresholdLabels": false,
-            "showThresholdMarkers": true
+            "showPercentChange": false,
+            "textMode": "value_and_name",
+            "wideLayout": true
           },
           "pluginVersion": "10.4.0",
           "targets": [
             {
               "editorMode": "code",
-              "expr": "1 - sum(node_filesystem_free_bytes{fstype!=\"\",mountpoint=\"/\"}) / sum(node_filesystem_size_bytes{fstype!=\"\",mountpoint=\"/\"})",
+              "expr": "sum(node_filesystem_size_bytes{fstype!=\"\",mountpoint=\"/\"}) - sum(node_filesystem_free_bytes{fstype!=\"\",mountpoint=\"/\"})",
               "instant": true,
-              "legendFormat": "disk used",
+              "legendFormat": "Used",
               "range": false,
               "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "sum(node_filesystem_size_bytes{fstype!=\"\",mountpoint=\"/\"})",
+              "hide": false,
+              "instant": true,
+              "legendFormat": "Total",
+              "range": false,
+              "refId": "B"
             }
           ],
-          "title": "Disk usage (root filesystems)",
-          "type": "gauge"
+          "title": "Disk (used / max available)",
+          "type": "stat"
         },
         {
           "datasource": {

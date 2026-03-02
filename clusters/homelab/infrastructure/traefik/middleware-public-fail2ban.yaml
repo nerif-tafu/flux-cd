@@ -6,6 +6,8 @@ kind: Middleware
 metadata:
   name: fail2ban-public
   namespace: traefik
+  labels:
+    traefik.tafu.casa/instance: public
 spec:
   plugin:
     fail2ban:

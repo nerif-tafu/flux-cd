@@ -1,4 +1,4 @@
-# Track the :latest tag (updated on every release).
+# Prefer :latest (alphabetical asc picks it when repo has latest, main, pr-*).
 apiVersion: image.toolkit.fluxcd.io/v1beta2
 kind: ImagePolicy
 metadata:
@@ -10,5 +10,3 @@ spec:
   policy:
     alphabetical:
       order: asc
-    filterTags:
-      pattern: '^latest$'

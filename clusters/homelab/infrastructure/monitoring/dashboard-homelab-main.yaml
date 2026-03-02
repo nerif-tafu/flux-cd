@@ -410,13 +410,13 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "kube_node_status_condition{condition=\"Ready\"}",
+              "expr": "kube_node_status_condition{condition=\"Ready\",status=\"true\"} or ((count by (node) (kube_node_info) * 0) unless on(node) kube_node_status_condition{condition=\"Ready\",status=\"true\"})",
               "instant": true,
               "legendFormat": "{{node}}",
               "refId": "A"
             }
           ],
-          "title": "Node status (Up/Down)",
+          "title": "Node status (Ready)",
           "transformations": [
             {
               "id": "seriesToRows",
@@ -432,10 +432,34 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "unit": "celsius",
-              "custom": {
-                "align": "auto"
-              }
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "max": 100,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 55
+                  },
+                  {
+                    "color": "orange",
+                    "value": 70
+                  },
+                  {
+                    "color": "red",
+                    "value": 85
+                  }
+                ]
+              },
+              "unit": "celsius"
             },
             "overrides": []
           },
@@ -447,25 +471,25 @@ data:
           },
           "id": 113,
           "options": {
-            "showHeader": true
+            "displayMode": "gradient",
+            "minVizHeight": 10,
+            "minVizWidth": 0,
+            "namePlacement": "auto",
+            "orientation": "horizontal",
+            "showUnfilled": true,
+            "valueMode": "color"
           },
           "targets": [
             {
               "editorMode": "code",
-              "expr": "node_hwmon_temp_celsius",
+              "expr": "max by (instance) (node_hwmon_temp_celsius)",
               "instant": true,
-              "legendFormat": "{{instance}} {{sensor}}",
+              "legendFormat": "{{instance}}",
               "refId": "A"
             }
           ],
           "title": "CPU temperature (\u00b0C) by node",
-          "transformations": [
-            {
-              "id": "seriesToRows",
-              "options": {}
-            }
-          ],
-          "type": "table"
+          "type": "bargauge"
         },
         {
           "datasource": {
@@ -495,7 +519,7 @@ data:
               {
                 "matcher": {
                   "id": "byName",
-                  "options": "Available"
+                  "options": "Free"
                 },
                 "properties": [
                   {
@@ -552,14 +576,14 @@ data:
             },
             {
               "editorMode": "code",
-              "expr": "sum(longhorn_node_storage_available_bytes)",
+              "expr": "sum(longhorn_node_storage_capacity_bytes) - sum(longhorn_node_storage_usage_bytes)",
               "instant": true,
-              "legendFormat": "Available",
+              "legendFormat": "Free",
               "refId": "B"
             },
             {
               "editorMode": "code",
-              "expr": "sum(longhorn_node_storage_capacity_bytes) - sum(longhorn_node_storage_available_bytes)",
+              "expr": "sum(longhorn_node_storage_usage_bytes)",
               "instant": true,
               "legendFormat": "Used",
               "refId": "C"

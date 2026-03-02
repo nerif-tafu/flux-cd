@@ -18,5 +18,8 @@ spec:
     crds: CreateReplace
   upgrade:
     crds: CreateReplace
-  values: {}
+  values:
+    metrics:
+      serviceMonitor:
+        enabled: true
 

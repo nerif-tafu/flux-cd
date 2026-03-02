@@ -38,6 +38,14 @@ spec:
         enabled: false
       service:
         type: ClusterIP
+      additionalDataSources:
+        - name: Loki
+          uid: loki
+          type: loki
+          access: proxy
+          url: http://loki-gateway.logging.svc.cluster.local
+          jsonData:
+            timeout: 60
     kubeStateMetrics:
       enabled: true
     nodeExporter:

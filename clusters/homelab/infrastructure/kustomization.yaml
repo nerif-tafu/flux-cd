@@ -8,4 +8,5 @@ resources:
   - ./cloudflare-ddns
   - ./longhorn
   - ./monitoring
+  - ./logging
 

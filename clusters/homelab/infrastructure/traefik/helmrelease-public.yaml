@@ -26,6 +26,10 @@ spec:
     additionalArguments:
       - --entrypoints.web.http.redirections.entrypoint.to=:443
       - --entrypoints.web.http.redirections.entrypoint.permanent=true
+    logs:
+      access:
+        enabled: true
+        format: json
     providers:
       kubernetesCRD:
         labelSelector: "traefik.tafu.casa/instance=public"
@@ -39,6 +43,10 @@ spec:
     metrics:
       prometheus:
         entryPoint: metrics
+        # Required for per-site/per-router dashboards (adds router/service labels)
+        addRoutersLabels: true
+        addServicesLabels: true
+        addEntryPointsLabels: true
         service:
           enabled: true
         serviceMonitor:

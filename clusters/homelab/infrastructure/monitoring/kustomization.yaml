@@ -7,3 +7,6 @@ resources:
   - certificate.yaml
   - ingress.yaml
   - dashboard-traefik-overview.yaml
+  - dashboard-homelab-resources.yaml
+  - dashboard-public-security.yaml
+  - dashboard-certificates.yaml

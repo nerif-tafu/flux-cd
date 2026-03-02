@@ -16,4 +16,8 @@ spec:
         namespace: flux-system
   values:
     installCRDs: true
+    prometheus:
+      enabled: true
+      servicemonitor:
+        enabled: true
 

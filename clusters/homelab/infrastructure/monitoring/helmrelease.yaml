@@ -40,7 +40,7 @@ spec:
         type: ClusterIP
       grafana.ini:
         dashboards:
-          default_home_dashboard_path: /tmp/dashboards/homelab-home.json
+          default_home_dashboard_path: /tmp/dashboards/homelab-main.json
       additionalDataSources:
         - name: Loki
           uid: loki

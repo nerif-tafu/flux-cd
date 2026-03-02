@@ -6,8 +6,4 @@ resources:
   - helmrelease.yaml
   - certificate.yaml
   - ingress.yaml
-  - dashboard-traefik-overview.yaml
-  - dashboard-homelab-resources.yaml
-  - dashboard-public-security.yaml
-  - dashboard-certificates.yaml
-  - dashboard-homelab-home.yaml
+  - dashboard-homelab-main.yaml

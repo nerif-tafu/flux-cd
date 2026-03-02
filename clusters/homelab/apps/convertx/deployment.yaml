@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: convertx
-          image: ghcr.io/c4illin/convertx:latest # {"$imagepolicy": "flux-system:convertx"}
+          image: ghcr.io/c4illin/convertx:v0.9.0 # {"$imagepolicy": "flux-system:convertx"}
           env:
             - name: JWT_SECRET
               valueFrom:

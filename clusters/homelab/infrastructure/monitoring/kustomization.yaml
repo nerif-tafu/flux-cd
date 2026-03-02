@@ -10,3 +10,4 @@ resources:
   - dashboard-homelab-resources.yaml
   - dashboard-public-security.yaml
   - dashboard-certificates.yaml
+  - dashboard-homelab-home.yaml

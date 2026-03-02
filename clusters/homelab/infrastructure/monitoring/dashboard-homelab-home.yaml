@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-homelab-home
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  homelab-home.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "graphTooltip": 0,
+      "id": null,
+      "panels": [
+        {
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "id": 1,
+          "options": {
+            "content": "## Homelab dashboards\\n\\n- [Traefik overview](/d/traefik-overview/traefik-overview)\\n- [Public security (Traefik logs)](/d/public-security/public-security-traefik-logs)\\n- [Certificates (cert-manager)](/d/certificates/certificates-cert-manager)\\n- [Homelab resources (namespace)](/d/homelab-resources/homelab-resources-namespace)\\n\\n## Useful UIs\\n\\n- [Longhorn](/) (opens via `longhorn.cl.tafu.casa`)\\n- [Traefik dashboards](/) (opens via `traefik-*.cl.tafu.casa`)\\n\\nTip: these are relative links inside Grafana; you can also pin your favorites in the left sidebar.\\n",
+            "mode": "markdown"
+          },
+          "title": "Home",
+          "type": "text"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "id": 2,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum by (service) (rate(traefik_entrypoint_requests_total{service=~\"traefik-(public|internal)-metrics\"}[5m]))",
+              "legendFormat": "{{service}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Traefik request rate (public vs internal)",
+          "type": "timeseries"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": [
+        "home",
+        "homelab"
+      ],
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "title": "Homelab Home",
+      "uid": "homelab-home",
+      "version": 1
+    }

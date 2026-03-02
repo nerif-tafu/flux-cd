@@ -38,6 +38,9 @@ spec:
         enabled: false
       service:
         type: ClusterIP
+      grafana.ini:
+        dashboards:
+          default_home_dashboard_path: /tmp/dashboards/homelab-home.json
       additionalDataSources:
         - name: Loki
           uid: loki

@@ -9,4 +9,5 @@ resources:
   - wildcard-cert.yaml
   - traefik-public-dashboard-service.yaml
   - dashboard-ingressroute.yaml
+  - middleware-public-fail2ban.yaml
   - routes

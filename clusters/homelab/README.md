@@ -121,7 +121,7 @@ Do **not** port-forward the gateway’s IP/port from the internet so the server 
 
 1. **App directory** under `apps/<name>/`:
    - **namespace.yaml**, **deployment.yaml**, **service.yaml** (ClusterIP).
-   - **ingress.yaml** — `ingressClassName: traefik-public`, label `traefik.tafu.casa/instance: public`, host (e.g. fit.tafu.casa), TLS (cert-manager or existing secret).
+   - **ingress.yaml** — `ingressClassName: traefik-public`, label `traefik.tafu.casa/instance: public`, host (e.g. fit.tafu.casa), TLS (cert-manager or existing secret). Add annotation `traefik.ingress.kubernetes.io/router.middlewares: traefik-fail2ban-public@kubernetescrd` so the public fail2ban middleware applies.
    - **kustomization.yaml** — list the above. Add **ghcr-pull-secret.yaml** (and reference in deployment) if using a private registry.
 
 2. **Certificate** — either:

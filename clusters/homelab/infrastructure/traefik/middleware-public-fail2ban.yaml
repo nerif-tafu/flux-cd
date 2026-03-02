@@ -1,0 +1,17 @@
+# Fail2ban middleware for the public Traefik instance.
+# Bans IPs that trigger too many error responses (4xx) within a time window.
+# Reference from public Ingress with: traefik.ingress.kubernetes.io/router.middlewares: traefik-fail2ban-public@kubernetescrd
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: fail2ban-public
+  namespace: traefik
+spec:
+  plugin:
+    fail2ban:
+      rules:
+        enabled: true
+        statuscode: "400,401,403-499"
+        maxretry: 5
+        bantime: "1h"
+        findtime: "10m"

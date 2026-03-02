@@ -7,6 +7,7 @@ metadata:
     traefik.tafu.casa/instance: public
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-fail2ban-public@kubernetescrd
 spec:
   ingressClassName: traefik-public
   rules:

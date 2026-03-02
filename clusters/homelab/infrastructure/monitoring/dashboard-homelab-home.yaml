@@ -37,7 +37,7 @@ data:
           },
           "id": 1,
           "options": {
-            "content": "## Homelab dashboards\\n\\n- [Traefik overview](/d/traefik-overview/traefik-overview)\\n- [Public security (Traefik logs)](/d/public-security/public-security-traefik-logs)\\n- [Certificates (cert-manager)](/d/certificates/certificates-cert-manager)\\n- [Homelab resources (namespace)](/d/homelab-resources/homelab-resources-namespace)\\n\\n## Useful UIs\\n\\n- [Longhorn](/) (opens via `longhorn.cl.tafu.casa`)\\n- [Traefik dashboards](/) (opens via `traefik-*.cl.tafu.casa`)\\n\\nTip: these are relative links inside Grafana; you can also pin your favorites in the left sidebar.\\n",
+            "content": "## Homelab dashboards\\n\\n- [Traefik overview](/d/traefik-overview/traefik-overview)\\n- [Public security (Traefik logs)](/d/public-security/public-security-traefik-logs)\\n- [Certificates (cert-manager)](/d/certificates/certificates-cert-manager)\\n- [Homelab resources (namespace)](/d/homelab-resources/homelab-resources-namespace)\\n\\n## Useful UIs\\n\\n- [Longhorn UI](https://longhorn.cl.tafu.casa/)\\n- [Traefik internal dashboard](https://traefik-internal.cl.tafu.casa/dashboard/)\\n- [Traefik public dashboard](https://traefik-public.cl.tafu.casa/dashboard/)\\n\\nTip: these are relative links inside Grafana; you can also pin your favorites in the left sidebar.\\n",
             "mode": "markdown"
           },
           "title": "Home",

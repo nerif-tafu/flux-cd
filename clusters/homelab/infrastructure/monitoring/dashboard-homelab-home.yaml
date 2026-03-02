@@ -30,7 +30,7 @@ data:
       "panels": [
         {
           "gridPos": {
-            "h": 10,
+            "h": 8,
             "w": 12,
             "x": 0,
             "y": 0
@@ -55,7 +55,7 @@ data:
             "overrides": []
           },
           "gridPos": {
-            "h": 10,
+            "h": 8,
             "w": 12,
             "x": 12,
             "y": 0
@@ -82,6 +82,201 @@ data:
           ],
           "title": "Traefik request rate (public vs internal)",
           "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "MBs"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 8,
+            "x": 0,
+            "y": 8
+          },
+          "id": 3,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "auto"
+          },
+          "pluginVersion": "10.4.0",
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "(\n  sum(rate(container_network_receive_bytes_total{pod!=\"\"}[5m]))\n+ sum(rate(container_network_transmit_bytes_total{pod!=\"\"}[5m]))\n) / 1024 / 1024",
+              "instant": true,
+              "legendFormat": "cluster traffic",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "title": "Cluster traffic (MB/s)",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "percentage",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 0.7
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.9
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 8,
+            "x": 8,
+            "y": 8
+          },
+          "id": 4,
+          "options": {
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true
+          },
+          "pluginVersion": "10.4.0",
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "1 - sum(node_filesystem_free_bytes{fstype!=\"\",mountpoint=\"/\"}) / sum(node_filesystem_size_bytes{fstype!=\"\",mountpoint=\"/\"})",
+              "instant": true,
+              "legendFormat": "disk used",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "title": "Disk usage (root filesystems)",
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 8,
+            "x": 16,
+            "y": 8
+          },
+          "id": 5,
+          "options": {
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true
+          },
+          "pluginVersion": "10.4.0",
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "sum(rate(traefik_router_requests_total{service=\"traefik-public-metrics\",code=~\"4..|5..\"}[5m]))\n/ sum(rate(traefik_router_requests_total{service=\"traefik-public-metrics\"}[5m]))",
+              "instant": true,
+              "legendFormat": "4xx+5xx / total",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "title": "Public error ratio (fail2ban load proxy)",
+          "type": "gauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "MBs"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 14
+          },
+          "id": 6,
+          "options": {
+            "showHeader": true
+          },
+          "pluginVersion": "10.4.0",
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "(\n  sum by (namespace,pod) (\n    rate(container_network_receive_bytes_total{pod!=\"\"}[5m])\n  + rate(container_network_transmit_bytes_total{pod!=\"\"}[5m])\n  )\n) / 1024 / 1024",
+              "instant": true,
+              "legendFormat": "{{namespace}}/{{pod}}",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "title": "Per-pod network throughput (MB/s)",
+          "transformations": [
+            {
+              "id": "seriesToRows",
+              "options": {}
+            }
+          ],
+          "type": "table"
         }
       ],
       "refresh": "30s",

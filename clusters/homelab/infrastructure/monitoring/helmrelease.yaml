@@ -46,7 +46,7 @@ spec:
           uid: loki
           type: loki
           access: proxy
-          url: http://loki-gateway.logging.svc.cluster.local
+          url: http://loki.monitoring.svc.cluster.local
           jsonData:
             timeout: 60
     kubeStateMetrics:

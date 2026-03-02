@@ -6,4 +6,5 @@ resources:
   - helmrelease.yaml
   - certificate.yaml
   - ingress.yaml
+  - loki-datasource-service.yaml
   - dashboard-homelab-main.yaml

@@ -1,0 +1,11 @@
+# Alias so Grafana (in monitoring) can reach Loki via in-namespace name;
+# avoids "lookup loki-gateway.logging.svc.cluster.local: Try again" when
+# cross-namespace DNS is flaky. Grafana uses url: http://loki.monitoring.svc.cluster.local
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki
+  namespace: monitoring
+spec:
+  type: ExternalName
+  externalName: loki-gateway.logging.svc.cluster.local

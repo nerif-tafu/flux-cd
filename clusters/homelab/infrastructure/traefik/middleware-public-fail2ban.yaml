@@ -1,6 +1,7 @@
 # Fail2ban middleware for the public Traefik instance.
 # Bans IPs that trigger too many error responses (4xx) within a time window.
 # Reference from public Ingress with: traefik.ingress.kubernetes.io/router.middlewares: traefik-fail2ban-public@kubernetescrd
+# Allowlist: private IPs (RFC 1918), Chilean and UK (England) CIDR blocks — never banned by fail2ban.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -11,6 +12,59 @@ metadata:
 spec:
   plugin:
     fail2ban:
+      allowlist:
+        ip:
+          # Private (RFC 1918)
+          - 10.0.0.0/8
+          - 172.16.0.0/12
+          - 192.168.0.0/16
+          # Chile (CL) — main allocations
+          - 45.4.0.0/22
+          - 83.160.0.0/13
+          - 138.0.0.0/16
+          - 152.139.0.0/16
+          - 152.172.0.0/14
+          - 164.98.0.0/16
+          - 179.2.0.0/13
+          - 181.201.0.0/16
+          - 186.104.0.0/15
+          - 191.124.0.0/15
+          - 200.22.0.0/16
+          - 201.188.0.0/15
+          # United Kingdom (GB) — main allocations
+          - 2.24.0.0/13
+          - 2.96.0.0/13
+          - 2.120.0.0/13
+          - 2.216.0.0/13
+          - 25.0.0.0/8
+          - 31.0.0.0/8
+          - 62.0.0.0/8
+          - 80.0.0.0/8
+          - 81.0.0.0/8
+          - 82.0.0.0/8
+          - 84.0.0.0/8
+          - 86.0.0.0/8
+          - 87.0.0.0/8
+          - 88.0.0.0/8
+          - 89.0.0.0/8
+          - 90.0.0.0/8
+          - 91.0.0.0/8
+          - 92.0.0.0/8
+          - 94.0.0.0/8
+          - 95.0.0.0/8
+          - 144.0.0.0/8
+          - 146.0.0.0/8
+          - 151.0.0.0/8
+          - 176.0.0.0/8
+          - 178.0.0.0/8
+          - 185.0.0.0/8
+          - 188.0.0.0/8
+          - 193.0.0.0/8
+          - 194.0.0.0/8
+          - 195.0.0.0/8
+          - 212.0.0.0/8
+          - 213.0.0.0/8
+          - 217.0.0.0/8
       rules:
         enabled: true
         statuscode: "400,401,403-499"

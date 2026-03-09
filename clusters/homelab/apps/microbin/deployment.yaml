@@ -46,6 +46,8 @@ spec:
               value: "true"
             - name: MICROBIN_ENCRYPTION_SERVER_SIDE
               value: "true"
+            - name: MICROBIN_MAX_EXPIRY
+              value: "never"
           ports:
             - containerPort: 8080
           volumeMounts:

@@ -18,3 +18,4 @@ resources:
   - ./rust-breeder
   - ./kag
   - ./minecraft
+  - ./webplayer

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webplayer
+  namespace: webplayer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webplayer
+  template:
+    metadata:
+      labels:
+        app: webplayer
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      containers:
+        - name: webplayer
+          image: ghcr.io/throwmyaway1038471/webplayer:1.0.0
+          ports:
+            - containerPort: 5173

@@ -1,0 +1,21 @@
+# Internal only, HTTP (no TLS)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webplayer
+  namespace: webplayer
+  labels:
+    traefik.tafu.casa/instance: internal
+spec:
+  ingressClassName: traefik-internal
+  rules:
+    - host: webplayer.cl.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: webplayer
+                port:
+                  number: 80

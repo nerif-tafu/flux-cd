@@ -5,6 +5,8 @@ metadata:
   namespace: webplayer
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: webplayer
@@ -23,3 +25,10 @@ spec:
               value: "webplayer.cl.tafu.casa"
           ports:
             - containerPort: 5173
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: webplayer-data

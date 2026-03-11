@@ -18,5 +18,8 @@ spec:
       containers:
         - name: webplayer
           image: ghcr.io/throwmyaway1038471/webplayer:1.0.0
+          env:
+            - name: __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS
+              value: "webplayer.cl.tafu.casa"
           ports:
             - containerPort: 5173

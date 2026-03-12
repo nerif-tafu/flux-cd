@@ -17,7 +17,7 @@ spec:
         - name: ghcr-pull-secret
       containers:
         - name: webplayer
-          image: ghcr.io/throwmyaway1038471/webplayer:1.0.1 # {"$imagepolicy": "flux-system:webplayer"}
+          image: ghcr.io/throwmyaway1038471/webplayer:1.0.2 # {"$imagepolicy": "flux-system:webplayer"}
           env:
             - name: ALLOWED_HOSTS
               value: "webplayer.cl.tafu.casa"

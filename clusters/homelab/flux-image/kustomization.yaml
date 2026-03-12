@@ -40,4 +40,7 @@ resources:
   - rust-breeder-imagepolicy.yaml
   - kag-imagerepository.yaml
   - kag-imagepolicy.yaml
+  - ghcr-registry-webplayer-secret.yaml
+  - webplayer-imagerepository.yaml
+  - webplayer-imagepolicy.yaml
   - imageupdateautomation.yaml

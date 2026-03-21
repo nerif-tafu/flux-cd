@@ -1,0 +1,35 @@
+# Redirect https://webplayer.cl.tafu.casa -> http://webplayer.cl.tafu.casa (internal only)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: webplayer-redirect-https-to-http
+  namespace: traefik
+  labels:
+    traefik.tafu.casa/instance: internal
+spec:
+  redirectScheme:
+    scheme: http
+    port: "80"
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: webplayer-https-redirect
+  namespace: traefik
+  labels:
+    traefik.tafu.casa/instance: internal
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`webplayer.cl.tafu.casa`)
+      kind: Rule
+      middlewares:
+        - name: webplayer-redirect-https-to-http
+          namespace: traefik
+      services:
+        - name: api@internal
+          kind: TraefikService
+  tls:
+    secretName: wildcard-cl-tafu-casa-tls

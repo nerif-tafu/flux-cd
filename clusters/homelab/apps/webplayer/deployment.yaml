@@ -23,6 +23,8 @@ spec:
           env:
             - name: ALLOWED_HOSTS
               value: "webplayer.cl.tafu.casa"
+            - name: LIBRARY_ROOT
+              value: "/data"
           ports:
             - containerPort: 5173
           volumeMounts:

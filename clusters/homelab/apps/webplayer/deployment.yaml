@@ -17,6 +17,17 @@ spec:
     spec:
       imagePullSecrets:
         - name: ghcr-pull-secret
+      initContainers:
+        # TMP on same filesystem as LIBRARY_ROOT — Node rename() from /tmp to /data fails with EXDEV.
+        - name: ensure-tmp
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - mkdir -p /data/tmp && chmod 1777 /data/tmp
+          volumeMounts:
+            - name: data
+              mountPath: /data
       containers:
         - name: webplayer
           image: ghcr.io/throwmyaway1038471/webplayer:1.0.6 # {"$imagepolicy": "flux-system:webplayer"}
@@ -25,6 +36,8 @@ spec:
               value: "webplayer.cl.tafu.casa"
             - name: LIBRARY_ROOT
               value: "/data"
+            - name: TMPDIR
+              value: "/data/tmp"
           ports:
             - containerPort: 5173
           volumeMounts:

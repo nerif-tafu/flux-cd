@@ -6,6 +6,9 @@ metadata:
 spec:
   imageRepositoryRef:
     name: filebrowser
+  filterTags:
+    pattern: '^[v]?\d+\.\d+\.\d+-stable$'
   policy:
-    alphabetical:
-      order: asc
+    semver:
+      # Range includes prerelease-style tags like 1.2.3-stable (see Masterminds/semver x.y.z-0).
+      range: ">=1.0.0-0"

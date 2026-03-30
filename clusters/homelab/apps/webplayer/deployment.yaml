@@ -15,6 +15,9 @@ spec:
       labels:
         app: webplayer
     spec:
+      # Use node L2/L3 for 192.168.3.0/24 (LAN APIs, NAS, etc.); default pod CIDR + SNAT can fail ACLs or routing.
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       imagePullSecrets:
         - name: ghcr-pull-secret
       initContainers:

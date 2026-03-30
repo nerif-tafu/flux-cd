@@ -10,5 +10,4 @@ resources:
   - traefik-public-dashboard-service.yaml
   - dashboard-ingressroute.yaml
   - middleware-public-fail2ban.yaml
-  - webplayer-https-redirect.yaml
   - routes

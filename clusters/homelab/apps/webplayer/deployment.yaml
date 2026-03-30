@@ -30,7 +30,7 @@ spec:
               mountPath: /data
       containers:
         - name: webplayer
-          image: ghcr.io/throwmyaway1038471/webplayer:1.0.7 # {"$imagepolicy": "flux-system:webplayer"}
+          image: ghcr.io/throwmyaway1038471/webplayer:1.1.0 # {"$imagepolicy": "flux-system:webplayer"}
           env:
             - name: ALLOWED_HOSTS
               value: "webplayer.cl.tafu.casa"

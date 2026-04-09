@@ -1,0 +1,10 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: skate-streamer-receiver
+  namespace: flux-system
+spec:
+  image: ghcr.io/nerif-tafu/skate-streamer-reciever
+  interval: 1m
+  secretRef:
+    name: ghcr-registry-secret

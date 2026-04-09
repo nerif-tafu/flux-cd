@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: skate-streamer-reciever
+  namespace: skate-streamer-reciever
+  labels:
+    traefik.tafu.casa/instance: public
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-fail2ban-public@kubernetescrd
+spec:
+  ingressClassName: traefik-public
+  rules:
+    - host: skate.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: skate-streamer-reciever
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - skate.tafu.casa
+      secretName: skate-streamer-reciever-tls

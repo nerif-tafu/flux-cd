@@ -19,3 +19,4 @@ resources:
   - ./kag
   - ./minecraft
   - ./webplayer
+  - ./skate-streamer-reciever

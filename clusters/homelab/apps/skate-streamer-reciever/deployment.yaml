@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skate-streamer-reciever
+  namespace: skate-streamer-reciever
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: skate-streamer-reciever
+  template:
+    metadata:
+      labels:
+        app: skate-streamer-reciever
+    spec:
+      initContainers:
+        - name: ensure-recordings-dir
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - mkdir -p /data/recordings && chmod 1777 /data/recordings
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      containers:
+        - name: receiver
+          image: ghcr.io/nerif-tafu/skate-streamer-reciever:v1.0.0 # {"$imagepolicy": "flux-system:skate-streamer-receiver"}
+          ports:
+            - containerPort: 9090
+          envFrom:
+            - secretRef:
+                name: skate-streamer-reciever-env
+          env:
+            - name: MONITOR_RECORDINGS_DIR
+              value: "/data/recordings"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: skate-streamer-reciever-data

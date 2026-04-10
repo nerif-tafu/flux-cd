@@ -27,7 +27,7 @@ spec:
               mountPath: /data
       containers:
         - name: receiver
-          image: ghcr.io/nerif-tafu/skate-streamer-reciever:v1.4.0 # {"$imagepolicy": "flux-system:skate-streamer-receiver"}
+          image: ghcr.io/nerif-tafu/skate-streamer-reciever:v1.5.0 # {"$imagepolicy": "flux-system:skate-streamer-receiver"}
           ports:
             - containerPort: 9090
           envFrom:

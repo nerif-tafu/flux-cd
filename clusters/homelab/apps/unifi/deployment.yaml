@@ -15,6 +15,10 @@ spec:
       labels:
         app: unifi
     spec:
+      # Use the node's LAN address (192.168.3.x) for traffic to/from APs and switches; avoids SNAT from the pod CIDR.
+      # Requires UniFi ports (8080, 8443, 3478/udp, …) free on the node; pin with nodeSelector if another hostNetwork workload shares the node.
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       securityContext:
         fsGroup: 999
       containers:

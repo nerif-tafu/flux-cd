@@ -19,7 +19,7 @@ spec:
         fsGroup: 999
       containers:
         - name: unifi
-          image: docker.io/jacobalberty/unifi:7.1.68 # {"$imagepolicy": "flux-system:unifi"}
+          image: docker.io/jacobalberty/unifi:7.3.83 # {"$imagepolicy": "flux-system:unifi"}
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false

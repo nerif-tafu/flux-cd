@@ -20,3 +20,4 @@ resources:
   - ./minecraft
   - ./webplayer
   - ./skate-streamer-reciever
+  - ./unifi

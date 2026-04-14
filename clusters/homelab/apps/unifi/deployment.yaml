@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unifi
+  namespace: unifi
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: unifi
+  template:
+    metadata:
+      labels:
+        app: unifi
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: unifi
+          image: docker.io/jacobalberty/unifi:7.1.68 # {"$imagepolicy": "flux-system:unifi"}
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+          env:
+            - name: TZ
+              value: America/Santiago
+            - name: UNIFI_HTTP_PORT
+              value: "8080"
+            - name: UNIFI_HTTPS_PORT
+              value: "8443"
+          ports:
+            - name: inform
+              containerPort: 8080
+              protocol: TCP
+            - name: https-ui
+              containerPort: 8443
+              protocol: TCP
+            - name: stun
+              containerPort: 3478
+              protocol: UDP
+            - name: portal-http
+              containerPort: 8880
+              protocol: TCP
+            - name: portal-https
+              containerPort: 8843
+              protocol: TCP
+            - name: speedtest
+              containerPort: 6789
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /unifi/data
+            - name: log
+              mountPath: /unifi/log
+          livenessProbe:
+            tcpSocket:
+              port: 8443
+            initialDelaySeconds: 180
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            tcpSocket:
+              port: 8443
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: unifi-data
+        - name: log
+          persistentVolumeClaim:
+            claimName: unifi-log

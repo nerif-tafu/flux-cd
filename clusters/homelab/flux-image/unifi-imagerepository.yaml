@@ -1,0 +1,8 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: unifi
+  namespace: flux-system
+spec:
+  image: docker.io/jacobalberty/unifi
+  interval: 30m

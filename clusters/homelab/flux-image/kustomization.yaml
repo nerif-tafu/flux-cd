@@ -45,4 +45,6 @@ resources:
   - webplayer-imagepolicy.yaml
   - skate-streamer-receiver-imagerepository.yaml
   - skate-streamer-receiver-imagepolicy.yaml
+  - unifi-imagerepository.yaml
+  - unifi-imagepolicy.yaml
   - imageupdateautomation.yaml

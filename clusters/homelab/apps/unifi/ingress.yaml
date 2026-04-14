@@ -1,0 +1,26 @@
+# Web UI at https://unifi.cl.tafu.casa (Traefik terminates TLS, backend is UniFi HTTPS :8443).
+# Device adoption: set Settings → System → Override Inform Host to the LoadBalancer IP (192.168.3.64).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: unifi
+  namespace: unifi
+  labels:
+    traefik.tafu.casa/instance: internal
+spec:
+  ingressClassName: traefik-internal
+  rules:
+    - host: unifi.cl.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: unifi
+                port:
+                  number: 8443
+  tls:
+    - hosts:
+        - unifi.cl.tafu.casa
+      secretName: unifi-cl-tafu-casa-tls

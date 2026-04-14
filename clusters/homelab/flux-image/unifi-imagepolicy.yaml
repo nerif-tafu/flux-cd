@@ -1,0 +1,14 @@
+# Track stable x.y.z tags from Docker Hub (not :latest or :rc).
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: unifi
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: unifi
+  filterTags:
+    pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+  policy:
+    semver:
+      range: ">=7.0.0"

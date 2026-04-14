@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: unifi
+  namespace: unifi
+spec:
+  secretName: unifi-cl-tafu-casa-tls
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+  dnsNames:
+    - unifi.cl.tafu.casa

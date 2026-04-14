@@ -7,6 +7,10 @@ metadata:
   namespace: unifi
   labels:
     traefik.tafu.casa/instance: internal
+  annotations:
+    # Bind only to :443 inside the pod (maps from Service :443); avoids broken routers on web/metrics.
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik-internal
   rules:

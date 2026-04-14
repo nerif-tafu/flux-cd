@@ -5,7 +5,8 @@ metadata:
   namespace: unifi
   annotations:
     traefik.ingress.kubernetes.io/service.serversscheme: https
-    traefik.ingress.kubernetes.io/service.serverstransport: unifi-insecure@kubernetescrd
+    # Ingress provider resolves CRDs as namespace-name@kubernetescrd (not same-NS short name).
+    traefik.ingress.kubernetes.io/service.serverstransport: unifi-unifi-insecure@kubernetescrd
     traefik.ingress.kubernetes.io/service.passhostheader: "true"
 spec:
   type: LoadBalancer

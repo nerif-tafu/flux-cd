@@ -16,7 +16,7 @@ metadata:
   namespace: traefik
 subsets:
   - addresses:
-      - ip: 192.168.3.180
+      - ip: 192.168.3.185
     ports:
       - name: http
         port: 8000

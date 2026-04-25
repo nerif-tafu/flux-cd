@@ -30,6 +30,8 @@ resources:
   - wg-easy-imagepolicy.yaml
   - tafu-casa-imagerepository.yaml
   - tafu-casa-imagepolicy.yaml
+  - gridfinity-imagerepository.yaml
+  - gridfinity-imagepolicy.yaml
   - convertx-imagerepository.yaml
   - convertx-imagepolicy.yaml
   - microbin-imagerepository.yaml

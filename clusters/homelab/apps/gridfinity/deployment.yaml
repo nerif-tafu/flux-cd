@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gridfinity
+  namespace: gridfinity
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: gridfinity
+  template:
+    metadata:
+      labels:
+        app: gridfinity
+    spec:
+      containers:
+        - name: gridfinity
+          image: ghcr.io/nerif-tafu/infinitygrid-sticker:v1.0.0 # {"$imagepolicy": "flux-system:gridfinity"}
+          ports:
+            - containerPort: 3000

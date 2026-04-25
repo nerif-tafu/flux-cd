@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gridfinity
+  namespace: gridfinity
+spec:
+  selector:
+    app: gridfinity
+  ports:
+    - port: 80
+      targetPort: 3000

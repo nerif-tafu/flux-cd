@@ -17,6 +17,6 @@ spec:
     spec:
       containers:
         - name: gridfinity
-          image: ghcr.io/nerif-tafu/infinitygrid-sticker:v1.0.0 # {"$imagepolicy": "flux-system:gridfinity"}
+          image: ghcr.io/nerif-tafu/infinitygrid-sticker:v1.1.0 # {"$imagepolicy": "flux-system:gridfinity"}
           ports:
             - containerPort: 3000

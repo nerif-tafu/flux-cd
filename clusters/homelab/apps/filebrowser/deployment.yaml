@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: filebrowser
-          image: ghcr.io/gtsteffaniak/filebrowser:1.3.0-stable # {"$imagepolicy": "flux-system:filebrowser"}
+          image: ghcr.io/gtsteffaniak/filebrowser:1.3.1-stable # {"$imagepolicy": "flux-system:filebrowser"}
           ports:
             - containerPort: 80
           volumeMounts:

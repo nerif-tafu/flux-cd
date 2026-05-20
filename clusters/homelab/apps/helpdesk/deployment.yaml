@@ -19,7 +19,7 @@ spec:
         - name: ghcr-pull-secret
       containers:
         - name: helpdesk
-          image: ghcr.io/nerif-tafu/helpdesk:v1.2.0 # {"$imagepolicy": "flux-system:helpdesk"}
+          image: ghcr.io/nerif-tafu/helpdesk:1.2.0 # {"$imagepolicy": "flux-system:helpdesk"}
           ports:
             - containerPort: 3000
           env:

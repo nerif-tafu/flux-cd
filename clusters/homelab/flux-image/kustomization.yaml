@@ -32,6 +32,8 @@ resources:
   - tafu-casa-imagepolicy.yaml
   - gridfinity-imagerepository.yaml
   - gridfinity-imagepolicy.yaml
+  - helpdesk-imagerepository.yaml
+  - helpdesk-imagepolicy.yaml
   - convertx-imagerepository.yaml
   - convertx-imagepolicy.yaml
   - microbin-imagerepository.yaml

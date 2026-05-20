@@ -13,6 +13,7 @@ resources:
   - ./wg-easy
   - ./tafu-casa
   - ./gridfinity
+  - ./helpdesk
   - ./convertx
   - ./microbin
   - ./filebrowser

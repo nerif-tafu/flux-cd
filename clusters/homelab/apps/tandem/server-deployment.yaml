@@ -35,7 +35,9 @@ spec:
             - name: CORS_ORIGINS
               value: https://tandem.tafu.casa
             - name: LIVEKIT_URL
-              value: wss://tandem.tafu.casa:7880
+              value: ws://livekit:7880
+            - name: LIVEKIT_PUBLIC_URL
+              value: wss://livekit.tafu.casa
             - name: DESKTOP_RELEASES_REPO
               value: nerif-tafu/tandem-desktop
           envFrom:

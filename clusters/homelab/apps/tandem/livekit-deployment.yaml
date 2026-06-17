@@ -1,5 +1,5 @@
-# Binds WebRTC ports on the node (7880/7881 TCP, 3478 + 50000-50060 UDP).
-# Forward those ports from your router to this node's LAN IP alongside HTTPS for tandem.tafu.casa.
+# Hybrid: signaling via https://livekit.tafu.casa (Traefik :443). hostNetwork binds media ports on the node.
+# Forward UDP 50000-50060, UDP 3478, and TCP 7881 to this node's LAN IP (7880 public forward not required).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,8 +17,11 @@ spec:
       labels:
         app: livekit
     spec:
+      enableServiceLinks: false
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
+      nodeSelector:
+        kubernetes.io/hostname: black-03
       containers:
         - name: livekit
           image: livekit/livekit-server:v1.8.4

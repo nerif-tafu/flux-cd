@@ -13,3 +13,4 @@ resources:
   - server-deployment.yaml
   - server-service.yaml
   - ingress.yaml
+  - livekit-ingress.yaml

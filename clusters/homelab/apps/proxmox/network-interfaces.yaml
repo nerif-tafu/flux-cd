@@ -1,0 +1,24 @@
+# Bridges enp88s0 on black-02 into vmbr0 so VMs share the 192.168.3.0/24 LAN.
+# Requires hostNetwork + NETWORK=N (dockur NAT bridge disabled).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxmox-network-interfaces
+  namespace: proxmox
+data:
+  interfaces: |
+    auto lo
+    iface lo inet loopback
+
+    auto enp88s0
+    iface enp88s0 inet manual
+
+    auto vmbr0
+    iface vmbr0 inet static
+        address 192.168.3.25/24
+        gateway 192.168.3.1
+        bridge-ports enp88s0
+        bridge-stp off
+        bridge-fd 0
+
+    source /etc/network/interfaces.d/*

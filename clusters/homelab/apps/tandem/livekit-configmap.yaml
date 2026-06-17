@@ -14,5 +14,5 @@ data:
       allow_tcp_fallback: true
     turn:
       enabled: true
-      domain: tandem.tafu.casa
+      domain: livekit.tafu.casa
       udp_port: 3478

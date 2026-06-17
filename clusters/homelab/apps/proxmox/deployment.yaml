@@ -23,6 +23,12 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       nodeSelector:
         kubernetes.io/hostname: black-02
+      # hostNetwork uses the node hostname (black-02); pmxcfs needs a non-loopback /etc/hosts entry.
+      hostAliases:
+        - ip: "192.168.3.24"
+          hostnames:
+            - black-02
+            - pve
       containers:
         - name: proxmox
           image: docker.io/dockurr/proxmox:9.2.3 # {"$imagepolicy": "flux-system:proxmox"}

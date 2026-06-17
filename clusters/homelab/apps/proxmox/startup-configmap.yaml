@@ -8,16 +8,44 @@ data:
   ensure-pve-cluster.sh: |
     #!/bin/bash
     set -euo pipefail
+    LEGACY_NODE="${PROXMOX_LEGACY_NODE_NAME:-pve}"
     NODE_IP="${NODE_HOST_IP:-$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}')}"
-    HOST_NAME="$(hostname)"
-    if ! grep -qE "[[:space:]]${HOST_NAME}([[:space:]]|$)" /etc/hosts || ! grep -q "${NODE_IP}" /etc/hosts; then
-      sed -i "/[[:space:]]${HOST_NAME}[[:space:]]/d; /[[:space:]]pve[[:space:]]/d" /etc/hosts 2>/dev/null || true
-      echo "${NODE_IP} ${HOST_NAME} pve" >> /etc/hosts
+    LOCAL_NODE="$(cat /proc/sys/kernel/hostname)"
+
+    # pmxcfs requires the k8s node hostname to resolve to a non-loopback IP.
+    if ! grep -qE "[[:space:]]${LOCAL_NODE}([[:space:]]|$)" /etc/hosts || ! grep -q "${NODE_IP}" /etc/hosts; then
+      sed -i "/[[:space:]]${LOCAL_NODE}[[:space:]]/d" /etc/hosts 2>/dev/null || true
+      echo "${NODE_IP} ${LOCAL_NODE}" >> /etc/hosts
     fi
-    hostname pve 2>/dev/null || true
+
     for _ in $(seq 1 60); do
       systemctl is-active --quiet pve-cluster && break
       systemctl start pve-cluster 2>/dev/null || true
       sleep 2
     done
-    systemctl try-restart pveproxy 2>/dev/null || true
+
+    # hostNetwork uses the k8s node name (e.g. black-02) but dockur originally created configs under "pve".
+    if [ "${LOCAL_NODE}" != "${LEGACY_NODE}" ] && [ -d "/etc/pve/nodes/${LEGACY_NODE}/qemu-server" ]; then
+      pvecm expected 1 2>/dev/null || true
+      mkdir -p "/etc/pve/nodes/${LOCAL_NODE}/qemu-server"
+      for conf in /etc/pve/nodes/${LEGACY_NODE}/qemu-server/*.conf; do
+        [ -f "${conf}" ] || continue
+        dest="/etc/pve/nodes/${LOCAL_NODE}/qemu-server/$(basename "${conf}")"
+        [ -f "${dest}" ] || mv "${conf}" "${dest}"
+      done
+      for f in pve-ssl.key pve-ssl.pem ssh_known_hosts lrm_status; do
+        if [ -f "/etc/pve/nodes/${LEGACY_NODE}/${f}" ] && [ ! -f "/etc/pve/nodes/${LOCAL_NODE}/${f}" ]; then
+          mv "/etc/pve/nodes/${LEGACY_NODE}/${f}" "/etc/pve/nodes/${LOCAL_NODE}/${f}"
+        fi
+      done
+      if [ -d "/etc/pve/nodes/${LEGACY_NODE}/priv" ]; then
+        mkdir -p "/etc/pve/nodes/${LOCAL_NODE}/priv"
+        for item in /etc/pve/nodes/${LEGACY_NODE}/priv/*; do
+          [ -e "${item}" ] || continue
+          base="$(basename "${item}")"
+          [ -e "/etc/pve/nodes/${LOCAL_NODE}/priv/${base}" ] || mv "${item}" "/etc/pve/nodes/${LOCAL_NODE}/priv/"
+        done
+      fi
+    fi
+
+    systemctl try-restart pvedaemon pveproxy 2>/dev/null || true

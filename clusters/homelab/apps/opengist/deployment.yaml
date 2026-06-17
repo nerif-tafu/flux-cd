@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: opengist
-          image: ghcr.io/thomiceli/opengist:1.13 # {"$imagepolicy": "flux-system:opengist"}
+          image: ghcr.io/thomiceli/opengist:1.13.1 # {"$imagepolicy": "flux-system:opengist"}
           env:
             - name: OG_OPENGIST_HOME
               value: /opengist

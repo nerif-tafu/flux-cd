@@ -1,0 +1,23 @@
+# Ensures pmxcfs can resolve the node name after hostNetwork pod starts (see deployment hostAliases).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxmox-startup
+  namespace: proxmox
+data:
+  ensure-pve-cluster.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    NODE_IP="${NODE_HOST_IP:-$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}')}"
+    HOST_NAME="$(hostname)"
+    if ! grep -qE "[[:space:]]${HOST_NAME}([[:space:]]|$)" /etc/hosts || ! grep -q "${NODE_IP}" /etc/hosts; then
+      sed -i "/[[:space:]]${HOST_NAME}[[:space:]]/d; /[[:space:]]pve[[:space:]]/d" /etc/hosts 2>/dev/null || true
+      echo "${NODE_IP} ${HOST_NAME} pve" >> /etc/hosts
+    fi
+    hostname pve 2>/dev/null || true
+    for _ in $(seq 1 60); do
+      systemctl is-active --quiet pve-cluster && break
+      systemctl start pve-cluster 2>/dev/null || true
+      sleep 2
+    done
+    systemctl try-restart pveproxy 2>/dev/null || true

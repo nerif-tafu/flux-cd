@@ -45,6 +45,10 @@ spec:
               value: America/Santiago
             - name: NETWORK
               value: "N"
+            - name: NODE_HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
           ports:
             - name: https
               containerPort: 8006
@@ -62,6 +66,16 @@ spec:
               mountPath: /dev/kvm
             - name: dev-net-tun
               mountPath: /dev/net/tun
+            - name: startup
+              mountPath: /usr/local/bin/ensure-pve-cluster.sh
+              subPath: ensure-pve-cluster.sh
+              readOnly: true
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/bash
+                  - /usr/local/bin/ensure-pve-cluster.sh
           livenessProbe:
             tcpSocket:
               port: 8006
@@ -69,10 +83,13 @@ spec:
             periodSeconds: 60
             timeoutSeconds: 10
           readinessProbe:
-            tcpSocket:
-              port: 8006
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - curl -sk --fail --max-time 5 https://127.0.0.1:8006/ >/dev/null
             initialDelaySeconds: 60
-            periodSeconds: 30
+            periodSeconds: 15
             timeoutSeconds: 10
           resources:
             requests:
@@ -88,6 +105,10 @@ spec:
         - name: network-interfaces
           configMap:
             name: proxmox-network-interfaces
+        - name: startup
+          configMap:
+            name: proxmox-startup
+            defaultMode: 0755
         - name: dev-kvm
           hostPath:
             path: /dev/kvm

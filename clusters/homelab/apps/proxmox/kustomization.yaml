@@ -5,6 +5,7 @@ resources:
   - pvc.yaml
   - pvc-config.yaml
   - network-interfaces.yaml
+  - startup-configmap.yaml
   - proxmox-secret.yaml
   - servers-transport.yaml
   - certificate.yaml

@@ -1,0 +1,46 @@
+# Persisted via PVC at /home/filebrowser/data/config.yaml (see deployment volumeMounts).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebrowser-config
+  namespace: filebrowser
+data:
+  config.yaml: |
+    server:
+      port: 80
+      baseURL: "/"
+      database: /home/filebrowser/data/database.db
+      cacheDir: /home/filebrowser/data/tmp
+      logging:
+        - levels: "info|warning|error"
+      sources:
+        - path: /srv
+          config:
+            defaultEnabled: true
+    userDefaults:
+      darkMode: true
+      stickySidebar: true
+      viewMode: normal
+      singleClick: false
+      showHidden: false
+      lockPassword: false
+      disableSettings: false
+      preview:
+        image: true
+        video: true
+        audio: true
+        motionVideoPreview: true
+        office: true
+        popup: true
+        autoplayMedia: true
+        folder: true
+        models: true
+      permissions:
+        api: false
+        admin: false
+        modify: false
+        share: false
+        realtime: false
+        delete: false
+        create: false
+        download: true

@@ -17,6 +17,12 @@ data:
         - path: /srv
           config:
             defaultEnabled: true
+    auth:
+      adminUsername: admin
+      methods:
+        password:
+          enabled: true
+          signup: false
     userDefaults:
       darkMode: true
       stickySidebar: true

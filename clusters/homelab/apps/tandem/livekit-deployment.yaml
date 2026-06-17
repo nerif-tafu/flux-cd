@@ -24,7 +24,7 @@ spec:
         kubernetes.io/hostname: black-03
       containers:
         - name: livekit
-          image: livekit/livekit-server:v1.13.1 # {"$imagepolicy": "flux-system:livekit"}
+          image: docker.io/livekit/livekit-server:v1.13.1 # {"$imagepolicy": "flux-system:livekit"}
           args:
             - --bind
             - 0.0.0.0

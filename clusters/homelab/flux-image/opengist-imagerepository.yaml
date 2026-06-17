@@ -1,8 +1,8 @@
 apiVersion: image.toolkit.fluxcd.io/v1beta2
 kind: ImageRepository
 metadata:
-  name: microbin
+  name: opengist
   namespace: flux-system
 spec:
-  image: docker.io/danielszabo99/microbin
+  image: ghcr.io/thomiceli/opengist
   interval: 1m

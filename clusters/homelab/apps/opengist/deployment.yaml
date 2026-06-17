@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opengist
+  namespace: opengist
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: opengist
+  template:
+    metadata:
+      labels:
+        app: opengist
+    spec:
+      containers:
+        - name: opengist
+          image: ghcr.io/thomiceli/opengist:1.13 # {"$imagepolicy": "flux-system:opengist"}
+          env:
+            - name: OG_OPENGIST_HOME
+              value: /opengist
+            - name: OG_EXTERNAL_URL
+              value: https://paste.tafu.casa
+            - name: OG_HTTP_PORT
+              value: "6157"
+            - name: OG_SSH_GIT_ENABLED
+              value: "false"
+            - name: OG_LOG_LEVEL
+              value: info
+            - name: OG_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: opengist-secret
+                  key: OG_SECRET_KEY
+          ports:
+            - name: http
+              containerPort: 6157
+          volumeMounts:
+            - name: data
+              mountPath: /opengist
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: opengist-data

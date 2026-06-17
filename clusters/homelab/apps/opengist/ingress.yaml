@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: microbin
-  namespace: microbin
+  name: opengist
+  namespace: opengist
   labels:
     traefik.tafu.casa/instance: public
   annotations:
@@ -18,10 +18,10 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: microbin
+                name: opengist
                 port:
                   number: 80
   tls:
     - hosts:
         - paste.tafu.casa
-      secretName: microbin-tls
+      secretName: opengist-tls

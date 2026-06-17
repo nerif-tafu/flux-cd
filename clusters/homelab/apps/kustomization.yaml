@@ -15,7 +15,7 @@ resources:
   - ./gridfinity
   - ./helpdesk
   - ./convertx
-  - ./microbin
+  - ./opengist
   - ./filebrowser
   - ./rust-breeder
   - ./kag

@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: microbin
-  namespace: microbin
+  name: opengist
+  namespace: opengist
 spec:
   selector:
-    app: microbin
+    app: opengist
   ports:
     - port: 80
-      targetPort: 8080
+      targetPort: 6157

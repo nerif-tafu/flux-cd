@@ -41,6 +41,11 @@ spec:
               value: /home/filebrowser/data/config.yaml
             - name: FILEBROWSER_DATABASE
               value: /home/filebrowser/data/database.db
+            - name: FILEBROWSER_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: filebrowser-secret
+                  key: FILEBROWSER_ADMIN_PASSWORD
           ports:
             - containerPort: 80
           volumeMounts:

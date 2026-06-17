@@ -1,0 +1,13 @@
+# Proxmox cluster configuration (maps to /var/lib/pve-cluster in the container).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: proxmox-config
+  namespace: proxmox
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi

@@ -1,0 +1,13 @@
+# VM disks, ISOs, and templates (maps to /var/lib/vz in the container).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: proxmox-data
+  namespace: proxmox
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 100Gi

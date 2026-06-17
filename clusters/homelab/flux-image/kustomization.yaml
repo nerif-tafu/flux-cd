@@ -51,4 +51,6 @@ resources:
   - skate-streamer-receiver-imagepolicy.yaml
   - unifi-imagerepository.yaml
   - unifi-imagepolicy.yaml
+  - proxmox-imagerepository.yaml
+  - proxmox-imagepolicy.yaml
   - imageupdateautomation.yaml

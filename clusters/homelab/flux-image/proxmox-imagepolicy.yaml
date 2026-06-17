@@ -1,0 +1,14 @@
+# Track stable x.y.z tags from Docker Hub (not :latest).
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: proxmox
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: proxmox
+  filterTags:
+    pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+  policy:
+    semver:
+      range: ">=9.2.0"

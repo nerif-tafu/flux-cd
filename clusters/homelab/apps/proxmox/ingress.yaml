@@ -1,0 +1,28 @@
+# Web UI at https://proxmox.cl.tafu.casa (Traefik terminates TLS, backend is Proxmox HTTPS :8006).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: proxmox
+  namespace: proxmox
+  labels:
+    traefik.tafu.casa/instance: internal
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik-internal
+  rules:
+    - host: proxmox.cl.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: proxmox
+                port:
+                  number: 8006
+  tls:
+    - hosts:
+        - proxmox.cl.tafu.casa
+      secretName: proxmox-cl-tafu-casa-tls

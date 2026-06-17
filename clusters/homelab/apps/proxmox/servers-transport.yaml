@@ -1,0 +1,11 @@
+# Traefik → Proxmox uses the controller's self-signed cert on :8006.
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: proxmox-insecure
+  namespace: proxmox
+  labels:
+    traefik.tafu.casa/instance: internal
+spec:
+  insecureSkipVerify: true
+  disableHTTP2: true

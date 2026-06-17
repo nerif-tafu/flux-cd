@@ -1,0 +1,82 @@
+# Proxmox VE in Docker (dockurr/proxmox). Requires KVM on the node (nested virt if nodes are VMs).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxmox
+  namespace: proxmox
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: proxmox
+  template:
+    metadata:
+      labels:
+        app: proxmox
+    spec:
+      hostname: pve
+      terminationGracePeriodSeconds: 120
+      securityContext:
+        sysctls:
+          - name: net.ipv4.ip_forward
+            value: "1"
+      containers:
+        - name: proxmox
+          image: docker.io/dockurr/proxmox:9.2.3 # {"$imagepolicy": "flux-system:proxmox"}
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          env:
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: proxmox
+                  key: PASSWORD
+            - name: TZ
+              value: America/Santiago
+          ports:
+            - name: https
+              containerPort: 8006
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/vz
+            - name: config
+              mountPath: /var/lib/pve-cluster
+            - name: dev-kvm
+              mountPath: /dev/kvm
+            - name: dev-net-tun
+              mountPath: /dev/net/tun
+          livenessProbe:
+            tcpSocket:
+              port: 8006
+            initialDelaySeconds: 180
+            periodSeconds: 60
+            timeoutSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 8006
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: proxmox-data
+        - name: config
+          persistentVolumeClaim:
+            claimName: proxmox-config
+        - name: dev-kvm
+          hostPath:
+            path: /dev/kvm
+            type: CharDevice
+        - name: dev-net-tun
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice

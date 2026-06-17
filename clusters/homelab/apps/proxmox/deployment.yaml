@@ -23,10 +23,6 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       nodeSelector:
         kubernetes.io/hostname: black-02
-      securityContext:
-        sysctls:
-          - name: net.ipv4.ip_forward
-            value: "1"
       containers:
         - name: proxmox
           image: docker.io/dockurr/proxmox:9.2.3 # {"$imagepolicy": "flux-system:proxmox"}

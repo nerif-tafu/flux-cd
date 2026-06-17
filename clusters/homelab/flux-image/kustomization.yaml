@@ -53,4 +53,6 @@ resources:
   - unifi-imagepolicy.yaml
   - proxmox-imagerepository.yaml
   - proxmox-imagepolicy.yaml
+  - tandem-server-imagerepository.yaml
+  - tandem-server-imagepolicy.yaml
   - imageupdateautomation.yaml

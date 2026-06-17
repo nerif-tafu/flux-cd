@@ -1,0 +1,63 @@
+# Binds WebRTC ports on the node (7880/7881 TCP, 3478 + 50000-50060 UDP).
+# Forward those ports from your router to this node's LAN IP alongside HTTPS for tandem.tafu.casa.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livekit
+  namespace: tandem
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: livekit
+  template:
+    metadata:
+      labels:
+        app: livekit
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: livekit
+          image: livekit/livekit-server:v1.8.4
+          args:
+            - --bind
+            - 0.0.0.0
+            - --config
+            - /etc/livekit.yaml
+          env:
+            - name: NODE_IP
+              valueFrom:
+                secretKeyRef:
+                  name: tandem-env
+                  key: LIVEKIT_NODE_IP
+            - name: LIVEKIT_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: tandem-env
+                  key: LIVEKIT_KEYS
+          ports:
+            - name: signal
+              containerPort: 7880
+              protocol: TCP
+            - name: rtc-tcp
+              containerPort: 7881
+              protocol: TCP
+            - name: turn
+              containerPort: 3478
+              protocol: UDP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/livekit.yaml
+              subPath: livekit.yaml
+              readOnly: true
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: livekit-config

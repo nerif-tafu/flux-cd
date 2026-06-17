@@ -1,0 +1,10 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: tandem-server
+  namespace: flux-system
+spec:
+  image: ghcr.io/nerif-tafu/tandem-server
+  interval: 1m
+  secretRef:
+    name: ghcr-registry-secret

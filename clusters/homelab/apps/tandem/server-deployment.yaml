@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tandem-server
+  namespace: tandem
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: tandem-server
+  template:
+    metadata:
+      labels:
+        app: tandem-server
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      containers:
+        - name: tandem-server
+          image: ghcr.io/nerif-tafu/tandem-server:1.1.0 # {"$imagepolicy": "flux-system:tandem-server"}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3841
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3841"
+            - name: HOST
+              value: "0.0.0.0"
+            - name: REDIS_URL
+              value: redis://redis:6379
+            - name: CORS_ORIGINS
+              value: https://tandem.tafu.casa
+            - name: LIVEKIT_URL
+              value: wss://tandem.tafu.casa:7880
+            - name: DESKTOP_RELEASES_REPO
+              value: nerif-tafu/tandem-desktop
+          envFrom:
+            - secretRef:
+                name: tandem-env
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3841
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3841
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi

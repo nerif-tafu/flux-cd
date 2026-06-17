@@ -24,3 +24,4 @@ resources:
   - ./skate-streamer-reciever
   - ./unifi
   - ./proxmox
+  - ./tandem

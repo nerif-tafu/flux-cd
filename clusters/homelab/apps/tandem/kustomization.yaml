@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - pvc.yaml
+  - ghcr-pull-secret.yaml
+  - tandem-secret.yaml
+  - redis-deployment.yaml
+  - redis-service.yaml
+  - livekit-configmap.yaml
+  - livekit-deployment.yaml
+  - livekit-service.yaml
+  - server-deployment.yaml
+  - server-service.yaml
+  - ingress.yaml

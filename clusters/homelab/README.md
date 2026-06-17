@@ -191,6 +191,59 @@ Port-forward the gateway IP and port from the internet if the server should be r
 
 ---
 
+## Proxmox VE (internal, failover-capable)
+
+**URL:** https://proxmox.cl.tafu.casa (internal Traefik at .62)
+
+Proxmox runs as a privileged `hostNetwork` pod (dockurr/proxmox) with Longhorn PVCs for VM disk and cluster config. It is a **singleton** (one replica, RWO volumes): the goal is **failover to another node** when the preferred host is down, not zero-downtime HA.
+
+### Node requirements
+
+Label every node that may host Proxmox (requires `/dev/kvm` and `enp88s0` on the LAN):
+
+```bash
+kubectl label node black-01 homelab.tafu.casa/proxmox-capable=true
+kubectl label node black-02 homelab.tafu.casa/proxmox-capable=true
+kubectl label node black-03 homelab.tafu.casa/proxmox-capable=true
+```
+
+Labels are cluster state (not in git). Remove a label to take a node out of the pool:
+
+```bash
+kubectl label node black-03 homelab.tafu.casa/proxmox-capable-
+```
+
+### Scheduling
+
+- **nodeSelector:** `homelab.tafu.casa/proxmox-capable=true`
+- **Preferred order:** `black-02` → `black-01` → `black-03`
+- When the preferred node is unavailable, Kubernetes reschedules elsewhere after Longhorn detaches the volume (minutes of downtime).
+
+### Networking
+
+Each candidate node has a profile in `apps/proxmox/network-profiles.yaml` that bridges `enp88s0` → `vmbr0` with a **reserved** LAN IP:
+
+| Node     | Node IP       | vmbr0 (VM bridge) |
+|----------|---------------|-------------------|
+| black-01 | 192.168.3.22  | 192.168.3.23      |
+| black-02 | 192.168.3.24  | 192.168.3.25      |
+| black-03 | 192.168.3.26  | 192.168.3.27      |
+
+An init container picks the profile from `spec.nodeName`. Adding a new failover node requires a new profile key and label on that node.
+
+On failover, the startup script migrates VM configs under `/etc/pve/nodes/<old>/` to the new k8s hostname. VMs on DHCP usually recover; static LAN IPs may need updating if they targeted the old bridge address.
+
+### Manifests (`apps/proxmox/`)
+
+- **deployment.yaml** — `hostNetwork`, nodeSelector + affinity, init container for network profile
+- **network-profiles.yaml** — per-node `/etc/network/interfaces`
+- **startup-configmap.yaml** — pmxcfs `/etc/hosts` fix and node config migration
+- **pvc.yaml** / **pvc-config.yaml** — Longhorn data volumes
+- **ingress.yaml** — internal Traefik only (`traefik.tafu.casa/instance: internal`)
+- **servers-transport.yaml** — Traefik skips verify on Proxmox :8006 self-signed cert
+
+---
+
 ## Image auto-update (Flux) summary
 
 - **flux-image/imagerepository.yaml** — `image:`, `interval:`, optional `secretRef` for private registries.

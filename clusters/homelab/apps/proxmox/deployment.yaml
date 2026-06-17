@@ -1,5 +1,5 @@
 # Proxmox VE in Docker (dockurr/proxmox). Requires KVM on the node (nested virt if nodes are VMs).
-# LAN bridge: hostNetwork on black-02 bridges enp88s0 → vmbr0 (192.168.3.0/24). VMs use router DHCP or static LAN IPs.
+# hostNetwork bridges enp88s0 → vmbr0 on whichever proxmox-capable node is scheduled (preferred: black-02).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,17 +17,58 @@ spec:
       labels:
         app: proxmox
     spec:
-      hostname: pve
       terminationGracePeriodSeconds: 120
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       nodeSelector:
-        kubernetes.io/hostname: black-02
-      # hostNetwork uses the k8s node hostname (black-02); pmxcfs needs a non-loopback /etc/hosts entry.
-      hostAliases:
-        - ip: "192.168.3.24"
-          hostnames:
-            - black-02
+        homelab.tafu.casa/proxmox-capable: "true"
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - black-02
+            - weight: 50
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - black-01
+            - weight: 25
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - black-03
+      initContainers:
+        - name: select-network-profile
+          image: busybox:1.36
+          command:
+            - sh
+            - -ec
+            - |
+              profile="/profiles/${NODE_NAME}"
+              if [ ! -f "${profile}" ]; then
+                echo "no network profile for node ${NODE_NAME}" >&2
+                exit 1
+              fi
+              cp "${profile}" /work/interfaces
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: network-profiles
+              mountPath: /profiles
+            - name: network-interfaces
+              mountPath: /work
       containers:
         - name: proxmox
           image: docker.io/dockurr/proxmox:9.2.3 # {"$imagepolicy": "flux-system:proxmox"}
@@ -62,7 +103,6 @@ spec:
             - name: network-interfaces
               mountPath: /etc/network/interfaces
               subPath: interfaces
-              readOnly: true
             - name: dev-kvm
               mountPath: /dev/kvm
             - name: dev-net-tun
@@ -103,9 +143,11 @@ spec:
         - name: config
           persistentVolumeClaim:
             claimName: proxmox-config
-        - name: network-interfaces
+        - name: network-profiles
           configMap:
-            name: proxmox-network-interfaces
+            name: proxmox-network-profiles
+        - name: network-interfaces
+          emptyDir: {}
         - name: startup
           configMap:
             name: proxmox-startup

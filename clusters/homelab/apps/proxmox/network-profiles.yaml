@@ -1,0 +1,56 @@
+# Per-node LAN bridge profiles (enp88s0 → vmbr0). Selected at pod start from spec.nodeName.
+# vmbr0 address must be unique on 192.168.3.0/24 and reserved for the node hosting Proxmox.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxmox-network-profiles
+  namespace: proxmox
+data:
+  black-01: |
+    auto lo
+    iface lo inet loopback
+
+    auto enp88s0
+    iface enp88s0 inet manual
+
+    auto vmbr0
+    iface vmbr0 inet static
+        address 192.168.3.23/24
+        gateway 192.168.3.1
+        bridge-ports enp88s0
+        bridge-stp off
+        bridge-fd 0
+
+    source /etc/network/interfaces.d/*
+  black-02: |
+    auto lo
+    iface lo inet loopback
+
+    auto enp88s0
+    iface enp88s0 inet manual
+
+    auto vmbr0
+    iface vmbr0 inet static
+        address 192.168.3.25/24
+        gateway 192.168.3.1
+        bridge-ports enp88s0
+        bridge-stp off
+        bridge-fd 0
+
+    source /etc/network/interfaces.d/*
+  black-03: |
+    auto lo
+    iface lo inet loopback
+
+    auto enp88s0
+    iface enp88s0 inet manual
+
+    auto vmbr0
+    iface vmbr0 inet static
+        address 192.168.3.27/24
+        gateway 192.168.3.1
+        bridge-ports enp88s0
+        bridge-stp off
+        bridge-fd 0
+
+    source /etc/network/interfaces.d/*

@@ -1,0 +1,9 @@
+# Public Docker Hub image; poll for new v1.x releases.
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: livekit
+  namespace: flux-system
+spec:
+  image: docker.io/livekit/livekit-server
+  interval: 30m

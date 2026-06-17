@@ -55,4 +55,6 @@ resources:
   - proxmox-imagepolicy.yaml
   - tandem-server-imagerepository.yaml
   - tandem-server-imagepolicy.yaml
+  - livekit-imagerepository.yaml
+  - livekit-imagepolicy.yaml
   - imageupdateautomation.yaml

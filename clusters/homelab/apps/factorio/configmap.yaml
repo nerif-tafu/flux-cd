@@ -11,7 +11,8 @@ data:
     ]
   server-adminlist.json: |
     [
-      "tafu"
+      "tafu",
+      "That_Logic"
     ]
   server-banlist.json: |
     []

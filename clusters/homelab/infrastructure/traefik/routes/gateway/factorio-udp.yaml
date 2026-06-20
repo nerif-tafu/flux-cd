@@ -1,0 +1,15 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: factorio
+  namespace: traefik
+  labels:
+    traefik.tafu.casa/instance: gateway
+spec:
+  entryPoints:
+    - factorio
+  routes:
+    - services:
+        - name: factorio
+          namespace: factorio
+          port: 34197

@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: factorio
+  namespace: factorio
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: factorio
+  template:
+    metadata:
+      labels:
+        app: factorio
+    spec:
+      securityContext:
+        fsGroup: 845
+      containers:
+        - name: factorio
+          image: docker.io/factoriotools/factorio:2.0.76 # {"$imagepolicy": "flux-system:factorio"}
+          env:
+            - name: PORT
+              value: "34197"
+          ports:
+            - name: game
+              containerPort: 34197
+              protocol: UDP
+          volumeMounts:
+            - name: data
+              mountPath: /factorio
+            - name: config
+              mountPath: /factorio/config/server-whitelist.json
+              subPath: server-whitelist.json
+            - name: config
+              mountPath: /factorio/config/server-adminlist.json
+              subPath: server-adminlist.json
+            - name: config
+              mountPath: /factorio/config/server-banlist.json
+              subPath: server-banlist.json
+            - name: config
+              mountPath: /factorio/config/server-settings.json
+              subPath: server-settings.json
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: factorio-data
+        - name: config
+          configMap:
+            name: factorio-config

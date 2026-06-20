@@ -5,3 +5,4 @@ resources:
   - kag-tcp.yaml
   - kag-udp.yaml
   - minecraft-tcp.yaml
+  - factorio-udp.yaml

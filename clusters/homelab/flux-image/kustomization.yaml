@@ -57,4 +57,6 @@ resources:
   - tandem-server-imagepolicy.yaml
   - livekit-imagerepository.yaml
   - livekit-imagepolicy.yaml
+  - factorio-imagerepository.yaml
+  - factorio-imagepolicy.yaml
   - imageupdateautomation.yaml

@@ -51,6 +51,11 @@ spec:
         exposedPort: 50301
         protocol: UDP
       # Minecraft
+      factorio:
+        port: 34197
+        expose: true
+        exposedPort: 34197
+        protocol: UDP
       minecraft:
         port: 25565
         expose: true

@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: factorio-config
+  namespace: factorio
+data:
+  server-whitelist.json: |
+    [
+      "nerif.tafu",
+      "alexdear",
+      "erehtelloh"
+    ]
+  server-adminlist.json: |
+    [
+      "nerif.tafu"
+    ]
+  server-banlist.json: |
+    []
+  server-settings.json: |
+    {
+      "name": "HopHop Factorio",
+      "description": "Friends-only Factorio server",
+      "tags": ["game"],
+      "max_players": 10,
+      "visibility": {
+        "public": false,
+        "lan": true
+      },
+      "username": "",
+      "token": "",
+      "game_password": "",
+      "require_user_verification": true,
+      "max_upload_in_kilobytes_per_second": 0,
+      "max_upload_slots": 5,
+      "minimum_latency_in_ticks": 0,
+      "ignore_player_limit_for_returning_players": false,
+      "allow_commands": "admins-only",
+      "autosave_interval": 10,
+      "autosave_only_on_server": true,
+      "autosave_when_empty": true,
+      "auto_pause": true,
+      "only_admins_can_pause_the_game": true,
+      "afk_autokick_interval": 0
+    }

@@ -1,0 +1,8 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: factorio
+  namespace: flux-system
+spec:
+  image: docker.io/factoriotools/factorio
+  interval: 1m

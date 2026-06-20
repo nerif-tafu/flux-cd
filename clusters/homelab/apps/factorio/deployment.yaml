@@ -41,6 +41,12 @@ spec:
           env:
             - name: PORT
               value: "34197"
+            - name: LOAD_LATEST_SAVE
+              value: "false"
+            - name: SAVE_NAME
+              value: "Multiplayer World"
+            - name: DLC_SPACE_AGE
+              value: "false"
           ports:
             - name: game
               containerPort: 34197

@@ -6,13 +6,12 @@ metadata:
 data:
   server-whitelist.json: |
     [
-      "nerif.tafu",
-      "alexdear",
-      "erehtelloh"
+      "tafu",
+      "That_Logic"
     ]
   server-adminlist.json: |
     [
-      "nerif.tafu"
+      "tafu"
     ]
   server-banlist.json: |
     []

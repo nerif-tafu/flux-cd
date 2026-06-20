@@ -17,6 +17,24 @@ spec:
     spec:
       securityContext:
         fsGroup: 845
+      initContainers:
+        - name: seed-config
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /factorio/config
+              cp /seed/server-whitelist.json /factorio/config/
+              cp /seed/server-adminlist.json /factorio/config/
+              cp /seed/server-banlist.json /factorio/config/
+              cp /seed/server-settings.json /factorio/config/
+              chown -R 845:845 /factorio/config
+          volumeMounts:
+            - name: data
+              mountPath: /factorio
+            - name: config
+              mountPath: /seed
       containers:
         - name: factorio
           image: docker.io/factoriotools/factorio:2.0.76 # {"$imagepolicy": "flux-system:factorio"}
@@ -30,18 +48,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /factorio
-            - name: config
-              mountPath: /factorio/config/server-whitelist.json
-              subPath: server-whitelist.json
-            - name: config
-              mountPath: /factorio/config/server-adminlist.json
-              subPath: server-adminlist.json
-            - name: config
-              mountPath: /factorio/config/server-banlist.json
-              subPath: server-banlist.json
-            - name: config
-              mountPath: /factorio/config/server-settings.json
-              subPath: server-settings.json
       volumes:
         - name: data
           persistentVolumeClaim:

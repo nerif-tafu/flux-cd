@@ -46,7 +46,7 @@ spec:
             - name: SAVE_NAME
               value: "Multiplayer World"
             - name: DLC_SPACE_AGE
-              value: "false"
+              value: "elevated-rails"
           ports:
             - name: game
               containerPort: 34197

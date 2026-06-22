@@ -37,7 +37,7 @@ spec:
               mountPath: /seed
       containers:
         - name: factorio
-          image: docker.io/factoriotools/factorio:2.0.76 # {"$imagepolicy": "flux-system:factorio"}
+          image: docker.io/factoriotools/factorio:2.0.77 # {"$imagepolicy": "flux-system:factorio"}
           env:
             - name: PORT
               value: "34197"

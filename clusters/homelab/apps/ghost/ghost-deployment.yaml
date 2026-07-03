@@ -35,6 +35,8 @@ spec:
               value: https://blog.tafu.casa
             - name: server__trustProxy
               value: "true"
+            - name: security__staffDeviceVerification
+              value: "false"
             - name: database__client
               value: mysql
             - name: database__connection__host

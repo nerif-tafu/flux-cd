@@ -1,0 +1,8 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: ghost
+  namespace: flux-system
+spec:
+  image: docker.io/library/ghost
+  interval: 1m

@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ghost
+  namespace: ghost
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ghost
+  template:
+    metadata:
+      labels:
+        app: ghost
+    spec:
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - until nc -z ghost-mysql 3306; do echo waiting for mysql; sleep 2; done
+      containers:
+        - name: ghost
+          image: docker.io/library/ghost:6.50.0-alpine # {"$imagepolicy": "flux-system:ghost"}
+          ports:
+            - name: http
+              containerPort: 2368
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: url
+              value: https://blog.tafu.casa
+            - name: database__client
+              value: mysql
+            - name: database__connection__host
+              value: ghost-mysql
+            - name: database__connection__user
+              valueFrom:
+                secretKeyRef:
+                  name: ghost-mysql-secret
+                  key: MYSQL_USER
+            - name: database__connection__password
+              valueFrom:
+                secretKeyRef:
+                  name: ghost-mysql-secret
+                  key: MYSQL_PASSWORD
+            - name: database__connection__database
+              valueFrom:
+                secretKeyRef:
+                  name: ghost-mysql-secret
+                  key: MYSQL_DATABASE
+          volumeMounts:
+            - name: content
+              mountPath: /var/lib/ghost/content
+          readinessProbe:
+            tcpSocket:
+              port: 2368
+            initialDelaySeconds: 45
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 2368
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 5
+      volumes:
+        - name: content
+          persistentVolumeClaim:
+            claimName: ghost-data

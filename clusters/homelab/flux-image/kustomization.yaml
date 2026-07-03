@@ -58,5 +58,7 @@ resources:
   - livekit-imagerepository.yaml
   - livekit-imagepolicy.yaml
   - factorio-imagerepository.yaml
+  - ghost-imagerepository.yaml
+  - ghost-imagepolicy.yaml
   - factorio-imagepolicy.yaml
   - imageupdateautomation.yaml

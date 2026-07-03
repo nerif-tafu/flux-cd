@@ -16,6 +16,7 @@ resources:
   - ./helpdesk
   - ./convertx
   - ./opengist
+  - ./ghost
   - ./filebrowser
   - ./rust-breeder
   - ./kag

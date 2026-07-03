@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ghost
+  namespace: ghost
+  labels:
+    traefik.tafu.casa/instance: public
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-fail2ban-public@kubernetescrd
+spec:
+  ingressClassName: traefik-public
+  rules:
+    - host: blog.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ghost
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - blog.tafu.casa
+      secretName: ghost-tls

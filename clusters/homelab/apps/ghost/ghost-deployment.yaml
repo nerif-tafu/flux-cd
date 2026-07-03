@@ -33,6 +33,8 @@ spec:
               value: production
             - name: url
               value: https://blog.tafu.casa
+            - name: server__trustProxy
+              value: "true"
             - name: database__client
               value: mysql
             - name: database__connection__host
@@ -56,14 +58,30 @@ spec:
             - name: content
               mountPath: /var/lib/ghost/content
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /ghost/
               port: 2368
+              httpHeaders:
+                - name: Host
+                  value: blog.tafu.casa
+                - name: X-Forwarded-Host
+                  value: blog.tafu.casa
+                - name: X-Forwarded-Proto
+                  value: https
             initialDelaySeconds: 45
             periodSeconds: 15
+            timeoutSeconds: 5
           livenessProbe:
             httpGet:
-              path: /
+              path: /ghost/
               port: 2368
+              httpHeaders:
+                - name: Host
+                  value: blog.tafu.casa
+                - name: X-Forwarded-Host
+                  value: blog.tafu.casa
+                - name: X-Forwarded-Proto
+                  value: https
             initialDelaySeconds: 90
             periodSeconds: 30
             timeoutSeconds: 5

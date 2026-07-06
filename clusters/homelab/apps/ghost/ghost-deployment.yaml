@@ -24,7 +24,7 @@ spec:
             - until nc -z ghost-mysql 3306; do echo waiting for mysql; sleep 2; done
       containers:
         - name: ghost
-          image: docker.io/library/ghost:6.50.0-alpine # {"$imagepolicy": "flux-system:ghost"}
+          image: docker.io/library/ghost:6.51.0-alpine # {"$imagepolicy": "flux-system:ghost"}
           ports:
             - name: http
               containerPort: 2368

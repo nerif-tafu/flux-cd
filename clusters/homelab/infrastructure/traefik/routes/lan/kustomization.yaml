@@ -7,5 +7,6 @@ resources:
   - kvm1.yaml
   - kvm2.yaml
   - companion-01.yaml
+  - companion-02.yaml
 commonLabels:
   traefik.tafu.casa/instance: internal

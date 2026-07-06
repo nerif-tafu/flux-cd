@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lan-companion-02
+  namespace: traefik
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: lan-companion-02
+  namespace: traefik
+subsets:
+  - addresses:
+      - ip: 192.168.3.185
+    ports:
+      - name: http
+        port: 8000
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: lan-companion-02
+  namespace: traefik
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`companion-02.cl.tafu.casa`)
+      kind: Rule
+      services:
+        - name: lan-companion-02
+          port: 80
+  tls:
+    secretName: wildcard-cl-tafu-casa-tls

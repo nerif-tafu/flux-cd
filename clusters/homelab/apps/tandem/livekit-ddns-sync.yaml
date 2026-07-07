@@ -46,7 +46,7 @@ data:
     STATE_CM="${STATE_CM:-livekit-ddns-sync-state}"
     NAMESPACE="${NAMESPACE:-tandem}"
     resolve_wan_ip() {
-      nslookup "$DNS_NAME" 2>/dev/null | awk '/^Address: / { print $2 }' | tail -1
+      getent ahostsv4 "$DNS_NAME" 2>/dev/null | awk '{ print $1; exit }'
     }
     while true; do
       NEW_IP="$(resolve_wan_ip || true)"

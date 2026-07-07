@@ -10,7 +10,8 @@ data:
       tcp_port: 7881
       port_range_start: 50000
       port_range_end: 50060
-      use_external_ip: true
+      use_external_ip: false
+      node_ip: 186.106.38.90
       allow_tcp_fallback: true
     turn:
       enabled: true

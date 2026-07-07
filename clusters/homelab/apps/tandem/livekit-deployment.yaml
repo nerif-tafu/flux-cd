@@ -1,5 +1,6 @@
 # Hybrid: signaling via https://livekit.tafu.casa (Traefik :443). hostNetwork binds media ports on the node.
 # Forward UDP 50000-50060, UDP 3478, and TCP 7881 to this node's LAN IP (7880 public forward not required).
+# NODE_IP is resolved from livekit.tafu.casa at pod start (kept in sync with Cloudflare DDNS).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,20 +23,40 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       nodeSelector:
         kubernetes.io/hostname: black-03
+      initContainers:
+        - name: resolve-wan-ip
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              for _ in $(seq 1 30); do
+                IP=$(nslookup livekit.tafu.casa 2>/dev/null | awk '/^Address: / { print $2 }' | tail -1)
+                if [ -n "$IP" ]; then
+                  printf '%s' "$IP" > /shared/wan-ip
+                  echo "Resolved WAN IP: $IP"
+                  exit 0
+                fi
+                sleep 2
+              done
+              echo "Failed to resolve livekit.tafu.casa" >&2
+              exit 1
+          volumeMounts:
+            - name: wan-ip
+              mountPath: /shared
       containers:
         - name: livekit
           image: docker.io/livekit/livekit-server:v1.13.3 # {"$imagepolicy": "flux-system:livekit"}
-          args:
-            - --bind
-            - 0.0.0.0
-            - --config
-            - /etc/livekit.yaml
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              export NODE_IP=$(cat /shared/wan-ip)
+              echo "Starting LiveKit with NODE_IP=$NODE_IP"
+              exec livekit-server --bind 0.0.0.0 --config /etc/livekit.yaml
           env:
-            - name: NODE_IP
-              valueFrom:
-                secretKeyRef:
-                  name: tandem-env
-                  key: LIVEKIT_NODE_IP
             - name: LIVEKIT_KEYS
               valueFrom:
                 secretKeyRef:
@@ -56,11 +77,16 @@ spec:
               mountPath: /etc/livekit.yaml
               subPath: livekit.yaml
               readOnly: true
+            - name: wan-ip
+              mountPath: /shared
+              readOnly: true
           resources:
             requests:
               cpu: 250m
               memory: 512Mi
       volumes:
+        - name: wan-ip
+          emptyDir: {}
         - name: config
           configMap:
             name: livekit-config

@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: livekit-ddns-sync
+  namespace: tandem
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: livekit-ddns-sync
+  namespace: tandem
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "create", "update", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "patch"]
+    resourceNames: ["livekit"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: livekit-ddns-sync
+  namespace: tandem
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: livekit-ddns-sync
+subjects:
+  - kind: ServiceAccount
+    name: livekit-ddns-sync
+    namespace: tandem
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: livekit-ddns-sync-script
+  namespace: tandem
+data:
+  sync.sh: |
+    #!/bin/sh
+    set -eu
+    DNS_NAME="${DNS_NAME:-livekit.tafu.casa}"
+    INTERVAL="${INTERVAL:-300}"
+    STATE_CM="${STATE_CM:-livekit-ddns-sync-state}"
+    NAMESPACE="${NAMESPACE:-tandem}"
+    resolve_wan_ip() {
+      nslookup "$DNS_NAME" 2>/dev/null | awk '/^Address: / { print $2 }' | tail -1
+    }
+    while true; do
+      NEW_IP="$(resolve_wan_ip || true)"
+      if [ -z "$NEW_IP" ]; then
+        echo "WARN: could not resolve ${DNS_NAME}; retrying in ${INTERVAL}s" >&2
+        sleep "$INTERVAL"
+        continue
+      fi
+      CURRENT_IP="$(kubectl get configmap "$STATE_CM" -n "$NAMESPACE" -o jsonpath='{.data.ip}' 2>/dev/null || true)"
+      if [ "$NEW_IP" != "$CURRENT_IP" ]; then
+        echo "WAN IP changed: ${CURRENT_IP:-<none>} -> ${NEW_IP}"
+        kubectl create configmap "$STATE_CM" --namespace "$NAMESPACE" --from-literal=ip="$NEW_IP" --dry-run=client -o yaml | kubectl apply -f -
+        if [ -n "$CURRENT_IP" ]; then
+          kubectl rollout restart deployment/livekit -n "$NAMESPACE"
+          kubectl rollout status deployment/livekit -n "$NAMESPACE" --timeout=180s || true
+        fi
+      fi
+      sleep "$INTERVAL"
+    done
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livekit-ddns-sync
+  namespace: tandem
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: livekit-ddns-sync
+  template:
+    metadata:
+      labels:
+        app: livekit-ddns-sync
+    spec:
+      serviceAccountName: livekit-ddns-sync
+      containers:
+        - name: sync
+          image: bitnami/kubectl:1.32.3
+          command: ["/bin/sh", "/scripts/sync.sh"]
+          env:
+            - name: DNS_NAME
+              value: livekit.tafu.casa
+            - name: INTERVAL
+              value: "300"
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+      volumes:
+        - name: scripts
+          configMap:
+            name: livekit-ddns-sync-script
+            defaultMode: 0555

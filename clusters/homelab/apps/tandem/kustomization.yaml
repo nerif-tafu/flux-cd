@@ -8,6 +8,7 @@ resources:
   - redis-deployment.yaml
   - redis-service.yaml
   - livekit-configmap.yaml
+  - livekit-ddns-sync.yaml
   - livekit-deployment.yaml
   - livekit-service.yaml
   - server-deployment.yaml

@@ -46,7 +46,7 @@ data:
     STATE_CM="${STATE_CM:-livekit-ddns-sync-state}"
     NAMESPACE="${NAMESPACE:-tandem}"
     resolve_wan_ip() {
-      getent ahostsv4 "$DNS_NAME" 2>/dev/null | awk '{ print $1; exit }'
+      getent ahostsv4 "$DNS_NAME" 2>/dev/null | head -1 | cut -f1 -d' '
     }
     while true; do
       NEW_IP="$(resolve_wan_ip || true)"
@@ -99,10 +99,10 @@ spec:
           resources:
             requests:
               cpu: 10m
-              memory: 32Mi
+              memory: 128Mi
             limits:
               cpu: 100m
-              memory: 64Mi
+              memory: 256Mi
       volumes:
         - name: scripts
           configMap:

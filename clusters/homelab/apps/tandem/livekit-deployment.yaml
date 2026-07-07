@@ -55,7 +55,7 @@ spec:
               set -eu
               export NODE_IP=$(cat /shared/wan-ip)
               echo "Starting LiveKit with NODE_IP=$NODE_IP"
-              exec livekit-server --bind 0.0.0.0 --config /etc/livekit.yaml
+              exec /livekit-server --bind 0.0.0.0 --config /etc/livekit.yaml
           env:
             - name: LIVEKIT_KEYS
               valueFrom:

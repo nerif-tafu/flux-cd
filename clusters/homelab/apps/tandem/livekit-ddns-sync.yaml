@@ -85,7 +85,7 @@ spec:
       serviceAccountName: livekit-ddns-sync
       containers:
         - name: sync
-          image: bitnami/kubectl:1.32.3
+          image: bitnami/kubectl:latest
           command: ["/bin/sh", "/scripts/sync.sh"]
           env:
             - name: DNS_NAME

@@ -8,5 +8,6 @@ resources:
   - kvm2.yaml
   - companion-01.yaml
   - companion-02.yaml
+  - backlight.yaml
 commonLabels:
   traefik.tafu.casa/instance: internal

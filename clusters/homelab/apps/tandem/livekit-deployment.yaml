@@ -47,7 +47,7 @@ spec:
               mountPath: /shared
       containers:
         - name: livekit
-          image: docker.io/livekit/livekit-server:v1.13.3 # {"$imagepolicy": "flux-system:livekit"}
+          image: docker.io/livekit/livekit-server:v1.13.4 # {"$imagepolicy": "flux-system:livekit"}
           command:
             - sh
             - -c

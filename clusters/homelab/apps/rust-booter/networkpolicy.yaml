@@ -1,0 +1,32 @@
+# Only Traefik may reach the app port.
+#
+# TRUST_PROXY=1 makes the rate limiter key on the address Traefik appends to
+# X-Forwarded-For. A pod connecting directly would supply that header itself and
+# could present a fresh address per request, bypassing the limits entirely —
+# including the 30/15min bucket guarding wake-on-LAN packets, Discord webhooks
+# and physical smart switches. This policy is what prevents that.
+#
+# The selector covers the whole traefik namespace, so the internal and gateway
+# instances keep working if a route is ever added there.
+#
+# Ingress only: egress is unrestricted, so outbound WoL packets, webhooks and
+# smart-switch calls are unaffected.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rust-booter-allow-traefik
+  namespace: rust-booter
+spec:
+  podSelector:
+    matchLabels:
+      app: rust-booter
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 8534

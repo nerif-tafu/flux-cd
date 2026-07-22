@@ -18,5 +18,18 @@ spec:
       containers:
         - name: tafu-casa
           image: ghcr.io/nerif-tafu/tafu-casa:v1.1.5 # {"$imagepolicy": "flux-system:tafu-casa"}
+          env:
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tafu-casa-secret
+                  key: ADMIN_PASSWORD
           ports:
             - containerPort: 3000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: tafu-casa-data

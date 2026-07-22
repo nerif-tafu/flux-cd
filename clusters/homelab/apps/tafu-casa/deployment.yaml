@@ -24,6 +24,14 @@ spec:
                 secretKeyRef:
                   name: tafu-casa-secret
                   key: ADMIN_PASSWORD
+            # Identify visitors by the address Traefik forwards, not the proxy's
+            # own socket address. Safe because networkpolicy.yaml permits ingress
+            # only from Traefik, so no other pod can supply this header.
+            # Depth 1 = the last entry, which is the one Traefik itself appends.
+            - name: ADDRESS_HEADER
+              value: X-Forwarded-For
+            - name: XFF_DEPTH
+              value: "1"
           ports:
             - containerPort: 3000
           volumeMounts:

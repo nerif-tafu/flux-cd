@@ -1,0 +1,32 @@
+# Only the public Traefik instance may reach the app port.
+#
+# The app trusts X-Forwarded-For to identify visitors (ADDRESS_HEADER in
+# deployment.yaml). That is only sound while nothing else in the cluster can
+# open a connection to port 3000 and present a header of its own choosing —
+# this policy is what makes that true.
+#
+# Ingress only: egress is left unrestricted so the app can still reach the
+# geolocation API used by the metrics page.
+#
+# Note: there are deliberately no liveness/readiness probes on this Deployment.
+# If any are added later, kubelet connects from the node's host network and
+# would be denied here unless an ipBlock for the node addresses is added.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tafu-casa-allow-traefik
+  namespace: tafu-casa
+spec:
+  podSelector:
+    matchLabels:
+      app: tafu-casa
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 3000

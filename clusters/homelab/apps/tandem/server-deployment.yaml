@@ -19,7 +19,7 @@ spec:
         - name: ghcr-pull-secret
       containers:
         - name: tandem-server
-          image: ghcr.io/nerif-tafu/tandem-server:1.4.2 # {"$imagepolicy": "flux-system:tandem-server"}
+          image: ghcr.io/nerif-tafu/tandem-server:1.4.3 # {"$imagepolicy": "flux-system:tandem-server"}
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3841

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: tafu-casa
-          image: ghcr.io/nerif-tafu/tafu-casa:v2.0.1 # {"$imagepolicy": "flux-system:tafu-casa"}
+          image: ghcr.io/nerif-tafu/tafu-casa:v2.0.2 # {"$imagepolicy": "flux-system:tafu-casa"}
           env:
             - name: ADMIN_PASSWORD
               valueFrom:

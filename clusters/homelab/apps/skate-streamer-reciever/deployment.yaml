@@ -36,6 +36,14 @@ spec:
           env:
             - name: MONITOR_RECORDINGS_DIR
               value: "/data/recordings"
+            # Rate limit per visitor rather than per proxy. Without this every
+            # request is keyed to the Traefik pod, so all users share one bucket
+            # and the 20/15min auth limit locks out everyone at once.
+            # Must be the hop count, not "true": the app passes a non-numeric
+            # value through to Express verbatim, which rejects it as an IP and
+            # exits. 1 = trust only the address Traefik appends.
+            - name: TRUST_PROXY
+              value: "1"
           volumeMounts:
             - name: data
               mountPath: /data

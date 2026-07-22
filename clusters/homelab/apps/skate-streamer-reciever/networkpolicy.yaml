@@ -1,0 +1,34 @@
+# Only Traefik may reach the app port.
+#
+# TRUST_PROXY=1 makes the rate limiter key on the address Traefik appends to
+# X-Forwarded-For. A pod connecting directly would supply that header itself and
+# could present a fresh address per request, bypassing the limits — including
+# the 20/15min bucket on auth.
+#
+# The selector covers the whole traefik namespace, so the internal and gateway
+# instances keep working if a route is ever added there.
+#
+# Port 9090 also carries the encoder's /ingest WebSocket. The Service is
+# ClusterIP with no NodePort, so the encoder necessarily arrives via
+# skate.tafu.casa through Traefik and is covered by the rule below.
+#
+# Ingress only: egress is unrestricted.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: skate-streamer-reciever-allow-traefik
+  namespace: skate-streamer-reciever
+spec:
+  podSelector:
+    matchLabels:
+      app: skate-streamer-reciever
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 9090

@@ -18,6 +18,13 @@ spec:
       type: LoadBalancer
       spec:
         loadBalancerIP: 192.168.3.61
+        # Preserve the client source IP. With the default (Cluster), kube-proxy
+        # SNATs inbound traffic to a node address before Traefik sees it, so
+        # every visitor looks like the same internal IP and X-Forwarded-For
+        # carries that useless value downstream. With Local, MetalLB announces
+        # the VIP only from nodes running a ready Traefik pod and traffic is
+        # delivered without SNAT.
+        externalTrafficPolicy: Local
     experimental:
       plugins:
         fail2ban:

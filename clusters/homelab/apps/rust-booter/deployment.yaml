@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: rust-booter
-          image: ghcr.io/nerif-tafu/rust-booter:v1.0.2 # {"$imagepolicy": "flux-system:rust-booter"}
+          image: ghcr.io/nerif-tafu/rust-booter:v1.0.3 # {"$imagepolicy": "flux-system:rust-booter"}
           ports:
             - containerPort: 8534
           volumeMounts:

@@ -1,0 +1,31 @@
+# Only Traefik may reach the app port.
+#
+# TRUST_PROXY=1 makes the rate limiter key on the address Traefik appends to
+# X-Forwarded-For. A pod connecting directly would supply that header itself and
+# could present a fresh address per request, bypassing the limits — including
+# the 60/15min bucket on redownload/update/refresh-markers.
+#
+# The selector covers the whole traefik namespace, so the internal and gateway
+# instances keep working if a route is ever added there.
+#
+# Ingress only: egress is unrestricted, so the app can still reach the upstream
+# Rust+ APIs it pulls item data and images from.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rustplus-shop-helper-v2-allow-traefik
+  namespace: rustplus-shop-helper-v2
+spec:
+  podSelector:
+    matchLabels:
+      app: rustplus-shop-helper-v2
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 3001

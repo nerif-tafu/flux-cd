@@ -71,7 +71,7 @@ spec:
               mountPath: /work
       containers:
         - name: proxmox
-          image: docker.io/dockurr/proxmox:9.2.4 # {"$imagepolicy": "flux-system:proxmox"}
+          image: docker.io/dockurr/proxmox:9.2.5 # {"$imagepolicy": "flux-system:proxmox"}
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true

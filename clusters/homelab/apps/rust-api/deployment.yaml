@@ -24,6 +24,8 @@ spec:
             - name: data
               mountPath: /data
           env:
+            - name: GAME_DATA_DIR
+              value: /data
             - name: STEAM_USERNAME
               valueFrom:
                 secretKeyRef:

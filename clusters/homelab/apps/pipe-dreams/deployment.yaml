@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: pipe-dreams
-          image: ghcr.io/nerif-tafu/pipe-dreams:v1.0.6 # {"$imagepolicy": "flux-system:pipe-dreams"}
+          image: ghcr.io/nerif-tafu/pipe-dreams:v1.0.7 # {"$imagepolicy": "flux-system:pipe-dreams"}
           env:
             # Keep the downloaded item data and images on the mounted volume.
             # Without this they are written into the image layer, so every

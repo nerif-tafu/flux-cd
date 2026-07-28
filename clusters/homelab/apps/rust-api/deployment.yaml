@@ -26,6 +26,13 @@ spec:
           env:
             - name: GAME_DATA_DIR
               value: /data
+            # Keeps the extracted item data the API serves on the volume too.
+            # Left in the image layer it is wiped on every update and the API
+            # serves nothing until a full re-extraction has run. AssetRipper's
+            # binaries and raw export stay in the container by design — see
+            # game-data-path.js.
+            - name: DATA_DIR
+              value: /data
             - name: STEAM_USERNAME
               valueFrom:
                 secretKeyRef:

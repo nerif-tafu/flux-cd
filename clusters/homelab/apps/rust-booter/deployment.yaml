@@ -19,6 +19,11 @@ spec:
         - name: rust-booter
           image: ghcr.io/nerif-tafu/rust-booter:v1.0.8 # {"$imagepolicy": "flux-system:rust-booter"}
           env:
+            # Write config.json to the mounted volume. Without this the app
+            # writes it beside its own source, which lives in the image layer,
+            # so every image update resets the user's settings.
+            - name: DATA_DIR
+              value: /data
             # Rate limit per visitor rather than per proxy. Without this every
             # request is keyed to the Traefik pod, so all users share one bucket
             # and the 30/15min action limit locks out everyone at once.

@@ -144,9 +144,16 @@ spec:
           # 5x KubePodNotReady, 4x KubeDeploymentReplicasMismatch, 3x
           # KubeContainerWaiting, 1x KubeStatefulSetReplicasMismatch. Without this
           # rule, one dead node is ~26 Discord messages.
+          #
+          # TargetDown added after seeing the first real delivery: one node of
+          # four going down reliably produces three separate "25% of targets are
+          # down" alerts (node-exporter, kubelet, flux-controllers) that say
+          # nothing the node alert has not already said. It stays un-inhibited
+          # when no node alert is firing, which is the case where it is useful —
+          # a single scrape target dying on its own.
           - source_matchers: ['alertname =~ "KubeNodeNotReady|KubeNodeUnreachable"']
             target_matchers:
-              - 'alertname =~ "KubePodNotReady|KubePodCrashLooping|KubeContainerWaiting|KubeDeploymentReplicasMismatch|KubeStatefulSetReplicasMismatch|KubeDaemonSetMisScheduled|KubeDaemonSetRolloutStuck|LonghornNodeNotReady|LonghornVolumeDegraded|TraefikBackendDown"'
+              - 'alertname =~ "KubePodNotReady|KubePodCrashLooping|KubeContainerWaiting|KubeDeploymentReplicasMismatch|KubeStatefulSetReplicasMismatch|KubeDaemonSetMisScheduled|KubeDaemonSetRolloutStuck|TargetDown|LonghornNodeNotReady|LonghornVolumeDegraded|TraefikBackendDown"'
           # A faulted volume is already degraded; only say it once.
           - source_matchers: ['alertname = "LonghornVolumeFaulted"']
             target_matchers: ['alertname = "LonghornVolumeDegraded"']
@@ -174,7 +181,7 @@ spec:
                   {{ range .Alerts -}}
                   *{{ .Annotations.summary }}*
                   {{ .Annotations.description }}
-                  {{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}` {{ end }}{{ with .Labels.node }}node=`{{ . }}`{{ end }}
+                  {{ if .Labels.node }}node=`{{ .Labels.node }}`{{ else }}{{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}`{{ end }}{{ end }}
                   {{ end }}
                 footer: ''
                 short_fields: false
@@ -191,7 +198,7 @@ spec:
                   {{ range .Alerts -}}
                   *{{ .Annotations.summary }}*
                   {{ .Annotations.description }}
-                  {{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}` {{ end }}{{ with .Labels.node }}node=`{{ . }}`{{ end }}
+                  {{ if .Labels.node }}node=`{{ .Labels.node }}`{{ else }}{{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}`{{ end }}{{ end }}
                   {{ end }}
                 footer: ''
                 short_fields: false

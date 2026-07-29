@@ -1,0 +1,148 @@
+# Catches the class of bug that reaches the cluster silently.
+#
+# Two real examples from this repo that this workflow would have caught:
+#
+#   1. apps/wg-easy/deployment.yaml used `securityContext.sysctl` instead of
+#      `sysctls`. The API server dropped the whole block without complaint, so
+#      the pod ran for months with an empty securityContext and none of the
+#      intended sysctls applied. kubeconform -strict rejects unknown fields.
+#
+#   2. The Alertmanager config used discord_configs fields that
+#      prometheus-operator v0.70.0's vendored parser does not know. Flux,
+#      Helm and the HelmRelease all reported success; the operator silently
+#      refused to regenerate the StatefulSet and no alert was delivered for
+#      hours. amtool check-config catches it in seconds.
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  manifests:
+    name: kustomize build + kubeconform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          set -euo pipefail
+          KUSTOMIZE_VERSION=5.4.3
+          KUBECONFORM_VERSION=0.6.7
+          curl -sSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz -C /usr/local/bin kustomize
+          curl -sSL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz -C /usr/local/bin kubeconform
+          kustomize version && kubeconform -v
+
+      - name: kustomize build
+        run: |
+          set -euo pipefail
+          kustomize build clusters/homelab > /tmp/rendered.yaml
+          echo "rendered $(grep -c '^kind:' /tmp/rendered.yaml) resources"
+
+      - name: kubeconform
+        # -strict is the point of this step: without it, unknown fields like the
+        # `sysctl` typo pass silently, which is exactly the failure being guarded.
+        #
+        # -skip Secret because SOPS-encrypted Secrets carry a top-level `sops:`
+        # key that is not part of the Secret schema. Their structure is covered
+        # by the sops job below instead.
+        #
+        # CRD schemas (Traefik, cert-manager, Flux, prometheus-operator) come
+        # from the community catalog; -ignore-missing-schemas keeps a brand-new
+        # CRD from failing the build, while built-in kinds are always checked.
+        run: |
+          set -euo pipefail
+          kubeconform \
+            -strict \
+            -summary \
+            -skip Secret \
+            -ignore-missing-schemas \
+            -kubernetes-version 1.34.0 \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            /tmp/rendered.yaml
+
+  alertmanager:
+    name: amtool check-config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract Alertmanager config from the HelmRelease
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import yaml
+          hr = yaml.safe_load(open('clusters/homelab/infrastructure/monitoring/helmrelease.yaml'))
+          cfg = hr['spec']['values']['alertmanager']['config']
+          yaml.safe_dump(cfg, open('/tmp/alertmanager.yml','w'), sort_keys=False)
+          print(f"{len(cfg['receivers'])} receivers, {len(cfg['inhibit_rules'])} inhibit rules")
+          PY
+
+      - name: Validate against the Alertmanager the operator actually runs
+        # Pinned to the version prometheus-operator v0.70.0 (chart 55.0.0)
+        # ships. The operator validates the config with its own parser of this
+        # vintage before generating the StatefulSet, so a pass here is what
+        # predicts the operator will accept it. Bump this when the chart moves.
+        run: |
+          set -euo pipefail
+          docker run --rm -v /tmp/alertmanager.yml:/cfg.yml:ro \
+            --entrypoint amtool quay.io/prometheus/alertmanager:v0.26.0 \
+            check-config /cfg.yml
+
+  rules:
+    name: promtool check rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract PrometheusRule groups
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import glob, yaml
+          groups = []
+          for f in sorted(glob.glob('clusters/homelab/infrastructure/monitoring/rules-*.yaml')):
+              groups += yaml.safe_load(open(f))['spec']['groups']
+          yaml.safe_dump({'groups': groups}, open('/tmp/rules.yml','w'), sort_keys=False)
+          print(f"{len(groups)} groups, {sum(len(g['rules']) for g in groups)} rules")
+          PY
+
+      - name: Validate PromQL
+        run: |
+          set -euo pipefail
+          docker run --rm -v /tmp/rules.yml:/rules.yml:ro \
+            --entrypoint promtool quay.io/prometheus/prometheus:v2.48.0 \
+            check rules /rules.yml
+
+  sops:
+    name: secrets are encrypted
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Every Secret must be SOPS-encrypted
+        # Decryption is not possible in CI (the age private key is not here, and
+        # should not be). This only asserts the shape: anything declaring
+        # kind: Secret must carry a sops block and must not contain a value that
+        # looks like a live credential.
+        run: |
+          set -euo pipefail
+          fail=0
+          while IFS= read -r f; do
+            if ! grep -q '^sops:' "$f"; then
+              echo "::error file=$f::Secret is not SOPS-encrypted"
+              fail=1
+            fi
+          done < <(grep -rl '^kind: Secret' --include='*.yaml' clusters/)
+          if grep -rnE 'https://(discord|hooks\.slack)\.com/api/webhooks/[0-9]' --include='*.yaml' clusters/ | grep -v 'ENC\['; then
+            echo "::error::plaintext webhook URL committed"
+            fail=1
+          fi
+          exit $fail

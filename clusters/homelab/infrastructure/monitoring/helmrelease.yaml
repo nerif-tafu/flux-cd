@@ -57,15 +57,30 @@ spec:
       enabled: true
       alertmanagerSpec:
         retention: 120h
-        # discord_configs.content — the only field that produces a real Discord
-        # ping — was added in Alertmanager v0.28.0. Chart 55.0.0 defaults to
-        # v0.26.0, which silently ignores it. Pinned here so @mentions work.
-        # This is a newer Alertmanager than prometheus-operator v0.70.0 ships
-        # with; if it misbehaves, drop this image block and the `content:` lines
-        # below and alerts still deliver, just without the ping.
-        # The real fix is upgrading kube-prometheus-stack off 55.0.0.
-        image:
-          tag: v0.28.1
+        # NOTE: no image override here on purpose.
+        #
+        # discord_configs is the natural fit, but prometheus-operator v0.70.0
+        # (chart 55.0.0) validates this config with its own vendored parser
+        # BEFORE generating the StatefulSet, and that parser predates both
+        # `content` and `webhook_url_file`:
+        #
+        #   sync "monitoring/kube-prometheus-stack-alertmanager" failed:
+        #   provision alertmanager configuration: failed to initialize from
+        #   secret: field content not found in type config.plain
+        #   ...field webhook_url_file not found in type config.plain
+        #
+        # The operator gatekeeps, so pinning a newer Alertmanager image does
+        # not help — it never gets applied. Hence slack_configs below, which
+        # v0.70.0 does understand, pointed at Discord's Slack-compatible
+        # endpoint. Trade-off: the body lands in an attachment, which Discord
+        # renders as an embed, and mentions inside embeds do not ping.
+        #
+        # To get @mentions back: upgrade kube-prometheus-stack to a version
+        # whose operator understands the modern schema, then swap these
+        # receivers back to discord_configs with webhook_url_file +
+        # content: '<@107411599001710592>' and pin alertmanager >= v0.28.0.
+        # The bare (non-/slack) URL is already in the secret for that day.
+        #
         # Mounts at /etc/alertmanager/secrets/alertmanager-discord-webhook/<key>
         secrets:
           - alertmanager-discord-webhook
@@ -144,32 +159,42 @@ spec:
         receivers:
           - name: 'null'
 
+          # Deliberately minimal attachments: Discord's Slack-compat endpoint
+          # supports a subset of Slack's schema and 400s on some fields, so no
+          # fields/actions/footer here.
           - name: discord-critical
-            discord_configs:
-              - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord-webhook/cluster-webhook-url
+            slack_configs:
+              - api_url_file: /etc/alertmanager/secrets/alertmanager-discord-webhook/cluster-webhook-url-slack
+                channel: homelab-cluster
+                username: alertmanager
                 send_resolved: true
-                # Mentions only ping from `content`; text inside embeds does not.
-                content: '<@107411599001710592>'
-                title: '{{ if eq .Status "firing" }}🔴 [{{ .Alerts.Firing | len }}] {{ else }}✅ RESOLVED {{ end }}{{ .CommonLabels.alertname }}'
-                message: |-
+                color: '{{ if eq .Status "firing" }}#d93f3f{{ else }}#2eb886{{ end }}'
+                title: '{{ if eq .Status "firing" }}[CRITICAL x{{ .Alerts.Firing | len }}] {{ else }}[RESOLVED] {{ end }}{{ .CommonLabels.alertname }}'
+                text: |-
                   {{ range .Alerts -}}
-                  **{{ .Annotations.summary }}**
+                  *{{ .Annotations.summary }}*
                   {{ .Annotations.description }}
-                  {{ with .Labels.namespace }}`ns={{ . }}` {{ end }}{{ with .Labels.pod }}`pod={{ . }}` {{ end }}{{ with .Labels.node }}`node={{ . }}`{{ end }}
+                  {{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}` {{ end }}{{ with .Labels.node }}node=`{{ . }}`{{ end }}
                   {{ end }}
+                footer: ''
+                short_fields: false
 
           - name: discord-warning
-            discord_configs:
-              - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord-webhook/cluster-webhook-url
+            slack_configs:
+              - api_url_file: /etc/alertmanager/secrets/alertmanager-discord-webhook/cluster-webhook-url-slack
+                channel: homelab-cluster
+                username: alertmanager
                 send_resolved: true
-                # No content field: warnings post silently, no ping.
-                title: '{{ if eq .Status "firing" }}🟠 [{{ .Alerts.Firing | len }}] {{ else }}✅ RESOLVED {{ end }}{{ .CommonLabels.alertname }}'
-                message: |-
+                color: '{{ if eq .Status "firing" }}#d9a13f{{ else }}#2eb886{{ end }}'
+                title: '{{ if eq .Status "firing" }}[warning x{{ .Alerts.Firing | len }}] {{ else }}[RESOLVED] {{ end }}{{ .CommonLabels.alertname }}'
+                text: |-
                   {{ range .Alerts -}}
-                  **{{ .Annotations.summary }}**
+                  *{{ .Annotations.summary }}*
                   {{ .Annotations.description }}
-                  {{ with .Labels.namespace }}`ns={{ . }}` {{ end }}{{ with .Labels.pod }}`pod={{ . }}` {{ end }}{{ with .Labels.node }}`node={{ . }}`{{ end }}
+                  {{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}` {{ end }}{{ with .Labels.node }}node=`{{ . }}`{{ end }}
                   {{ end }}
+                footer: ''
+                short_fields: false
 
         # Heartbeat: Watchdog is routed to 'null' above because it fires every
         # 30s. To prove the whole pipeline is alive, point a free dead-man's-switch
@@ -177,7 +202,11 @@ spec:
         # and let it alert you by email if the pings stop. Discord is the wrong
         # place for a heartbeat — you would learn to ignore it.
         #
-        # Fallback if discord_configs proves incompatible with operator v0.70.0:
-        # replace each receiver with slack_configs pointed at the same webhook plus
-        # a /slack suffix (Discord accepts Slack-format payloads there), using
-        # `text:` for the body — mentions in `text` do ping.
+        # On @mentions: there is no way to get a real ping out of this receiver.
+        # Alertmanager's Slack payload carries the body inside attachments[] and
+        # sends no top-level text, so Discord always renders an embed — and a
+        # mention inside an embed does not notify anyone. Putting the mention in
+        # title: or text: would look right and silently never ping.
+        # Pings require discord_configs + content:, which needs the chart upgrade
+        # described above. Until then, critical alerts are visually distinct
+        # (red, [CRITICAL xN]) but silent.

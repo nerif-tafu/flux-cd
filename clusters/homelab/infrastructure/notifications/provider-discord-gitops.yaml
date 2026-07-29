@@ -1,0 +1,14 @@
+# Discord webhook for the #homelab-gitops channel.
+# Flux posts to {address}/slack (Discord's Slack-compatible endpoint) using embeds.
+# Embeds cannot @mention — pings for GitOps failures come from the Prometheus
+# side instead (see infrastructure/monitoring/rules-flux.yaml).
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: discord-gitops
+  namespace: flux-system
+spec:
+  type: discord
+  username: flux
+  secretRef:
+    name: discord-gitops-webhook

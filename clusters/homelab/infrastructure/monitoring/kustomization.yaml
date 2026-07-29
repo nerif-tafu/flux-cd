@@ -3,8 +3,14 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - helmrepository.yaml
+  - alertmanager-discord-webhook-secret.yaml
   - helmrelease.yaml
   - certificate.yaml
   - ingress.yaml
   - loki-datasource-service.yaml
   - dashboard-homelab-main.yaml
+  - podmonitor-flux.yaml
+  - rules-longhorn.yaml
+  - rules-cert-manager.yaml
+  - rules-traefik.yaml
+  - rules-flux.yaml

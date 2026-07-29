@@ -1,0 +1,52 @@
+# Reconciliation failures across the whole GitOps pipeline.
+#
+# eventSources cannot use a wildcard namespace — notification-controller defaults
+# an omitted namespace to the Alert's own namespace, so every namespace that holds
+# a HelmRelease must be listed explicitly. Add a line here when a new namespace
+# gains a HelmRelease, or its failures will be silent.
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: gitops-errors
+  namespace: flux-system
+spec:
+  providerRef:
+    name: discord-gitops
+  eventSeverity: error
+  eventMetadata:
+    cluster: homelab
+  eventSources:
+    # Sources and Kustomizations (all live in flux-system)
+    - kind: GitRepository
+      name: '*'
+    - kind: HelmRepository
+      name: '*'
+    - kind: Kustomization
+      name: '*'
+    # Image automation — scan failures, auth failures, push failures.
+    # ImageUpdateAutomation is deliberately absent: it is covered by the
+    # image-updates Alert, which runs at info severity and so already
+    # includes its errors. Listing it here too would double-post.
+    - kind: ImageRepository
+      name: '*'
+    - kind: ImagePolicy
+      name: '*'
+    # HelmReleases, one entry per namespace that has one.
+    - kind: HelmRelease
+      name: '*'
+      namespace: cert-manager
+    - kind: HelmRelease
+      name: '*'
+      namespace: logging
+    - kind: HelmRelease
+      name: '*'
+      namespace: longhorn-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: metallb-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: monitoring
+    - kind: HelmRelease
+      name: '*'
+      namespace: traefik

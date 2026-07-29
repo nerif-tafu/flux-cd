@@ -1,0 +1,108 @@
+# Longhorn has no default alerting rules in kube-prometheus-stack; these are ours.
+# Metrics come from longhorn-manager, already scraped via
+# infrastructure/longhorn/helmrelease.yaml (metrics.serviceMonitor.enabled: true).
+#
+# longhorn_volume_robustness: 0=unknown 1=healthy 2=degraded 3=faulted
+# longhorn_node_status: 0=false 1=true, keyed by the `condition` label
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: longhorn
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-alerts
+spec:
+  groups:
+    - name: longhorn.volumes
+      rules:
+        - alert: LonghornVolumeFaulted
+          # All replicas unusable — the volume is offline and data is at risk.
+          expr: longhorn_volume_robustness == 3
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Longhorn volume {{ $labels.volume }} is FAULTED"
+            description: >-
+              Volume {{ $labels.volume }} on node {{ $labels.node }} has no usable
+              replicas. The workload using it is down and data may be unrecoverable
+              without a backup.
+
+        - alert: LonghornVolumeDegraded
+          # Running on fewer replicas than configured. Normal for a few minutes
+          # after a node reboot, so the 30m window keeps reboots quiet.
+          expr: longhorn_volume_robustness == 2
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Longhorn volume {{ $labels.volume }} degraded for 30m"
+            description: >-
+              Volume {{ $labels.volume }} is running with reduced replicas and has
+              not rebuilt. Check whether a node is down or a disk is out of space.
+
+        - alert: LonghornVolumeRobustnessUnknown
+          expr: longhorn_volume_robustness == 0
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Longhorn cannot determine health of volume {{ $labels.volume }}"
+            description: >-
+              Volume {{ $labels.volume }} has reported unknown robustness for 30m,
+              which usually means longhorn-manager lost track of its replicas.
+
+    - name: longhorn.nodes
+      rules:
+        - alert: LonghornNodeNotReady
+          expr: longhorn_node_status{condition="ready"} == 0
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Longhorn node {{ $labels.node }} is not ready"
+            description: >-
+              Longhorn cannot use node {{ $labels.node }}. Volumes with replicas
+              there are degraded and new volumes will not schedule to it.
+
+        - alert: LonghornNodeSchedulingDisabled
+          # Long window: disabling scheduling is often deliberate during maintenance.
+          # This is here to catch the case where it was never turned back on.
+          expr: longhorn_node_status{condition="allowScheduling"} == 0
+          for: 6h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Longhorn scheduling disabled on {{ $labels.node }} for 6h"
+            description: >-
+              Node {{ $labels.node }} has had scheduling disabled for 6 hours.
+              If maintenance is finished, re-enable it or replicas will keep
+              concentrating on the remaining nodes.
+
+    - name: longhorn.capacity
+      rules:
+        - alert: LonghornDiskFillingUp
+          expr: (longhorn_disk_usage_bytes / longhorn_disk_capacity_bytes) > 0.80
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Longhorn disk {{ $labels.disk }} on {{ $labels.node }} is {{ $value | humanizePercentage }} full"
+            description: >-
+              Longhorn stops scheduling new replicas as disks fill. Free space or
+              add capacity before this reaches the eviction threshold.
+
+        - alert: LonghornDiskAlmostFull
+          expr: (longhorn_disk_usage_bytes / longhorn_disk_capacity_bytes) > 0.90
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Longhorn disk {{ $labels.disk }} on {{ $labels.node }} is {{ $value | humanizePercentage }} full"
+            description: >-
+              Replica rebuilds will start failing. Free space on {{ $labels.node }} now.
+
+# Not covered here: backup success/failure. Longhorn 1.6 exposes no usable
+# recurring-job metrics, and no backupTarget is configured on this cluster yet.
+# Once backups exist, the reliable signal is a Kubernetes CronJob/Job failure
+# alert rather than a Longhorn metric.

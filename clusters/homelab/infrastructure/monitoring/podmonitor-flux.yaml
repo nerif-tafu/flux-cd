@@ -1,0 +1,33 @@
+# gotk-components.yaml exposes controller metrics on the http-prom port (8080)
+# but ships no PodMonitor, so nothing scrapes them out of the box. Without this,
+# rules-flux.yaml can never fire.
+#
+# Prometheus is configured with podMonitorSelector: {} and
+# podMonitorNamespaceSelector: {} (see helmrelease.yaml), so this is picked up
+# from any namespace. The resulting job label is "<namespace>/<name>", i.e.
+# flux-system/flux-controllers — which is what rules-flux.yaml matches on.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: flux-controllers
+  namespace: flux-system
+  labels:
+    app.kubernetes.io/part-of: flux
+spec:
+  namespaceSelector:
+    matchNames:
+      - flux-system
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - helm-controller
+          - image-automation-controller
+          - image-reflector-controller
+          - kustomize-controller
+          - notification-controller
+          - source-controller
+  podMetricsEndpoints:
+    - port: http-prom
+      interval: 60s

@@ -1,0 +1,69 @@
+# Flux health via Prometheus, deliberately overlapping with notification-controller.
+#
+# Why both: the Discord Provider gives rich, immediate, per-event messages in
+# #homelab-gitops, but Flux posts through Discord embeds, which cannot @mention.
+# These rules route the same failures through Alertmanager into #homelab-cluster,
+# where the critical receiver does ping. They also catch the case the Provider
+# cannot: notification-controller itself being broken.
+#
+# Requires podmonitor-flux.yaml — gotk-components.yaml ships prometheus.io/*
+# annotations but no PodMonitor, so nothing scrapes these metrics by default.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: flux
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-alerts
+spec:
+  groups:
+    - name: flux.reconciliation
+      rules:
+        - alert: FluxReconciliationFailure
+          # Upstream Flux expression. The `* 2 == 1` trick matches Ready=False
+          # while excluding objects that are merely Deleted.
+          # `exported_namespace` (not `namespace`) is correct: Prometheus renames
+          # the metric's own namespace label to avoid colliding with the pod's.
+          expr: |
+            max(gotk_reconcile_condition{status="False", type="Ready"}) by (exported_namespace, name, kind)
+              + on(exported_namespace, name, kind)
+            (max(gotk_reconcile_condition{status="Deleted"}) by (exported_namespace, name, kind)) * 2
+            == 1
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Flux {{ $labels.kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} has been failing for 15m"
+            description: >-
+              This object has not reconciled successfully. While it is failing, the
+              cluster is drifting from git. Investigate with:
+              flux get all -A --status-selector ready=false
+
+        - alert: FluxSuspended
+          # A suspended object looks healthy but silently ignores git.
+          expr: max(gotk_suspend_status) by (exported_namespace, name, kind) == 1
+          for: 6h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Flux {{ $labels.kind }} {{ $labels.exported_namespace }}/{{ $labels.name }} suspended for 6h"
+            description: >-
+              Reconciliation is paused, so changes committed to git are not being
+              applied to this object. Resume it if the pause was temporary.
+
+    - name: flux.controllers
+      rules:
+        - alert: FluxControllerDown
+          # If this fires, the Discord Provider is probably also not delivering —
+          # which is exactly why this alert goes down the Alertmanager path instead.
+          expr: absent(up{job="flux-system/flux-controllers"} == 1)
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Flux controllers are not being scraped"
+            description: >-
+              No Flux controller metrics for 15 minutes. Either the controllers are
+              down — in which case GitOps has stopped entirely and Discord alerts
+              from notification-controller will not arrive either — or the PodMonitor
+              stopped matching.

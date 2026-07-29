@@ -57,3 +57,127 @@ spec:
       enabled: true
       alertmanagerSpec:
         retention: 120h
+        # discord_configs.content — the only field that produces a real Discord
+        # ping — was added in Alertmanager v0.28.0. Chart 55.0.0 defaults to
+        # v0.26.0, which silently ignores it. Pinned here so @mentions work.
+        # This is a newer Alertmanager than prometheus-operator v0.70.0 ships
+        # with; if it misbehaves, drop this image block and the `content:` lines
+        # below and alerts still deliver, just without the ping.
+        # The real fix is upgrading kube-prometheus-stack off 55.0.0.
+        image:
+          tag: v0.28.1
+        # Mounts at /etc/alertmanager/secrets/alertmanager-discord-webhook/<key>
+        secrets:
+          - alertmanager-discord-webhook
+      config:
+        global:
+          resolve_timeout: 5m
+
+        route:
+          receiver: discord-warning
+          # Group by alert + namespace so one bad node produces a few messages,
+          # not one per pod.
+          group_by: ['alertname', 'namespace']
+          group_wait: 45s
+          group_interval: 5m
+          # Sustained problems re-notify twice a day rather than every 4h.
+          repeat_interval: 12h
+          routes:
+            # Watchdog fires constantly by design — it is the dead-man's switch.
+            # Drop it here; see the heartbeat note at the bottom of this file.
+            - receiver: 'null'
+              matchers:
+                - alertname = "Watchdog"
+            # k3s embeds these components and does not expose scrape targets for
+            # them, so the stock rules can never be satisfied. KubeProxyDown in
+            # particular has been firing continuously on this cluster.
+            - receiver: 'null'
+              matchers:
+                - alertname =~ "KubeProxyDown|KubeSchedulerDown|KubeControllerManagerDown|KubeEtcdDown|InfoInhibitor"
+            # CPU throttling is meaningless until resource requests exist on the
+            # 30 deployments that currently have none. Re-enable after that.
+            - receiver: 'null'
+              matchers:
+                - alertname =~ "CPUThrottlingHigh|KubeCPUOvercommit|KubeMemoryOvercommit"
+            # Promoted to the pinging receiver despite shipping as severity=warning
+            # upstream. Verified against the live cluster: KubeNodeNotReady and
+            # KubeNodeUnreachable are both firing for black-03 at severity=warning,
+            # and a dead node is exactly the case that should ping rather than post
+            # silently. Same for a volume that is filling.
+            - receiver: discord-critical
+              matchers:
+                - alertname =~ "KubeNodeNotReady|KubeNodeUnreachable|KubePersistentVolumeFillingUp|KubePersistentVolumeErrors"
+              group_wait: 15s
+              repeat_interval: 4h
+            - receiver: discord-critical
+              matchers:
+                - severity = "critical"
+              group_wait: 15s
+              repeat_interval: 4h
+            - receiver: discord-warning
+              matchers:
+                - severity =~ "warning|info"
+
+        inhibit_rules:
+          # Don't send the warning version of something already reported critical.
+          - source_matchers: ['severity = "critical"']
+            target_matchers: ['severity = "warning"']
+            equal: ['alertname', 'namespace']
+          # A dead node produces a cascade. Report the node, suppress the fallout.
+          # The target list was built from what black-03 is actually generating
+          # right now: 7x KubeDaemonSetRolloutStuck, 6x KubeDaemonSetMisScheduled,
+          # 5x KubePodNotReady, 4x KubeDeploymentReplicasMismatch, 3x
+          # KubeContainerWaiting, 1x KubeStatefulSetReplicasMismatch. Without this
+          # rule, one dead node is ~26 Discord messages.
+          - source_matchers: ['alertname =~ "KubeNodeNotReady|KubeNodeUnreachable"']
+            target_matchers:
+              - 'alertname =~ "KubePodNotReady|KubePodCrashLooping|KubeContainerWaiting|KubeDeploymentReplicasMismatch|KubeStatefulSetReplicasMismatch|KubeDaemonSetMisScheduled|KubeDaemonSetRolloutStuck|LonghornNodeNotReady|LonghornVolumeDegraded|TraefikBackendDown"'
+          # A faulted volume is already degraded; only say it once.
+          - source_matchers: ['alertname = "LonghornVolumeFaulted"']
+            target_matchers: ['alertname = "LonghornVolumeDegraded"']
+            equal: ['volume']
+          # Expiring-critical supersedes expiring-soon for the same certificate.
+          - source_matchers: ['alertname = "CertManagerCertExpiringCritical"']
+            target_matchers: ['alertname = "CertManagerCertExpiringSoon"']
+            equal: ['namespace', 'name']
+
+        receivers:
+          - name: 'null'
+
+          - name: discord-critical
+            discord_configs:
+              - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord-webhook/cluster-webhook-url
+                send_resolved: true
+                # Mentions only ping from `content`; text inside embeds does not.
+                content: '<@107411599001710592>'
+                title: '{{ if eq .Status "firing" }}🔴 [{{ .Alerts.Firing | len }}] {{ else }}✅ RESOLVED {{ end }}{{ .CommonLabels.alertname }}'
+                message: |-
+                  {{ range .Alerts -}}
+                  **{{ .Annotations.summary }}**
+                  {{ .Annotations.description }}
+                  {{ with .Labels.namespace }}`ns={{ . }}` {{ end }}{{ with .Labels.pod }}`pod={{ . }}` {{ end }}{{ with .Labels.node }}`node={{ . }}`{{ end }}
+                  {{ end }}
+
+          - name: discord-warning
+            discord_configs:
+              - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord-webhook/cluster-webhook-url
+                send_resolved: true
+                # No content field: warnings post silently, no ping.
+                title: '{{ if eq .Status "firing" }}🟠 [{{ .Alerts.Firing | len }}] {{ else }}✅ RESOLVED {{ end }}{{ .CommonLabels.alertname }}'
+                message: |-
+                  {{ range .Alerts -}}
+                  **{{ .Annotations.summary }}**
+                  {{ .Annotations.description }}
+                  {{ with .Labels.namespace }}`ns={{ . }}` {{ end }}{{ with .Labels.pod }}`pod={{ . }}` {{ end }}{{ with .Labels.node }}`node={{ . }}`{{ end }}
+                  {{ end }}
+
+        # Heartbeat: Watchdog is routed to 'null' above because it fires every
+        # 30s. To prove the whole pipeline is alive, point a free dead-man's-switch
+        # service (healthchecks.io, Better Stack) at Watchdog via a webhook receiver
+        # and let it alert you by email if the pings stop. Discord is the wrong
+        # place for a heartbeat — you would learn to ignore it.
+        #
+        # Fallback if discord_configs proves incompatible with operator v0.70.0:
+        # replace each receiver with slack_configs pointed at the same webhook plus
+        # a /slack suffix (Discord accepts Slack-format payloads there), using
+        # `text:` for the body — mentions in `text` do ping.

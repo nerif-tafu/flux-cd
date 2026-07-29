@@ -1,0 +1,107 @@
+# Traefik alerts, including the closest thing to a fail2ban signal that exists
+# as a metric.
+#
+# The tomMoulard/fail2ban plugin exports no Prometheus metrics at all — it only
+# writes to Traefik's stdout. What it does do is answer 403 to every banned
+# request, and Traefik counts those at the entrypoint. So a 403 surge on the
+# public instance IS the ban signal, one step removed. Exact ban lines (which IP,
+# for how long) need Loki ruler rules instead — see the note at the bottom.
+#
+# LABEL CAVEAT: the `job` values below assume the Traefik chart names its metrics
+# Services <release>-metrics, giving job="traefik-public-metrics". This has not
+# been verified against the live cluster. Confirm with:
+#   sum by (job) (traefik_entrypoint_requests_total)
+# and correct the matchers if they differ, otherwise these rules silently never fire.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: traefik
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-alerts
+spec:
+  groups:
+    - name: traefik.health
+      rules:
+        - alert: TraefikConfigReloadFailing
+          # Traefik keeps serving the last good config, so this is invisible
+          # without an alert: new Ingresses just never appear.
+          expr: traefik_config_last_reload_failure > traefik_config_last_reload_success
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Traefik ({{ $labels.job }}) is failing to reload its config"
+            description: >-
+              Traefik rejected the current dynamic configuration and is still running
+              the previous one. New or changed Ingress/IngressRoute objects are not
+              taking effect. Check the Traefik pod logs for the parse error.
+
+        - alert: TraefikBackendDown
+          expr: traefik_service_server_up == 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Traefik backend {{ $labels.service }} has no healthy servers"
+            description: >-
+              Traefik cannot reach {{ $labels.url }} for service {{ $labels.service }}.
+              Requests to it are returning 502.
+
+        - alert: TraefikHigh5xxRate
+          expr: |
+            (
+              sum by (job, service) (rate(traefik_service_requests_total{code=~"5.."}[5m]))
+              /
+              sum by (job, service) (rate(traefik_service_requests_total[5m]))
+            ) > 0.10
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.service }} is returning {{ $value | humanizePercentage }} 5xx"
+            description: >-
+              Sustained server errors through Traefik for service {{ $labels.service }}.
+
+    - name: traefik.fail2ban
+      rules:
+        - alert: Fail2banBlockingSurge
+          # Steady-state 403s on the public entrypoint are near zero. A sustained
+          # surge means fail2ban is actively banning, i.e. someone is scanning you.
+          # Informational, not urgent — the middleware is doing its job.
+          expr: |
+            sum(rate(traefik_entrypoint_requests_total{job=~"traefik-public.*", code="403"}[5m])) > 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "fail2ban is blocking {{ $value | printf \"%.1f\" }} req/s on the public entrypoint"
+            description: >-
+              Sustained 403s from public Traefik, which is what the fail2ban
+              middleware returns to banned IPs. Usually a scanner. Worth a look if
+              it persists for hours, or if legitimate users report being locked out —
+              note the allowlist in middleware-public-fail2ban.yaml currently exempts
+              most of RIPE space, so a real attacker may not be getting banned at all.
+
+        - alert: PublicEndpoint4xxFlood
+          # Much higher threshold: this is "something is hammering us hard enough
+          # that fail2ban is not keeping up".
+          expr: |
+            sum(rate(traefik_entrypoint_requests_total{job=~"traefik-public.*", code=~"4.."}[5m])) > 20
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Public Traefik seeing {{ $value | printf \"%.0f\" }} 4xx/s"
+            description: >-
+              Heavy scanning or a brute-force attempt against a public hostname that
+              fail2ban is not stopping. Check which router is being hit:
+              topk(5, sum by (router) (rate(traefik_router_requests_total{code=~"4.."}[5m])))
+
+# Exact ban events (source IP, ban duration) live only in Traefik's stdout, which
+# promtail already ships to Loki. Turning those into alerts needs the Loki ruler
+# enabled (loki.rulerConfig + an alertmanager_url pointing at kube-prometheus-stack)
+# plus a rules ConfigMap. That is a separate change and needs a real ban line to
+# write the matcher against — the plugin's log wording is not documented.
+# In the meantime you can query them ad hoc in Grafana:
+#   {namespace="traefik"} |~ "(?i)fail2ban"

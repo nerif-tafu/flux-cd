@@ -1,0 +1,26 @@
+# Image bumps committed by flux-bot, plus any ImageUpdateAutomation errors.
+#
+# eventSeverity: info means "info and above", so this also carries the error
+# events for ImageUpdateAutomation — which is why that kind is not listed in
+# the gitops-errors Alert.
+#
+# Volume: roughly one message per image bump, so a handful a day. If that turns
+# out to be too chatty, the cheapest knob is the exclusionList below rather than
+# deleting the Alert — you still want the failures.
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: image-updates
+  namespace: flux-system
+spec:
+  providerRef:
+    name: discord-gitops
+  eventSeverity: info
+  eventMetadata:
+    cluster: homelab
+  eventSources:
+    - kind: ImageUpdateAutomation
+      name: '*'
+  # Uncomment to keep failures but drop the routine "committed and pushed" line:
+  # exclusionList:
+  #   - "^committed and pushed"

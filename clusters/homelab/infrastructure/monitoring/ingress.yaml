@@ -6,8 +6,15 @@ metadata:
   namespace: monitoring
   labels:
     traefik.tafu.casa/instance: internal
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  # Deliberately no cert-manager.io/cluster-issuer annotation. certificate.yaml
+  # in this directory already requests grafana-cl-tafu-casa-tls explicitly. With
+  # the annotation as well, cert-manager's ingress-shim created a SECOND
+  # Certificate named after the secret, and the two fought over it: the explicit
+  # one won and stayed Ready, the shim's copy sat Ready=False for 150 days with
+  # "Secret was issued for grafana... you might have two conflicting Certificates
+  # pointing to the same secret". TLS worked throughout, so nothing surfaced it.
+  # proxmox, unifi, wg-easy and longhorn all pair certificate.yaml with an
+  # annotation-free Ingress; this brings monitoring in line.
 spec:
   ingressClassName: traefik-internal
   rules:

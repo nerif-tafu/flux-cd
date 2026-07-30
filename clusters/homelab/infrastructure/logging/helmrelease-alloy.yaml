@@ -71,14 +71,37 @@ spec:
               target_label  = "container"
             }
 
-            // promtail derives `app` from app.kubernetes.io/name, falling back
-            // to the plain `app` label. The regex picks the first non-empty
-            // value out of the ";"-joined pair.
+            // Controller name with the ReplicaSet hash suffix stripped, used as
+            // the third fallback for `app` below. Temp label; anything starting
+            // "__" is dropped before the target set is emitted.
             rule {
-              source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name", "__meta_kubernetes_pod_label_app"]
+              source_labels = ["__meta_kubernetes_pod_controller_name"]
+              regex         = "([0-9a-z-.]+?)(-[0-9a-f]{8,10})?"
+              target_label  = "__tmp_controller_name"
+            }
+
+            // promtail falls through FOUR sources for `app`, not two. Getting
+            // this wrong left `app` empty on pods carrying neither
+            // app.kubernetes.io/name nor a plain `app` label, which in turn
+            // produced job="<namespace>/" instead of "<namespace>/<app>" --
+            // visible on the node-debugger pods during the first Alloy rollout.
+            // The regex takes the first non-empty value from the ";"-joined set.
+            rule {
+              source_labels = [
+                "__meta_kubernetes_pod_label_app_kubernetes_io_name",
+                "__meta_kubernetes_pod_label_app",
+                "__tmp_controller_name",
+                "__meta_kubernetes_pod_name",
+              ]
               separator     = ";"
               regex         = "^;*([^;]+)(;.*)?$"
               target_label  = "app"
+            }
+            rule {
+              source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_instance", "__meta_kubernetes_pod_label_instance"]
+              separator     = ";"
+              regex         = "^;*([^;]+)(;.*)?$"
+              target_label  = "instance"
             }
             rule {
               source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_component", "__meta_kubernetes_pod_label_component"]

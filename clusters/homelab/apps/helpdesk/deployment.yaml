@@ -20,6 +20,24 @@ spec:
       containers:
         - name: helpdesk
           image: ghcr.io/nerif-tafu/helpdesk:1.3.0 # {"$imagepolicy": "flux-system:helpdesk"}
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 6
           ports:
             - containerPort: 3000
           env:

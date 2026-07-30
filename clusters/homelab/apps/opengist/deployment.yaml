@@ -18,6 +18,24 @@ spec:
       containers:
         - name: opengist
           image: ghcr.io/thomiceli/opengist:1.15.0 # {"$imagepolicy": "flux-system:opengist"}
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            tcpSocket:
+              port: 6157
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 6157
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 6
           env:
             - name: OG_OPENGIST_HOME
               value: /opengist

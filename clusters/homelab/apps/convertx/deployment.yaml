@@ -18,6 +18,24 @@ spec:
       containers:
         - name: convertx
           image: ghcr.io/c4illin/convertx:v0.9.0 # {"$imagepolicy": "flux-system:convertx"}
+          resources:
+            requests:
+              cpu: 20m
+              memory: 384Mi
+            limits:
+              memory: 1Gi
+          readinessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 180
+            periodSeconds: 30
+            failureThreshold: 6
           env:
             - name: JWT_SECRET
               valueFrom:

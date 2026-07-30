@@ -36,6 +36,24 @@ spec:
       containers:
         - name: filebrowser
           image: ghcr.io/gtsteffaniak/filebrowser:1.5.0-stable # {"$imagepolicy": "flux-system:filebrowser"}
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          readinessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 6
           env:
             - name: FILEBROWSER_CONFIG
               value: /home/filebrowser/data/config.yaml

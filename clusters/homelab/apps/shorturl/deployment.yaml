@@ -18,6 +18,24 @@ spec:
       containers:
         - name: shorturl
           image: ghcr.io/nerif-tafu/shorturl:v1.0.1 # {"$imagepolicy": "flux-system:shorturl"}
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 6
           ports:
             - containerPort: 3000
           volumeMounts:

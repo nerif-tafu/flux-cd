@@ -18,6 +18,24 @@ spec:
       containers:
         - name: rust-breeder
           image: ghcr.io/nerif-tafu/rust-breeder:v3.3.0 # {"$imagepolicy": "flux-system:rust-breeder"}
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 80
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 6
           ports:
             - containerPort: 80
           volumeMounts:

@@ -18,6 +18,24 @@ spec:
       containers:
         - name: rust-plus-provider
           image: ghcr.io/nerif-tafu/rust-plus-provider:v1.3.2 # {"$imagepolicy": "flux-system:rust-plus-provider"}
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          readinessProbe:
+            tcpSocket:
+              port: 9443
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 9443
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 6
           env:
             # Write rustPlus.json to the mounted volume. Without this the FCM
             # credentials and paired servers are written into the image layer

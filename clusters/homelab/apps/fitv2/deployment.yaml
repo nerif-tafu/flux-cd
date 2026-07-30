@@ -22,6 +22,24 @@ spec:
       containers:
         - name: fitv2
           image: ghcr.io/nerif-tafu/fitv2:v1.3.2 # {"$imagepolicy": "flux-system:fitv2"}
+          resources:
+            requests:
+              cpu: 10m
+              memory: 192Mi
+            limits:
+              memory: 512Mi
+          readinessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 6
           ports:
             - containerPort: 3000
           volumeMounts:

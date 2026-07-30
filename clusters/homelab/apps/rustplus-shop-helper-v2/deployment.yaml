@@ -20,6 +20,24 @@ spec:
       containers:
         - name: rustplus-shop-helper-v2
           image: ghcr.io/nerif-tafu/rustplus-shop-helper-v2:v1.4.2 # {"$imagepolicy": "flux-system:rustplus-shop-helper-v2"}
+          resources:
+            requests:
+              cpu: 20m
+              memory: 576Mi
+            limits:
+              memory: 1536Mi
+          readinessProbe:
+            tcpSocket:
+              port: 3001
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 3001
+            initialDelaySeconds: 180
+            periodSeconds: 30
+            failureThreshold: 6
           env:
             # Rate limit per visitor rather than per proxy. Without this every
             # request is keyed to the Traefik pod, so all users share one bucket

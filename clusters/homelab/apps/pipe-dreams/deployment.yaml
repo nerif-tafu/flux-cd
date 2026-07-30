@@ -18,6 +18,24 @@ spec:
       containers:
         - name: pipe-dreams
           image: ghcr.io/nerif-tafu/pipe-dreams:v1.0.7 # {"$imagepolicy": "flux-system:pipe-dreams"}
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 6
           env:
             # Keep the downloaded item data and images on the mounted volume.
             # Without this they are written into the image layer, so every

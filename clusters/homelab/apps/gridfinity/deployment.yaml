@@ -18,5 +18,23 @@ spec:
       containers:
         - name: gridfinity
           image: ghcr.io/nerif-tafu/infinitygrid-sticker:v1.12.0 # {"$imagepolicy": "flux-system:gridfinity"}
+          resources:
+            requests:
+              cpu: 20m
+              memory: 832Mi
+            limits:
+              memory: 2Gi
+          readinessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 180
+            periodSeconds: 30
+            failureThreshold: 6
           ports:
             - containerPort: 3000

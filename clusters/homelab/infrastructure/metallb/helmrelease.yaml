@@ -9,7 +9,15 @@ spec:
   chart:
     spec:
       chart: metallb
-      version: "0.14.5"
+      # 0.14.5 -> 0.16.1. Values are empty, so nothing to migrate; the
+      # IPAddressPool and L2Advertisement CRs stay on metallb.io/v1beta1.
+      #
+      # This upgrade restarts the speaker DaemonSet, which withdraws and
+      # re-announces every LoadBalancer IP over ARP. 192.168.3.63 carries
+      # WireGuard, so expect a brief blip on the VPN while L2 ownership is
+      # re-established. Tailscale on all four nodes is the fallback path if it
+      # does not come back cleanly.
+      version: "0.16.1"
       sourceRef:
         kind: HelmRepository
         name: metallb

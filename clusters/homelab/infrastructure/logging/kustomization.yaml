@@ -4,5 +4,4 @@ resources:
   - namespace.yaml
   - helmrepository.yaml
   - helmrelease-loki.yaml
-  - helmrelease-promtail.yaml
   - helmrelease-alloy.yaml

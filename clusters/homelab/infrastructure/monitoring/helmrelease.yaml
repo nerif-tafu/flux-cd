@@ -23,6 +23,31 @@ spec:
       prometheusSpec:
         retention: 15d
         retentionSize: 8GB
+        # Was emptyDir, which made `retention: 15d` a promise the storage could
+        # not keep — only 7.5 days were actually held, and a reschedule or
+        # eviction would have taken all of it. Prometheus was BestEffort (no
+        # requests at all) on silver-01, so it was first in line for eviction
+        # under node memory pressure.
+        #
+        # 20Gi against a 8GB retentionSize leaves room for compaction. Three
+        # replicas land on black-01/02/03 (316/355/403 Gi free); silver-01 has
+        # only 17 Gi of scheduling budget so Longhorn will skip it, which is
+        # fine — the engine attaches over the network regardless of where the
+        # pod runs.
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: longhorn
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: 20Gi
+        resources:
+          requests:
+            cpu: 200m
+            memory: 1Gi
+          limits:
+            memory: 3Gi
         serviceMonitorNamespaceSelector: {}
         # IMPORTANT: allow selecting ServiceMonitors across the cluster (e.g. Traefik's)
         # The chart defaults to selecting only ServiceMonitors with release=kube-prometheus-stack.
@@ -54,6 +79,16 @@ spec:
         existingSecret: grafana-admin
         userKey: admin-user
         passwordKey: admin-password
+      # Phase 6: Grafana was also on emptyDir, so its database reset on every
+      # restart. Provisioned dashboards (homelab-main, from a ConfigMap) were
+      # unaffected, but anything created or edited in the UI vanished — as did
+      # users, API keys, preferences and starred dashboards.
+      persistence:
+        enabled: true
+        type: pvc
+        storageClassName: longhorn
+        accessModes: ["ReadWriteOnce"]
+        size: 5Gi
       ingress:
         enabled: false
       service:
@@ -77,6 +112,23 @@ spec:
       enabled: true
       alertmanagerSpec:
         retention: 120h
+        # Also was emptyDir. Alertmanager's alert set is in-memory regardless,
+        # but the notification log and silences live on disk — so a silence set
+        # before going to bed did not survive a reschedule.
+        storage:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: longhorn
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: 2Gi
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
         # NOTE: no image override here on purpose.
         #
         # discord_configs is the natural fit, but prometheus-operator v0.70.0

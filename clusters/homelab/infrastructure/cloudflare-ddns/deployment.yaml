@@ -16,7 +16,13 @@ spec:
     spec:
       containers:
         - name: cloudflare-ddns
-          image: oznu/cloudflare-ddns:latest
+          # Pinned to the digest that was already running, so this change is a
+          # no-op at runtime. oznu/cloudflare-ddns has been archived upstream
+          # since 2021 and :latest will never move again — but an unpinned tag
+          # on the DDNS for the entire domain means a silent, unreproducible
+          # image swap is one registry mishap away. favonia/cloudflare-ddns is
+          # the maintained replacement when there is appetite for a migration.
+          image: oznu/cloudflare-ddns:latest@sha256:19bd73d8aea9641dc329ec18ae693b2b9c33ff7cdc007f368266ce584446f995
           env:
             - name: API_KEY
               valueFrom:

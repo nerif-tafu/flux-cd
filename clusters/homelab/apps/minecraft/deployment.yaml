@@ -17,7 +17,10 @@ spec:
     spec:
       containers:
         - name: minecraft
-          image: docker.io/itzg/minecraft-server:latest
+          # Pinned to the running digest. :latest on a game server means an
+          # upstream major can eat a world save with no warning and no way to
+          # roll back to what was working.
+          image: docker.io/itzg/minecraft-server:latest@sha256:c4717b910b386cc7b12f7d3224349cc84c14c4a50efff8dc6183d43723387579
           env:
             - name: EULA
               value: "TRUE"

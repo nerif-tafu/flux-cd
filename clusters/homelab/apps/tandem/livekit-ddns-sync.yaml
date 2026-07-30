@@ -85,7 +85,11 @@ spec:
       serviceAccountName: livekit-ddns-sync
       containers:
         - name: sync
-          image: bitnami/kubectl:latest
+          # Pinned to the running digest. Bitnami restricted its Docker Hub
+          # catalogue in 2025 and moved most tags to bitnamilegacy; this pod
+          # currently works, but :latest could stop resolving at any point.
+          # rancher/kubectl or alpine/k8s are the stable alternatives.
+          image: bitnami/kubectl:latest@sha256:95de17e6eb92da83a58c90a9df0c4cede634f898d2e6b92ea04f4a6ee6ace08d
           command: ["/bin/sh", "/scripts/sync.sh"]
           env:
             - name: DNS_NAME

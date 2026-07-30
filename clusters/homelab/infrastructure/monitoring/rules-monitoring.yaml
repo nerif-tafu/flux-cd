@@ -1,0 +1,57 @@
+# Health of the monitoring stack itself.
+#
+# Context: on 2026-07-30 black-03 recovered at 16:45:37, and no resolved
+# notification was sent for KubeNodeNotReady / KubeNodeUnreachable. The cause
+# was that Prometheus and Alertmanager both restarted at 16:45:25 and 16:45:33 —
+# the recovery happened inside that window. Prometheus came back, re-evaluated,
+# found the node already Ready and so never fired the alert again; Alertmanager
+# came back with an empty in-memory alert set and was never told about it.
+# There was no firing->resolved edge for anything to report.
+#
+# No configuration prevents that: Alertmanager's alert set is in-memory by
+# design, and persistent storage holds the notification log and silences, not
+# the alerts. What is achievable is making the blind window *visible*, so a
+# missing notification explains itself instead of looking like a broken pipeline.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: monitoring-stack
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/part-of: homelab-alerts
+spec:
+  groups:
+    - name: monitoring.self
+      rules:
+        - alert: MonitoringComponentRestarted
+          # Deliberately NOT changes()/increase()/resets() over a range.
+          # Those need historical samples, and a Prometheus restart destroys
+          # exactly the samples they would need. Verified against the real
+          # 16:45 restart: changes(process_start_time_seconds[2h]) returned 0
+          # for both components, 45 minutes after they had demonstrably
+          # restarted. Any range function is blind to its own storage outage.
+          #
+          # This form reads only the current sample, so it survives the event
+          # it is reporting on.
+          #
+          # container!="config-reloader": both pods run a config-reloader
+          # sidecar that also exports process_start_time_seconds, which would
+          # otherwise produce two alerts per restart.
+          expr: |
+            time() - process_start_time_seconds{
+              job=~"kube-prometheus-stack-(prometheus|alertmanager)",
+              container!="config-reloader"
+            } < 900
+          for: 0m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.job }} restarted {{ $value | humanizeDuration }} ago"
+            description: >-
+              A monitoring component restarted, so alert state was lost. Any
+              condition that cleared during the restart window produced no
+              resolved notification, and any condition that both started and
+              ended inside it was never observed. Treat that window as
+              unmonitored. This alert clears itself 15 minutes after the
+              restart. It fires for deliberate restarts too — a deploy blinds
+              the pipeline exactly as a crash does, so both are worth seeing.

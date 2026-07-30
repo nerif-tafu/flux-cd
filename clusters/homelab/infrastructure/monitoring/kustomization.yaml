@@ -14,3 +14,4 @@ resources:
   - rules-cert-manager.yaml
   - rules-traefik.yaml
   - rules-flux.yaml
+  - rules-monitoring.yaml

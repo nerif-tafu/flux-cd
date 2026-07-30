@@ -1,5 +1,5 @@
 # Conservative auto-update within LiveKit 1.x (skip latest/rc/master).
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
   name: livekit

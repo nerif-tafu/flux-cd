@@ -8818,7 +8818,23 @@ spec:
           - 216.155.64.0/19
       rules:
         enabled: true
-        statuscode: "400,401,403-499"
+        # Was "400,401,403-499", which counted every 4xx including 404. Five of
+        # those in ten minutes earned a one-hour ban, and a single page load
+        # with a missing favicon and a couple of absent source maps can produce
+        # five. The old over-broad allowlist (14% of IPv4) was quietly
+        # compensating for that; tightening it to real GB+CL allocations (4%)
+        # removed the safety net and raised the odds of self-banning.
+        #
+        # Narrowed to authentication failures only. Normal browsing cannot
+        # produce a 401 or 403, so legitimate users are structurally incapable
+        # of tripping this, while brute-force attempts against filebrowser,
+        # opengist and the Ghost admin — the actual risk on a public edge —
+        # still get banned at the same threshold.
+        #
+        # Deliberate trade-off: 404-scanners are no longer banned. They were
+        # never achieving anything with a 404, and catching them was costing
+        # false positives on real users.
+        statuscode: "401,403"
         maxretry: 5
         bantime: "1h"
         findtime: "10m"

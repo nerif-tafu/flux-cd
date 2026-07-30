@@ -44,7 +44,16 @@ spec:
         ruleSelector: {}
     grafana:
       enabled: true
-      # Change password after first login or set admin.existingSecret
+      # Credentials from a SOPS secret rather than the chart default
+      # (admin/prom-operator). Grafana runs on emptyDir here, so its database
+      # is re-initialised on every restart and these env-backed values are
+      # authoritative — dashboards are provisioned from ConfigMaps, so nothing
+      # is lost by that.
+      #   sops -d clusters/homelab/infrastructure/monitoring/grafana-admin-secret.yaml
+      admin:
+        existingSecret: grafana-admin
+        userKey: admin-user
+        passwordKey: admin-password
       ingress:
         enabled: false
       service:

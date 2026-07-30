@@ -1,5 +1,5 @@
 # Prefer :latest (alphabetical asc picks it when repo has latest, main, pr-*).
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
   name: convertx

@@ -9,5 +9,15 @@ resources:
   - companion-01.yaml
   - companion-02.yaml
   - backlight.yaml
-commonLabels:
-  traefik.tafu.casa/instance: internal
+# commonLabels is deprecated in kustomize, but the reason to move is not the
+# warning: commonLabels also injects into spec.selector, which gave every
+# lan-* Service a selector it must not have. Those Services deliberately have
+# no selector so their hand-written Endpoints (the LAN IPs) stay authoritative;
+# a selector hands ownership to the endpoints controller. It happens to work
+# today because the legacy Endpoints path still wins, but it is a latent
+# conflict. includeSelectors: false keeps the metadata label and drops the
+# selector injection.
+labels:
+  - pairs:
+      traefik.tafu.casa/instance: internal
+    includeSelectors: false

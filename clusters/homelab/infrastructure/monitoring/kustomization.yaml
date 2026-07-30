@@ -4,6 +4,7 @@ resources:
   - namespace.yaml
   - helmrepository.yaml
   - alertmanager-discord-webhook-secret.yaml
+  - grafana-admin-secret.yaml
   - helmrelease.yaml
   - certificate.yaml
   - ingress.yaml

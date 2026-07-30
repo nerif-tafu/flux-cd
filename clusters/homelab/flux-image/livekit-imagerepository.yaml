@@ -1,5 +1,5 @@
 # Public Docker Hub image; poll for new v1.x releases.
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageRepository
 metadata:
   name: livekit

@@ -9,13 +9,22 @@ spec:
   chart:
     spec:
       chart: cert-manager
-      version: "v1.14.5"
+      # v1.14.5 was end-of-life. cert-manager supports upgrading across minors
+      # in one step; CRDs ship as chart templates rather than in crds/, so Helm
+      # updates them with the release.
+      version: "v1.21.1"
       sourceRef:
         kind: HelmRepository
         name: jetstack
         namespace: flux-system
   values:
-    installCRDs: true
+    # Replaces the deprecated top-level `installCRDs: true`, which still works
+    # in v1.21.1 but is an alias. keep: true means an uninstall leaves the CRDs
+    # (and therefore every Certificate object) in place rather than cascading
+    # deletes across all 25 certificates.
+    crds:
+      enabled: true
+      keep: true
     prometheus:
       enabled: true
       servicemonitor:

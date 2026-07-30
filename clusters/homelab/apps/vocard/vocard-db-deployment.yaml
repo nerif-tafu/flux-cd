@@ -20,6 +20,12 @@ spec:
       containers:
         - name: mongo
           image: mongo:8
+          resources:
+            requests:
+              cpu: 20m
+              memory: 384Mi
+            limits:
+              memory: 1Gi
           args:
             - --oplogSize=1024
             - --wiredTigerCacheSizeGB=1

@@ -22,6 +22,12 @@ spec:
       containers:
         - name: spotify-tokener
           image: ghcr.io/topi314/spotify-tokener:99e14ac # {"$imagepolicy": "flux-system:spotify-tokener"}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 640Mi
+            limits:
+              memory: 1536Mi
           ports:
             - containerPort: 49152
           env:

@@ -18,6 +18,12 @@ spec:
       containers:
         - name: mysql
           image: mysql:8.0
+          resources:
+            requests:
+              cpu: 20m
+              memory: 576Mi
+            limits:
+              memory: 1536Mi
           ports:
             - name: mysql
               containerPort: 3306

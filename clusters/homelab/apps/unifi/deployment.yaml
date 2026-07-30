@@ -24,6 +24,12 @@ spec:
       containers:
         - name: unifi
           image: docker.io/jacobalberty/unifi:7.3.83 # {"$imagepolicy": "flux-system:unifi"}
+          resources:
+            requests:
+              cpu: 50m
+              memory: 1536Mi
+            limits:
+              memory: 3Gi
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false

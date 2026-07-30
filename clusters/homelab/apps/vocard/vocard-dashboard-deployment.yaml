@@ -22,6 +22,12 @@ spec:
       containers:
         - name: vocard-dashboard
           image: ghcr.io/chocomeow/vocard-dashboard:beta # {"$imagepolicy": "flux-system:vocard-dashboard"}
+          resources:
+            requests:
+              cpu: 20m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
           ports:
             - containerPort: 8080
           volumeMounts:

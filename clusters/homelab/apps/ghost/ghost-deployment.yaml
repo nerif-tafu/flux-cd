@@ -25,6 +25,12 @@ spec:
       containers:
         - name: ghost
           image: docker.io/library/ghost:6.54.1-alpine # {"$imagepolicy": "flux-system:ghost"}
+          resources:
+            requests:
+              cpu: 20m
+              memory: 256Mi
+            limits:
+              memory: 768Mi
           ports:
             - name: http
               containerPort: 2368

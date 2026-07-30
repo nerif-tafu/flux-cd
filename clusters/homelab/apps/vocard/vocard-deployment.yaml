@@ -31,6 +31,12 @@ spec:
       containers:
         - name: vocard
           image: ghcr.io/chocomeow/vocard:beta # {"$imagepolicy": "flux-system:vocard"}
+          resources:
+            requests:
+              cpu: 20m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
           volumeMounts:
             - name: app-data
               mountPath: /app

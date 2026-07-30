@@ -19,6 +19,24 @@ spec:
       containers:
         - name: kag
           image: ghcr.io/nerif-tafu/kag-dedicatedserver:v1.3.4 # {"$imagepolicy": "flux-system:kag"}
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          readinessProbe:
+            tcpSocket:
+              port: 50301
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 50301
+            initialDelaySeconds: 300
+            periodSeconds: 30
+            failureThreshold: 6
           env:
             - name: NAME
               value: "HopHop KAG Server"

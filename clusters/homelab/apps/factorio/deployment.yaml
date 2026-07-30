@@ -38,6 +38,12 @@ spec:
       containers:
         - name: factorio
           image: docker.io/factoriotools/factorio:2.0.77 # {"$imagepolicy": "flux-system:factorio"}
+          resources:
+            requests:
+              cpu: 50m
+              memory: 1536Mi
+            limits:
+              memory: 3Gi
           env:
             - name: PORT
               value: "34197"

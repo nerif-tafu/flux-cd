@@ -21,6 +21,24 @@ spec:
           # upstream major can eat a world save with no warning and no way to
           # roll back to what was working.
           image: docker.io/itzg/minecraft-server:latest@sha256:c4717b910b386cc7b12f7d3224349cc84c14c4a50efff8dc6183d43723387579
+          resources:
+            requests:
+              cpu: 50m
+              memory: 1536Mi
+            limits:
+              memory: 3Gi
+          readinessProbe:
+            tcpSocket:
+              port: 25565
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 25565
+            initialDelaySeconds: 600
+            periodSeconds: 30
+            failureThreshold: 6
           env:
             - name: EULA
               value: "TRUE"

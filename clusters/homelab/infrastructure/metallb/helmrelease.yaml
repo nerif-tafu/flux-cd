@@ -26,5 +26,17 @@ spec:
     crds: CreateReplace
   upgrade:
     crds: CreateReplace
-  values: {}
+  values:
+    # MLB-1: MetalLB 0.15+ deploys frr-k8s by default, which on this cluster
+    # meant a 4-pod DaemonSet at 5 containers each plus a statuscleaner -- 21
+    # containers providing BGP support that is not used. This deployment is
+    # pure layer 2 (IPAddressPool + L2Advertisement, no BGPPeer anywhere), and
+    # every one of those containers declared resources: {}, so they were
+    # BestEffort on a cluster where Phase 3 had just finished eliminating
+    # exactly that.
+    frrk8s:
+      enabled: false
+    speaker:
+      frr:
+        enabled: false
 

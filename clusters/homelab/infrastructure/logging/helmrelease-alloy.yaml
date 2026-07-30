@@ -33,6 +33,14 @@ spec:
   values:
     controller:
       type: daemonset
+      # MON-1: without this nothing scrapes Alloy, so there are no metrics on
+      # log-shipping health at all -- no way to alert on dropped entries, write
+      # failures or a shipper that has quietly stopped. promtail had the same
+      # gap for its entire life here. Prometheus selects ServiceMonitors
+      # cluster-wide (serviceMonitorSelector: {}), so this is picked up without
+      # needing a release label.
+    serviceMonitor:
+      enabled: true
     alloy:
       # Required for file-based tailing: mounts /var/log so the DaemonSet can
       # read /var/log/pods/<uid>/<container>/*.log.

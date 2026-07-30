@@ -6,3 +6,5 @@ resources:
   - helmrelease.yaml
   - ingress.yaml
   - certificate.yaml
+  - ui-auth-secret.yaml
+  - ui-auth-middleware.yaml

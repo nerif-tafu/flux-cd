@@ -5,6 +5,10 @@ metadata:
   namespace: longhorn-system
   labels:
     traefik.tafu.casa/instance: internal
+  annotations:
+    # SEC-1: Longhorn's UI has no auth of its own. Without this, anyone on the
+    # LAN or the VPN can delete any volume in the cluster.
+    traefik.ingress.kubernetes.io/router.middlewares: longhorn-system-longhorn-ui-auth@kubernetescrd
 spec:
   ingressClassName: traefik-internal
   tls:

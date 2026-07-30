@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: node-config
+  labels:
+    # Contains a deliberately privileged, hostNetwork DaemonSet.
+    pod-security.kubernetes.io/enforce: privileged

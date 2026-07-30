@@ -8,7 +8,24 @@ spec:
   chart:
     spec:
       chart: traefik
-      version: "26.0.0"
+      # 26.0.0 (Traefik v2.10.6) -> 41.1.0 (Traefik v3.7.9).
+      #
+      # Verified before upgrading:
+      #   - all 21 IngressRoute/TCP/UDP/Middleware objects are already on the
+      #     traefik.io API group; zero remain on traefik.containo.us, which v3
+      #     drops entirely
+      #   - the fail2ban plugin pinned at v0.8.9 loads under v3.7.9. Confirmed
+      #     empirically by running traefik:v3.7.9 with that plugin: it reported
+      #     "Plugins loaded. plugins=[fail2ban]". This mattered because the
+      #     plugin's last release was April 2024 and neither its repo nor the
+      #     Traefik plugin catalogue state v3 support
+      #   - fail2ban-public uses only `plugin`, none of the middleware fields
+      #     v3 removed (ipWhiteList and friends)
+      #
+      # Chart value schema changes this required:
+      #   logs.access.*        -> accessLog.*        (`logs` is rejected outright)
+      #   ports.<n>.expose:bool -> expose.default:bool
+      version: "41.1.0"
       sourceRef:
         kind: HelmRepository
         name: traefik
@@ -33,10 +50,9 @@ spec:
     additionalArguments:
       - --entrypoints.web.http.redirections.entrypoint.to=:443
       - --entrypoints.web.http.redirections.entrypoint.permanent=true
-    logs:
-      access:
-        enabled: true
-        format: json
+    accessLog:
+      enabled: true
+      format: json
     providers:
       kubernetesCRD:
         labelSelector: "traefik.tafu.casa/instance=public"

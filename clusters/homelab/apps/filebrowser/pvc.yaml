@@ -1,3 +1,13 @@
+# 30Gi, down from 200Gi. The old size booked 600Gi of Longhorn scheduling
+# budget (3 replicas) to store 500KB: a 128KB SQLite database, a config.yaml
+# that comes from a ConfigMap anyway, and one cat.jpg. That was a third of the
+# cluster's entire committed budget, and it was the reason silver-01 sat at 95%
+# with no room for a Prometheus volume.
+#
+# PVCs cannot be shrunk, so this was migrated rather than edited: the volume
+# was archived, the PVC deleted, recreated at this size, and the archive
+# restored. Bulk file storage for files.tafu.casa is destined for the NAS, so
+# this volume only ever needs to hold the database and config.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -9,4 +19,4 @@ spec:
   storageClassName: longhorn
   resources:
     requests:
-      storage: 200Gi
+      storage: 30Gi

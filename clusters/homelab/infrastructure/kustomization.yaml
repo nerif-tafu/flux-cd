@@ -10,5 +10,4 @@ resources:
   - ./monitoring
   - ./logging
   - ./notifications
-  - ./node-config
 

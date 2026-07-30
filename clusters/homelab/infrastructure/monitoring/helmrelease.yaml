@@ -31,6 +31,17 @@ spec:
         podMonitorNamespaceSelector: {}
         podMonitorSelectorNilUsesHelmValues: false
         podMonitorSelector: {}
+        # Same story for PrometheusRules, and it bit us: the chart defaults
+        # ruleSelector to matchLabels{release: kube-prometheus-stack}, so the
+        # PrometheusRules in this directory were created successfully, passed
+        # promtool, showed up in `kubectl get prometheusrule` — and were never
+        # loaded by Prometheus, because they carry
+        # app.kubernetes.io/part-of: homelab-alerts instead of that release
+        # label. 21 rules sat inert for a day looking perfectly healthy.
+        # Only the chart's own bundled rules were evaluating.
+        ruleNamespaceSelector: {}
+        ruleSelectorNilUsesHelmValues: false
+        ruleSelector: {}
     grafana:
       enabled: true
       # Change password after first login or set admin.existingSecret

@@ -81,10 +81,9 @@ spec:
     grafana:
       enabled: true
       # Credentials from a SOPS secret rather than the chart default
-      # (admin/prom-operator). Grafana runs on emptyDir here, so its database
-      # is re-initialised on every restart and these env-backed values are
-      # authoritative — dashboards are provisioned from ConfigMaps, so nothing
-      # is lost by that.
+      # (admin/prom-operator), which was never in git and would not have
+      # survived a rebuild. Grafana applies these env-backed values at startup,
+      # so they stay authoritative now that the database is persisted below.
       #   sops -d clusters/homelab/infrastructure/monitoring/grafana-admin-secret.yaml
       admin:
         existingSecret: grafana-admin
@@ -100,6 +99,15 @@ spec:
         storageClassName: longhorn
         accessModes: ["ReadWriteOnce"]
         size: 5Gi
+      # Mandatory once persistence is on. The chart defaults to RollingUpdate,
+      # which starts the replacement pod before retiring the old one -- but a
+      # ReadWriteOnce volume can only attach to one pod, so the new pod blocks
+      # on "Multi-Attach error ... already used by pod(s) ..." while the old pod
+      # waits for the new one to become Ready. That deadlock stalled the 87.21.0
+      # upgrade past its Helm timeout. Every workload in apps/ with an RWO volume
+      # uses Recreate for this reason; Grafana needs the same.
+      deploymentStrategy:
+        type: Recreate
       ingress:
         enabled: false
       service:
@@ -140,18 +148,27 @@ spec:
             memory: 64Mi
           limits:
             memory: 256Mi
-        # That day has arrived. Chart 55.0.0 shipped prometheus-operator
-        # v0.70.0, whose vendored config parser predated both `content` and
-        # `webhook_url_file` and rejected the whole Alertmanager config before
-        # it ever reached a StatefulSet — which is why the receivers below were
-        # temporarily slack_configs against Discord's /slack endpoint, and why
-        # critical alerts could not @mention anyone. Operator v0.92.1 and
-        # Alertmanager v0.33.1 understand the modern schema, so discord_configs
-        # is back and so are pings.
+        # Receivers below are slack_configs against Discord's Slack-compatible
+        # endpoint, NOT discord_configs. discord_configs was attempted on
+        # operator v0.92.1 and rejected:
+        #
+        #   provision alertmanager configuration: failed to initialize from
+        #   secret: field webhook_url_file not found in type
+        #   alertmanager.discordConfig
+        #
+        # amtool from Alertmanager v0.33.1 accepts that same config — the
+        # operator validates against its OWN vendored type, not Alertmanager's,
+        # and its discordConfig knows webhook_url but not webhook_url_file.
+        # Validating with amtool is therefore necessary but not sufficient; the
+        # operator is the real gate, and it is one layer further in.
+        #
+        # The route to @mentions is the AlertmanagerConfig CRD, whose
+        # discordConfigs takes apiURL as a secret reference AND supports
+        # content. Until that migration, both receivers post silently.
         #
         # Mounts at /etc/alertmanager/secrets/alertmanager-discord-webhook/<key>
-        # The secret carries both the bare URL (used here) and a /slack-suffixed
-        # variant, kept in case a rollback to slack_configs is ever needed.
+        # The secret carries the bare URL and a /slack-suffixed variant; these
+        # receivers use the latter.
         secrets:
           - alertmanager-discord-webhook
       config:
@@ -240,27 +257,29 @@ spec:
           # mentions inside embeds notify nobody, which is what the interim
           # slack_configs receivers were stuck with.
           - name: discord-critical
-            discord_configs:
-              - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord-webhook/cluster-webhook-url
+            slack_configs:
+              - api_url_file: /etc/alertmanager/secrets/alertmanager-discord-webhook/cluster-webhook-url-slack
+                channel: homelab-cluster
+                username: alertmanager
                 send_resolved: true
-                content: '<@107411599001710592>'
                 title: '{{ if eq .Status "firing" }}🔴 [CRITICAL x{{ .Alerts.Firing | len }}] {{ else }}✅ [RESOLVED] {{ end }}{{ .CommonLabels.alertname }}'
-                message: |-
+                text: |-
                   {{ range .Alerts -}}
-                  **{{ .Annotations.summary }}**
+                  *{{ .Annotations.summary }}*
                   {{ .Annotations.description }}
                   {{ if .Labels.node }}node=`{{ .Labels.node }}`{{ else }}{{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}`{{ end }}{{ end }}
                   {{ end }}
 
           - name: discord-warning
-            discord_configs:
-              - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord-webhook/cluster-webhook-url
+            slack_configs:
+              - api_url_file: /etc/alertmanager/secrets/alertmanager-discord-webhook/cluster-webhook-url-slack
+                channel: homelab-cluster
+                username: alertmanager
                 send_resolved: true
-                # No content: warnings post without pinging.
                 title: '{{ if eq .Status "firing" }}🟠 [warning x{{ .Alerts.Firing | len }}] {{ else }}✅ [RESOLVED] {{ end }}{{ .CommonLabels.alertname }}'
-                message: |-
+                text: |-
                   {{ range .Alerts -}}
-                  **{{ .Annotations.summary }}**
+                  *{{ .Annotations.summary }}*
                   {{ .Annotations.description }}
                   {{ if .Labels.node }}node=`{{ .Labels.node }}`{{ else }}{{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}`{{ end }}{{ end }}
                   {{ end }}

@@ -9,7 +9,24 @@ spec:
   chart:
     spec:
       chart: traefik
-      version: "26.0.0"
+      # 26.0.0 (Traefik v2.10.6) -> 41.1.0 (Traefik v3.7.9).
+      #
+      # Verified before upgrading:
+      #   - all 21 IngressRoute/TCP/UDP/Middleware objects are already on the
+      #     traefik.io API group; zero remain on traefik.containo.us, which v3
+      #     drops entirely
+      #   - the fail2ban plugin pinned at v0.8.9 loads under v3.7.9. Confirmed
+      #     empirically by running traefik:v3.7.9 with that plugin: it reported
+      #     "Plugins loaded. plugins=[fail2ban]". This mattered because the
+      #     plugin's last release was April 2024 and neither its repo nor the
+      #     Traefik plugin catalogue state v3 support
+      #   - fail2ban-public uses only `plugin`, none of the middleware fields
+      #     v3 removed (ipWhiteList and friends)
+      #
+      # Chart value schema changes this required:
+      #   logs.access.*        -> accessLog.*        (`logs` is rejected outright)
+      #   ports.<n>.expose:bool -> expose.default:bool
+      version: "41.1.0"
       sourceRef:
         kind: HelmRepository
         name: traefik
@@ -26,39 +43,48 @@ spec:
     # Chart v26 expects expose as boolean; don't expose default HTTP entrypoints
     ports:
       web:
-        expose: false
+        expose:
+          default: false
       websecure:
-        expose: false
+        expose:
+          default: false
       traefik:
-        expose: false
+        expose:
+          default: false
       metrics:
-        expose: false
+        expose:
+          default: false
       # wg-easy WireGuard only (frontend is internal at vpn.cl.tafu.casa)
       wireguard:
         port: 51820
-        expose: true
+        expose:
+          default: true
         exposedPort: 51820
         protocol: UDP
       # KAG game server
       kagtcp:
         port: 50301
-        expose: true
+        expose:
+          default: true
         exposedPort: 50301
         protocol: TCP
       kagudp:
         port: 50301
-        expose: true
+        expose:
+          default: true
         exposedPort: 50301
         protocol: UDP
       # Minecraft
       factorio:
         port: 34197
-        expose: true
+        expose:
+          default: true
         exposedPort: 34197
         protocol: UDP
       minecraft:
         port: 25565
-        expose: true
+        expose:
+          default: true
         exposedPort: 25565
         protocol: TCP
     providers:

@@ -17,6 +17,19 @@ spec:
       labels:
         app: tesco-protein
     spec:
+      # The image runs as uid/gid 1001 (user "app"), but a freshly provisioned
+      # Longhorn volume mounts root-owned, so the app could not write to /data:
+      #
+      #   Error: EACCES: permission denied, copyfile
+      #   '/app/defaults/products.json' -> '/data/products.web.json'
+      #
+      # fsGroup makes the kubelet chown the volume to that group and set the
+      # setgid bit, so the seed copy on first start succeeds. OnRootMismatch
+      # means it only walks the volume when the top-level ownership is wrong,
+      # rather than re-chowning every file on every start.
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: tesco-protein
           image: ghcr.io/nerif-tafu/tesco-protein:v1.0.0 # {"$imagepolicy": "flux-system:tesco-protein"}

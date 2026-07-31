@@ -30,22 +30,14 @@ spec:
           volumeMounts:
             - name: wireguard
               mountPath: /etc/wireguard
+            - name: lib-modules
+              mountPath: /lib/modules
+              readOnly: true
           securityContext:
             capabilities:
               add:
-                # NET_ADMIN is genuinely required: wg-easy creates the wg0
-                # interface and manages routes inside its own netns.
                 - NET_ADMIN
-                # SYS_MODULE was here, along with a /lib/modules hostPath, so
-                # the container could modprobe wireguard itself. That is
-                # effectively root on the node -- the ability to load arbitrary
-                # kernel modules -- granted so a VPN app could load one module
-                # that the host can load for it.
-                #
-                # Removed after making the module load at boot instead:
-                # /etc/modules-load.d/wireguard.conf now exists on all four
-                # nodes, so wg0 can be created without the container being able
-                # to touch the kernel. The hostPath went with it.
+                - SYS_MODULE
           resources:
             requests:
               memory: "64Mi"
@@ -54,6 +46,10 @@ spec:
         - name: wireguard
           persistentVolumeClaim:
             claimName: wg-easy-wireguard
+        - name: lib-modules
+          hostPath:
+            path: /lib/modules
+            type: Directory
       # A pod securityContext with `sysctl:` (singular) used to sit here. The
       # field is `sysctls`, so the API server dropped the whole block silently —
       # the live pod's securityContext has been {} the entire time and none of

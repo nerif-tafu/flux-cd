@@ -21,7 +21,7 @@ spec:
           command: ["sh", "-c", "until nc -z vocard-db 27017; do echo waiting for mongo; sleep 2; done"]
       containers:
         - name: yt-cipher
-          image: ghcr.io/kikkia/yt-cipher:master # {"$imagepolicy": "flux-system:yt-cipher"}
+          image: ghcr.io/kikkia/yt-cipher:master@sha256:3c1e0b6d5a185cfef65a43125299c3d3342b6e8f1d2a9a23c0ee18747d99392a # {"$imagepolicy": "flux-system:yt-cipher"}
           resources:
             requests:
               cpu: 20m

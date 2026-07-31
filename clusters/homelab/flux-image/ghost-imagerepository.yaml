@@ -5,4 +5,4 @@ metadata:
   namespace: flux-system
 spec:
   image: docker.io/library/ghost
-  interval: 1m
+  interval: 1h

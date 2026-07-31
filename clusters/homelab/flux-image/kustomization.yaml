@@ -1,3 +1,21 @@
+# Scan interval policy for the ImageRepositories below.
+#
+#   5m  images we build ourselves (nerif-tafu/*, webplayer) — these are the
+#       only ones where fast pickup means anything, because they are the only
+#       ones a push is waiting on.
+#   1h  third-party upstreams — they release weekly at best, so scanning them
+#       every minute buys nothing.
+#
+# Everything used to be 1m. With 25 repositories on ghcr that was ~1,500
+# requests an hour to one registry, all of it to notice releases that mostly
+# do not exist. It also made the blast radius of any outbound network problem
+# as wide as possible: on 2026-07-31 a brief connectivity blip left the
+# image-reflector-controller's pooled HTTP/2 connection to ghcr.io wedged, and
+# every one of those repositories failed on a one-minute cycle until the
+# controller was restarted, producing 24 Discord messages for a single fault.
+#
+# The interval is not what wedged the connection and a longer one would not
+# have prevented it — but it decides how loudly the failure is repeated.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:

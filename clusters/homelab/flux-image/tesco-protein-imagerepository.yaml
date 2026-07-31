@@ -8,4 +8,4 @@ spec:
   # 30m rather than the 1m most entries here use. 29 repositories scanning
   # every minute is roughly 42k registry calls a day for images that ship
   # weekly at most; there is no reason to add another.
-  interval: 30m
+  interval: 5m

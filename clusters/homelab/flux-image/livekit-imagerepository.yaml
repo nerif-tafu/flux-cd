@@ -6,4 +6,4 @@ metadata:
   namespace: flux-system
 spec:
   image: docker.io/livekit/livekit-server
-  interval: 30m
+  interval: 1h

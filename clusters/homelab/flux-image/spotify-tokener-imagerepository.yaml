@@ -5,4 +5,4 @@ metadata:
   namespace: flux-system
 spec:
   image: ghcr.io/topi314/spotify-tokener
-  interval: 1m
+  interval: 1h

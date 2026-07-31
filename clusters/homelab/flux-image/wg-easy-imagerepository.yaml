@@ -5,4 +5,4 @@ metadata:
   namespace: flux-system
 spec:
   image: ghcr.io/wg-easy/wg-easy
-  interval: 1m
+  interval: 1h

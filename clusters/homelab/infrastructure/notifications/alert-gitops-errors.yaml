@@ -15,6 +15,27 @@ spec:
   eventSeverity: error
   eventMetadata:
     cluster: homelab
+  # Transient outbound-network failures are dropped here on purpose.
+  #
+  # notification-controller has no grouping or aggregation: it posts one Discord
+  # message per event per object. So a single network fault that stalls every
+  # ImageRepository at once arrives as one message each — 24 of them on
+  # 2026-07-31, all describing the same wedged connection.
+  #
+  # Nothing is lost by excluding them, because a failure that actually persists
+  # is already covered on the Prometheus path: FluxReconciliationFailure fires
+  # for any Flux object stuck Ready=False for 15m, at critical severity, which
+  # is the route that can @mention. Alertmanager groups those, so the same
+  # incident produces one notification instead of two dozen.
+  #
+  # The trade is that a fault which self-clears inside 15m is now silent. That
+  # is the intent: it self-cleared.
+  exclusionList:
+    - "context deadline exceeded"
+    - "connection refused"
+    - "no route to host"
+    - "TLS handshake timeout"
+    - "i/o timeout"
   eventSources:
     # Sources and Kustomizations (all live in flux-system)
     - kind: GitRepository

@@ -5,4 +5,4 @@ metadata:
   namespace: flux-system
 spec:
   image: docker.io/jacobalberty/unifi
-  interval: 30m
+  interval: 1h

@@ -5,4 +5,4 @@ metadata:
   namespace: flux-system
 spec:
   image: ghcr.io/nerif-tafu/rust-api
-  interval: 1m
+  interval: 5m

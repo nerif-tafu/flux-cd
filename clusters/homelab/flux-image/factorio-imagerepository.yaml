@@ -5,4 +5,4 @@ metadata:
   namespace: flux-system
 spec:
   image: docker.io/factoriotools/factorio
-  interval: 1m
+  interval: 1h

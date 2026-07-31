@@ -40,6 +40,26 @@ spec:
         metallb.universe.tf/allow-shared-ip: traefik-gateway
       spec:
         loadBalancerIP: 192.168.3.63
+        # NET-1. traefik-public already uses Local to preserve client source
+        # IPs; here the reason is different and load-bearing.
+        #
+        # With Cluster, MetalLB announces .63 from an arbitrary node — it was
+        # black-02 — while the traefik-gateway pod runs elsewhere (black-01).
+        # Every packet to the VPN and game ports therefore arrives on one node
+        # and is forwarded cross-node to another. That forwarding path is what
+        # broke when net.bridge.bridge-nf-call-iptables was set to 1 on
+        # black-02: bridged frames start traversing iptables, hit kube-router's
+        # per-pod chains, and are REJECTed for want of a matching NetworkPolicy.
+        # The result was a total loss of WireGuard and the game ports while
+        # every other service stayed up, which took a while to attribute.
+        #
+        # With Local, MetalLB only announces .63 from a node that actually runs
+        # a ready gateway pod, so the packet is delivered locally and never
+        # takes that forward. That removes the dependency on any particular
+        # node's bridge-netfilter setting, which in turn makes it safe to set
+        # bridge-nf-call-iptables=1 on black-02 and fix the same-node Service
+        # hairpin that is broken there today.
+        externalTrafficPolicy: Local
     # Chart v26 expects expose as boolean; don't expose default HTTP entrypoints
     ports:
       web:

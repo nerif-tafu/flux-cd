@@ -17,7 +17,10 @@ spec:
     spec:
       containers:
         - name: mysql
-          image: mysql:8.0
+          # Pinned to the digest already running. mysql:8.0 is a floating tag —
+          # it moves on every 8.0.x patch, so a pod reschedule could silently
+          # bring up a different database build than the one on the volume.
+          image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
           resources:
             requests:
               cpu: 20m

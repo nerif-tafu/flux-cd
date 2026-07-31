@@ -19,7 +19,10 @@ spec:
         fsGroup: 999
       containers:
         - name: mongo
-          image: mongo:8
+          # Pinned to the digest already running. mongo:8 floats across every
+          # 8.x release, which for a database is a silent major-ish upgrade
+          # waiting for the next reschedule.
+          image: mongo:8@sha256:9e52bf8768ae4f59b9ca734845d15cee0e523ced14b900cc3692d241eec9154c
           resources:
             requests:
               cpu: 20m

@@ -6,6 +6,12 @@ metadata:
 spec:
   imageRepositoryRef:
     name: vocard
+  # Upstream publishes no semver tags, only the moving "beta" tag, so there is
+  # nothing for a semver policy to order and alphabetical desc just re-elects
+  # "beta" forever. The tag cannot be made immutable, so reflect the digest
+  # instead: the automation then writes beta@sha256:... into the deployment and
+  # commits a real, reviewable change whenever upstream moves the tag.
+  digestReflectionPolicy: Always
   policy:
     alphabetical:
       order: desc

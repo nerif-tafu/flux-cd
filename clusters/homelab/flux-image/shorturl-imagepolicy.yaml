@@ -6,6 +6,15 @@ metadata:
 spec:
   imageRepositoryRef:
     name: shorturl
+  # This is the policy that actually flapped: the registry publishes both
+  # "1.0.1" and "v1.0.1", semver treats them as the same version, and the
+  # automation committed 1.0.1 -> v1.0.1 and back again. Same fix as
+  # tesco-protein — restrict to the v-prefixed form so each release has one
+  # canonical tag. v1.0.1 is what is deployed today, so this elects the same
+  # image it already has.
+  filterTags:
+    pattern: '^v(?P<version>\d+\.\d+\.\d+)$'
+    extract: '$version'
   policy:
     semver:
       range: ">=1.0.0"

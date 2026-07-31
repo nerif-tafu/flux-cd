@@ -6,6 +6,8 @@ metadata:
 spec:
   imageRepositoryRef:
     name: vocard-dashboard
+  # Same as vocard: "beta" is the only tag upstream publishes and it moves.
+  digestReflectionPolicy: Always
   policy:
     alphabetical:
       order: desc

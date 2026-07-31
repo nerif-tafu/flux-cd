@@ -6,6 +6,10 @@ metadata:
 spec:
   imageRepositoryRef:
     name: yt-cipher
+  # Same as vocard, but the moving tag here is "master" — i.e. whatever the
+  # default branch last built. Reflecting the digest is the only way to know
+  # which build is actually deployed.
+  digestReflectionPolicy: Always
   policy:
     alphabetical:
       order: desc

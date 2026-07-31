@@ -1,0 +1,130 @@
+# Stops unattended-upgrades from restarting the services that hold a node in
+# the cluster.
+#
+# WHAT HAPPENED (2026-07-31). apt-daily-upgrade ran on all four nodes at
+# staggered times and installed a routine OpenSSL security update:
+#
+#   Upgrade: libssl3t64:amd64 (3.0.13-0ubuntu3.11, 3.0.13-0ubuntu3.12)
+#
+# needrestart then did what it is designed to do -- work out which daemons link
+# against the replaced library and restart them. In a ten-second window that
+# was systemd-networkd, systemd-resolved, systemd-udevd, iscsid, ssh, journald,
+# timesyncd, fwupd, udisks2 and upower.
+#
+# black-01 (06:05) and black-02 (06:23) never recovered their networking and
+# dropped out of the cluster. Neither machine crashed -- black-01's journal
+# shows it running continuously through the outage; it was simply unreachable
+# until rebooted. black-03 (06:14) and silver-01 (06:22) took the identical
+# upgrade and were fine, so this is not deterministic and the exact mechanism
+# is NOT established. What is established is the trigger, and that is what this
+# removes.
+#
+# Two of those restarts are independently dangerous on a k3s node regardless of
+# the mechanism:
+#   systemd-networkd  manages cni0 and every veth* on these nodes (confirmed
+#                     with networkctl), which are Kubernetes CNI interfaces it
+#                     has no business owning. Restarting it reconfigures them.
+#   iscsid            is Longhorn's iSCSI initiator. Bouncing it mid-flight is
+#                     why volumes went to degraded/attaching rather than simply
+#                     following the node down.
+#
+# WHY A DAEMONSET. The file is read fresh by needrestart at each apt run, so
+# dropping it IS the whole fix -- nothing to reload, no daemon to restart. That
+# makes it a much better fit for this pattern than the alternative of marking
+# CNI interfaces unmanaged, which only takes effect on a networkd restart, i.e.
+# the exact operation that caused the outage. It also means a node that is
+# currently down gets the policy automatically when it rejoins, which is the
+# whole point: black-02 was unreachable when this was written.
+#
+# SCOPE. ssh and fwupd are deliberately still allowed to auto-restart. The goal
+# is not to stop security patching, it is to stop patching from evicting the
+# node. Anything not listed here behaves exactly as before.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: needrestart-policy
+  namespace: node-config
+  labels:
+    app: needrestart-policy
+spec:
+  selector:
+    matchLabels:
+      app: needrestart-policy
+  template:
+    metadata:
+      labels:
+        app: needrestart-policy
+    spec:
+      priorityClassName: system-node-critical
+      # Same reasoning as sysctl-guard: must land everywhere, including a
+      # cordoned or tainted node, because a node that patches itself off the
+      # network is worse than a busy one.
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: policy
+          image: busybox:1.36
+          securityContext:
+            # Root is needed to write into /etc on the host, but nothing here
+            # needs privileged or the host network namespace.
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          command:
+            - sh
+            - -c
+            - |
+              set -u
+              DEST=/host-needrestart/90-k8s-critical-services.conf
+              cat > /tmp/desired.conf <<'NRCONF'
+              # Managed by the needrestart-policy DaemonSet.
+              # See clusters/homelab/infrastructure/node-config/needrestart-policy.yaml
+              #
+              # These keys are ADDED to the existing override_rc hash rather than
+              # reassigning it, so the distro defaults (dbus, display managers)
+              # are preserved. Reassigning would silently drop them.
+              $nrconf{override_rc}{qr(^systemd-networkd)} = 0;
+              $nrconf{override_rc}{qr(^systemd-resolved)} = 0;
+              $nrconf{override_rc}{qr(^systemd-udevd)}    = 0;
+              $nrconf{override_rc}{qr(^iscsid)}           = 0;
+              $nrconf{override_rc}{qr(^k3s)}              = 0;
+              $nrconf{override_rc}{qr(^containerd)}       = 0;
+              $nrconf{override_rc}{qr(^tailscaled)}       = 0;
+
+              # Must return true. needrestart loads conf.d files with Perl's
+              # do(), and the last assignment above evaluates to 0 -- without
+              # this line do() returns false and the file is treated as a load
+              # failure. Verified.
+              1;
+              NRCONF
+              echo "needrestart-policy starting on ${NODE_NAME}"
+              while true; do
+                if [ ! -d /host-needrestart ]; then
+                  echo "$(date -Iseconds) ${NODE_NAME}: /etc/needrestart/conf.d absent, needrestart not installed - nothing to do"
+                elif ! cmp -s /tmp/desired.conf "$DEST"; then
+                  cp /tmp/desired.conf "$DEST"
+                  chmod 0644 "$DEST"
+                  echo "$(date -Iseconds) ${NODE_NAME}: wrote needrestart policy to ${DEST}"
+                fi
+                sleep 300
+              done
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: needrestart-confd
+              mountPath: /host-needrestart
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 32Mi
+      volumes:
+        - name: needrestart-confd
+          hostPath:
+            path: /etc/needrestart/conf.d
+            type: DirectoryOrCreate

@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - sysctl-guard.yaml
+  - needrestart-policy.yaml

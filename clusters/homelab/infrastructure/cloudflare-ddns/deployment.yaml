@@ -16,21 +16,39 @@ spec:
     spec:
       containers:
         - name: cloudflare-ddns
-          # Pinned to the digest that was already running, so this change is a
-          # no-op at runtime. oznu/cloudflare-ddns has been archived upstream
-          # since 2021 and :latest will never move again — but an unpinned tag
-          # on the DDNS for the entire domain means a silent, unreproducible
-          # image swap is one registry mishap away. favonia/cloudflare-ddns is
-          # the maintained replacement when there is appetite for a migration.
-          image: oznu/cloudflare-ddns:latest@sha256:19bd73d8aea9641dc329ec18ae693b2b9c33ff7cdc007f368266ce584446f995
+          # Migrated off oznu/cloudflare-ddns, archived upstream since 2021, to
+          # the maintained favonia replacement. Digest-pinned as usual.
+          #
+          # Settings chosen to reproduce the old behaviour exactly, not to adopt
+          # favonia's defaults:
+          #   PROXIED=false    — tafu.casa resolves straight to the WAN IP today;
+          #                      favonia would otherwise be free to orange-cloud it.
+          #   IP6_PROVIDER=none — the zone has no AAAA record. Left unset, favonia
+          #                      tries to manage IPv6 and errors on every run.
+          # The secret key is still API_KEY (its value is a scoped API token, not
+          # a global key) so the SOPS secret did not need re-encrypting; favonia
+          # reads it under its own name.
+          image: favonia/cloudflare-ddns:1.17.0@sha256:61013368c8f95981c0bb8bf56d962078d8b4e95724a554fa2dabb20d6e478097
           env:
-            - name: API_KEY
+            - name: CLOUDFLARE_API_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: cloudflare-ddns-secret
                   key: API_KEY
-            - name: ZONE
+            - name: DOMAINS
               value: "tafu.casa"
+            - name: PROXIED
+              value: "false"
+            - name: IP6_PROVIDER
+              value: "none"
+            - name: UPDATE_CRON
+              value: "@every 5m"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           resources:
             requests:
               cpu: 10m

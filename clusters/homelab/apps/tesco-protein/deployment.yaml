@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tesco-protein
+  namespace: tesco-protein
+spec:
+  replicas: 1
+  # Recreate because the data volume is ReadWriteOnce: a rolling update would
+  # deadlock with the new pod waiting on a volume the old one still holds.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: tesco-protein
+  template:
+    metadata:
+      labels:
+        app: tesco-protein
+    spec:
+      containers:
+        - name: tesco-protein
+          image: ghcr.io/nerif-tafu/tesco-protein:v1.0.0 # {"$imagepolicy": "flux-system:tesco-protein"}
+          env:
+            # The image defaults to /data already; set explicitly so the mount
+            # below and the app cannot drift apart.
+            - name: DATA_DIR
+              value: /data
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 20m
+              memory: 256Mi
+            # Generous ceiling: this scrapes and parses a grocery catalogue into
+            # JSON, so peak usage during a scrape is well above idle.
+            limits:
+              memory: 768Mi
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 6
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: tesco-protein-data

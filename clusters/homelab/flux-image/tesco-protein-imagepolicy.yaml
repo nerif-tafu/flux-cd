@@ -1,0 +1,19 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: tesco-protein
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: tesco-protein
+  # The registry publishes each release five ways: 1.0.0, v1.0.0, 1.0, 1 and
+  # latest. Without a filter the semver policy treats "1.0.0" and "v1.0.0" as
+  # the same version and can pick either, which is exactly how shorturl ended
+  # up committing 1.0.1 -> v1.0.1 and back again. Restricting to the v-prefixed
+  # form gives one canonical tag per release and no flapping.
+  filterTags:
+    pattern: '^v(?P<version>\d+\.\d+\.\d+)$'
+    extract: '$version'
+  policy:
+    semver:
+      range: ">=1.0.0"

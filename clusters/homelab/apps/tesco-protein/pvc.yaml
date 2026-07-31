@@ -1,0 +1,15 @@
+# Holds the scraped Tesco catalogue: products.json, products.web.json and
+# skus.json. Small and regenerable by re-scraping, but persisting it means a
+# restart does not force a full re-scrape of the grocery catalogue.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tesco-protein-data
+  namespace: tesco-protein
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 2Gi

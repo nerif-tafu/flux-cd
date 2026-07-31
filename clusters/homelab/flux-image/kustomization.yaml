@@ -61,4 +61,6 @@ resources:
   - ghost-imagerepository.yaml
   - ghost-imagepolicy.yaml
   - factorio-imagepolicy.yaml
+  - tesco-protein-imagerepository.yaml
+  - tesco-protein-imagepolicy.yaml
   - imageupdateautomation.yaml

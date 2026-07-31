@@ -1,0 +1,11 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: tesco-protein
+  namespace: flux-system
+spec:
+  image: ghcr.io/nerif-tafu/tesco-protein
+  # 30m rather than the 1m most entries here use. 29 repositories scanning
+  # every minute is roughly 42k registry calls a day for images that ship
+  # weekly at most; there is no reason to add another.
+  interval: 30m

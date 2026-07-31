@@ -148,29 +148,24 @@ spec:
             memory: 64Mi
           limits:
             memory: 256Mi
-        # Receivers below are slack_configs against Discord's Slack-compatible
-        # endpoint, NOT discord_configs. discord_configs was attempted on
-        # operator v0.92.1 and rejected:
+        # Mounts the webhook secret at
+        # /etc/alertmanager/secrets/alertmanager-discord-webhook/<key>.
         #
-        #   provision alertmanager configuration: failed to initialize from
-        #   secret: field webhook_url_file not found in type
-        #   alertmanager.discordConfig
-        #
-        # amtool from Alertmanager v0.33.1 accepts that same config — the
-        # operator validates against its OWN vendored type, not Alertmanager's,
-        # and its discordConfig knows webhook_url but not webhook_url_file.
-        # Validating with amtool is therefore necessary but not sufficient; the
-        # operator is the real gate, and it is one layer further in.
-        #
-        # The route to @mentions is the AlertmanagerConfig CRD, whose
-        # discordConfigs takes apiURL as a secret reference AND supports
-        # content. Until that migration, both receivers post silently.
-        #
-        # Mounts at /etc/alertmanager/secrets/alertmanager-discord-webhook/<key>
-        # The secret carries the bare URL and a /slack-suffixed variant; these
-        # receivers use the latter.
+        # Still needed even though routing has moved to the AlertmanagerConfig
+        # CRD: the inert `config:` block below references the /slack-suffixed
+        # key by file path, and keeping the mount means a rollback works
+        # immediately rather than needing a second change.
         secrets:
           - alertmanager-discord-webhook
+        # ALERT-1: routing and receivers now come from the AlertmanagerConfig
+        # CRD in this directory, which is the only way to get BOTH a
+        # secret-referenced webhook and the `content` field that produces a
+        # real Discord ping. The raw `config:` block below is deliberately
+        # left in place and inert -- the operator ignores it while this is set
+        # -- so rolling back is deleting these three lines rather than
+        # rewriting the routing from memory.
+        alertmanagerConfiguration:
+          name: homelab
       config:
         global:
           resolve_timeout: 5m

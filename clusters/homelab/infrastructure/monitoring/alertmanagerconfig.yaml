@@ -1,0 +1,158 @@
+# ALERT-1: routing and receivers as an AlertmanagerConfig CRD, so critical
+# alerts can @mention again.
+#
+# Why this exists rather than the raw alertmanager.config in helmrelease.yaml:
+# a Discord ping requires the `content` field, and keeping the webhook out of
+# git requires the URL to come from a Secret. Raw config can express one or the
+# other but not both, because prometheus-operator validates it with its own
+# vendored parser whose discordConfig type has `webhook_url` but no
+# `webhook_url_file`:
+#
+#   provision alertmanager configuration: failed to initialize from secret:
+#   field webhook_url_file not found in type alertmanager.discordConfig
+#
+# amtool from Alertmanager v0.33.1 accepts that same config, which is why an
+# amtool-only gate gave false confidence earlier -- the operator is the real
+# gate and it validates one layer further in.
+#
+# This CRD resolves it: discordConfigs takes apiURL as a Secret reference AND
+# supports content. Both requirements met, nothing in plaintext.
+#
+# CAVEAT: alertmanagerConfiguration is marked experimental by the operator
+# ("it may change in any upcoming release in a breaking way"). The raw
+# alertmanager.config block in helmrelease.yaml is deliberately left in place
+# and inert -- the operator ignores it while this is set -- so rolling back is
+# deleting one field from the HelmRelease rather than rewriting the routing
+# from memory.
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: homelab
+  namespace: monitoring
+spec:
+  route:
+    receiver: discord-warning
+    # Group by alert + namespace so one bad node produces a few messages
+    # rather than one per pod.
+    groupBy: ["alertname", "namespace"]
+    groupWait: 45s
+    groupInterval: 5m
+    # Sustained problems re-notify twice a day rather than every 4h.
+    repeatInterval: 12h
+    routes:
+      # Watchdog fires every 30s by design -- it is the dead-man's switch, not
+      # an alert. A heartbeat belongs in a service that notices its absence,
+      # not in a channel you would learn to ignore.
+      - receiver: "null"
+        matchers:
+          - name: alertname
+            value: Watchdog
+            matchType: "="
+      # k3s embeds these components without exposing scrape targets, so the
+      # stock rules can never be satisfied. KubeProxyDown in particular had
+      # been firing continuously for weeks.
+      - receiver: "null"
+        matchers:
+          - name: alertname
+            value: "KubeProxyDown|KubeSchedulerDown|KubeControllerManagerDown|KubeEtcdDown|InfoInhibitor"
+            matchType: "=~"
+      # Meaningless until every workload declares requests. C1 has since done
+      # that, so these can be re-enabled whenever you want them.
+      - receiver: "null"
+        matchers:
+          - name: alertname
+            value: "CPUThrottlingHigh|KubeCPUOvercommit|KubeMemoryOvercommit"
+            matchType: "=~"
+      # Promoted to the pinging receiver despite shipping as severity=warning
+      # upstream: a dead node or a filling volume should wake you, not post
+      # quietly. Verified against the real cluster -- KubeNodeNotReady fired at
+      # severity=warning when black-03 went down.
+      - receiver: discord-critical
+        matchers:
+          - name: alertname
+            value: "KubeNodeNotReady|KubeNodeUnreachable|KubePersistentVolumeFillingUp|KubePersistentVolumeErrors"
+            matchType: "=~"
+        groupWait: 15s
+        repeatInterval: 4h
+      - receiver: discord-critical
+        matchers:
+          - name: severity
+            value: critical
+            matchType: "="
+        groupWait: 15s
+        repeatInterval: 4h
+      - receiver: discord-warning
+        matchers:
+          - name: severity
+            value: "warning|info"
+            matchType: "=~"
+
+  inhibitRules:
+    # Don't send the warning form of something already reported as critical.
+    - sourceMatch:
+        - {name: severity, value: critical, matchType: "="}
+      targetMatch:
+        - {name: severity, value: warning, matchType: "="}
+      equal: ["alertname", "namespace"]
+
+    # A dead node cascades. Report the node; suppress the fallout. This target
+    # list was built from what black-03 actually generated: 7x
+    # KubeDaemonSetRolloutStuck, 6x KubeDaemonSetMisScheduled, 5x
+    # KubePodNotReady, 4x KubeDeploymentReplicasMismatch, 3x
+    # KubeContainerWaiting, 1x KubeStatefulSetReplicasMismatch, plus three
+    # TargetDown. Without it, one node failure is ~26 Discord messages.
+    - sourceMatch:
+        - {name: alertname, value: "KubeNodeNotReady|KubeNodeUnreachable", matchType: "=~"}
+      targetMatch:
+        - name: alertname
+          value: "KubePodNotReady|KubePodCrashLooping|KubeContainerWaiting|KubeDeploymentReplicasMismatch|KubeStatefulSetReplicasMismatch|KubeDaemonSetMisScheduled|KubeDaemonSetRolloutStuck|TargetDown|LonghornNodeNotReady|LonghornVolumeDegraded|TraefikBackendDown"
+          matchType: "=~"
+
+    # A faulted volume is already degraded; say it once.
+    - sourceMatch:
+        - {name: alertname, value: LonghornVolumeFaulted, matchType: "="}
+      targetMatch:
+        - {name: alertname, value: LonghornVolumeDegraded, matchType: "="}
+      equal: ["volume"]
+
+    # Expiring-critical supersedes expiring-soon for the same certificate.
+    - sourceMatch:
+        - {name: alertname, value: CertManagerCertExpiringCritical, matchType: "="}
+      targetMatch:
+        - {name: alertname, value: CertManagerCertExpiringSoon, matchType: "="}
+      equal: ["namespace", "name"]
+
+  receivers:
+    - name: "null"
+
+    - name: discord-critical
+      discordConfigs:
+        - apiURL:
+            name: alertmanager-discord-webhook
+            key: cluster-webhook-url
+          sendResolved: true
+          # The entire point of this migration. Mentions inside embeds notify
+          # nobody; only content produces an actual Discord ping.
+          content: "<@107411599001710592>"
+          title: '{{ if eq .Status "firing" }}🔴 [CRITICAL x{{ .Alerts.Firing | len }}] {{ else }}✅ [RESOLVED] {{ end }}{{ .CommonLabels.alertname }}'
+          message: |-
+            {{ range .Alerts -}}
+            **{{ .Annotations.summary }}**
+            {{ .Annotations.description }}
+            {{ if .Labels.node }}node=`{{ .Labels.node }}`{{ else }}{{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}`{{ end }}{{ end }}
+            {{ end }}
+
+    - name: discord-warning
+      discordConfigs:
+        - apiURL:
+            name: alertmanager-discord-webhook
+            key: cluster-webhook-url
+          sendResolved: true
+          # No content: warnings post without pinging.
+          title: '{{ if eq .Status "firing" }}🟠 [warning x{{ .Alerts.Firing | len }}] {{ else }}✅ [RESOLVED] {{ end }}{{ .CommonLabels.alertname }}'
+          message: |-
+            {{ range .Alerts -}}
+            **{{ .Annotations.summary }}**
+            {{ .Annotations.description }}
+            {{ if .Labels.node }}node=`{{ .Labels.node }}`{{ else }}{{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}`{{ end }}{{ end }}
+            {{ end }}

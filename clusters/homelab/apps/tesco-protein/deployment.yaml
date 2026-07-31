@@ -38,6 +38,19 @@ spec:
             # below and the app cannot drift apart.
             - name: DATA_DIR
               value: /data
+            # Google OAuth client, from the SOPS-encrypted secret alongside this
+            # file. Referenced key-by-key rather than with envFrom so the
+            # deployment records exactly which variables the app depends on.
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: tesco-protein-google-oauth
+                  key: GOOGLE_CLIENT_ID
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tesco-protein-google-oauth
+                  key: GOOGLE_CLIENT_SECRET
           ports:
             - name: http
               containerPort: 8080

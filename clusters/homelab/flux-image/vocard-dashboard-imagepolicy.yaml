@@ -8,6 +8,7 @@ spec:
     name: vocard-dashboard
   # Same as vocard: "beta" is the only tag upstream publishes and it moves.
   digestReflectionPolicy: Always
+  interval: 10m
   policy:
     alphabetical:
       order: desc

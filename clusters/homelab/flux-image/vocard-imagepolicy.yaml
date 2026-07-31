@@ -11,7 +11,11 @@ spec:
   # "beta" forever. The tag cannot be made immutable, so reflect the digest
   # instead: the automation then writes beta@sha256:... into the deployment and
   # commits a real, reviewable change whenever upstream moves the tag.
+  # interval is required by the CRD whenever digestReflectionPolicy is Always:
+  # the tag never changes, so this is the only thing that re-checks whether the
+  # digest behind it has moved.
   digestReflectionPolicy: Always
+  interval: 10m
   policy:
     alphabetical:
       order: desc

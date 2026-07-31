@@ -10,6 +10,7 @@ spec:
   # default branch last built. Reflecting the digest is the only way to know
   # which build is actually deployed.
   digestReflectionPolicy: Always
+  interval: 10m
   policy:
     alphabetical:
       order: desc

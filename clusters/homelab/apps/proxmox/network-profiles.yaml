@@ -1,5 +1,45 @@
-# Per-node LAN bridge profiles (enp88s0 → vmbr0). Selected at pod start from spec.nodeName.
-# vmbr0 address must be unique on 192.168.3.0/24 and reserved for the node hosting Proxmox.
+# Per-node Proxmox network profiles, selected at pod start from spec.nodeName by
+# the select-network-profile initContainer, which copies the matching key into
+# the emptyDir mounted at /etc/network/interfaces.
+#
+# Each node gets TWO bridges, so a VM can choose its network per interface:
+#
+#   vmbr0  bridged to enp88s0. A VM on this bridge is on the real LAN and gets a
+#          192.168.3.x lease from the router's DHCP server (192.168.3.2), the
+#          same as any physical machine. Verified 2026-08-05 by packet capture:
+#          VM 100 sent a DHCP Request, was offered 192.168.3.226, took the
+#          address and ARPed the gateway.
+#
+#   vmbr1  no physical port. A VM on this bridge is isolated from the LAN and
+#          reaches the internet via NAT through vmbr0. Nothing on the LAN can
+#          reach it inbound. Use this for anything untrusted.
+#
+# vmbr0's address must stay unique on 192.168.3.0/24 and reserved for the node
+# hosting Proxmox. vmbr1 is identical on every node because it is isolated --
+# two nodes never see each other's 10.10.10.0/24.
+#
+# CHOOSING, per VM: set the interface's bridge in the VM's hardware settings
+#   bridge=vmbr0  -> LAN, DHCP, 192.168.3.x
+#   bridge=vmbr1  -> isolated, NAT, static 10.10.10.x
+#
+# vmbr1 has NO DHCP server. Guests on it need static configuration:
+#   address 10.10.10.<n>/24, gateway 10.10.10.1, DNS 192.168.3.1 (or any).
+# Adding dnsmasq for a lease range is a possible follow-up; it is left out here
+# to keep the change to a single NAT rule.
+#
+# 10.10.10.0/24 was chosen to avoid every subnet already in play: pods
+# 10.42.0.0/16, services 10.43.0.0/16, LAN 192.168.3.0/24, WireGuard
+# 10.8.0.0/24.
+#
+# WHY ONLY A NAT RULE AND NO FORWARD RULES: the FORWARD chain policy on these
+# nodes is ACCEPT and kube-router owns a chain within it. Section 6.3 of the
+# handover is an account of forwarded traffic being REJECTed by kube-router's
+# per-pod chains and taking the VPN down for an hour, so the footprint here is
+# deliberately one rule in nat/POSTROUTING and nothing in FORWARD.
+#
+# TAKES EFFECT ON THE NEXT PROXMOX POD RESTART, not on apply. The initContainer
+# only copies the profile at pod start, so editing this ConfigMap changes
+# nothing until the Deployment is restarted.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -21,6 +61,15 @@ data:
         bridge-stp off
         bridge-fd 0
 
+    auto vmbr1
+    iface vmbr1 inet static
+        address 10.10.10.1/24
+        bridge-ports none
+        bridge-stp off
+        bridge-fd 0
+        post-up   iptables -t nat -A POSTROUTING -s 10.10.10.0/24 -o vmbr0 -j MASQUERADE
+        post-down iptables -t nat -D POSTROUTING -s 10.10.10.0/24 -o vmbr0 -j MASQUERADE
+
     source /etc/network/interfaces.d/*
   black-02: |
     auto lo
@@ -37,6 +86,15 @@ data:
         bridge-stp off
         bridge-fd 0
 
+    auto vmbr1
+    iface vmbr1 inet static
+        address 10.10.10.1/24
+        bridge-ports none
+        bridge-stp off
+        bridge-fd 0
+        post-up   iptables -t nat -A POSTROUTING -s 10.10.10.0/24 -o vmbr0 -j MASQUERADE
+        post-down iptables -t nat -D POSTROUTING -s 10.10.10.0/24 -o vmbr0 -j MASQUERADE
+
     source /etc/network/interfaces.d/*
   black-03: |
     auto lo
@@ -52,5 +110,14 @@ data:
         bridge-ports enp88s0
         bridge-stp off
         bridge-fd 0
+
+    auto vmbr1
+    iface vmbr1 inet static
+        address 10.10.10.1/24
+        bridge-ports none
+        bridge-stp off
+        bridge-fd 0
+        post-up   iptables -t nat -A POSTROUTING -s 10.10.10.0/24 -o vmbr0 -j MASQUERADE
+        post-down iptables -t nat -D POSTROUTING -s 10.10.10.0/24 -o vmbr0 -j MASQUERADE
 
     source /etc/network/interfaces.d/*

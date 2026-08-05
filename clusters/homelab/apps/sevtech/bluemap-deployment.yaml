@@ -75,11 +75,25 @@ spec:
               # needs for block models and textures. This is an assertion about
               # Mojang's EULA, which is already accepted for the server itself.
               sed -i 's/accept-download: false/accept-download: true/' config/core.conf
-              # BlueMap ships a default map pointing at ./world, which does not
-              # exist here and only produces a warning on every start.
-              rm -f config/maps/world.conf
+              # The map set is defined here and nowhere else. BlueMap generates
+              # default configs (nether.conf, end.conf) pointing at a relative
+              # "world" directory that does not exist in this layout. Those
+              # broken maps do not merely warn — they are advertised to the web
+              # app in settings.json and render as an empty black world, and
+              # since the app opens the first map in that list, a working
+              # overworld sits behind a black nether.
+              #
+              # Clearing the directory each start means the maps the app offers
+              # are exactly the ones configured below, with no leftovers from a
+              # previous BlueMap version's defaults.
               mkdir -p config/maps
-              printf 'world: "/mcdata/world"\n' > config/maps/overworld.conf
+              find config/maps -name '*.conf' -delete
+              cat > config/maps/overworld.conf <<'MAPCONF'
+              world: "/mcdata/world"
+              dimension: "minecraft:overworld"
+              name: "SevTech Overworld"
+              sorting: 0
+              MAPCONF
               # -r render, -u keep watching and update as the world changes,
               # -w serve it. All three are needed: -ru alone renders but never
               # binds 8100, and -w alone serves without rendering.

@@ -18,3 +18,10 @@ spec:
       port: 8123
       targetPort: 8123
       protocol: TCP
+    # RCON. On the ClusterIP only — there is deliberately no matching entrypoint
+    # on the gateway Traefik instance, so this is not reachable from the WAN.
+    # Reach it from inside the cluster.
+    - name: rcon
+      port: 25575
+      targetPort: 25575
+      protocol: TCP

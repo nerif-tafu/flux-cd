@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - pvc.yaml
+  - rcon-secret.yaml
   - deployment.yaml
   - service.yaml
   # Dynmap: a Forge mod inside the server, serving its web UI at mc.tafu.casa.

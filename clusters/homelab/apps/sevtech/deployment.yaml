@@ -81,6 +81,44 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+        # RCON, so the server console is reachable. Needed at minimum to issue
+        # "dynmap fullrender": Dynmap renders on blockupdate/chunkpopulate/
+        # chunkgenerate triggers, none of which ever fired for chunks that were
+        # generated before the mod was installed, so spawn stays blank until a
+        # full render is requested once.
+        #
+        # server.properties is patched here rather than shipped as a file: the
+        # image writes and rewrites it, and the password has to come from the
+        # SOPS secret rather than being committed. Rewriting on every start is
+        # idempotent and keeps the setting from drifting.
+        - name: configure-rcon
+          image: curlimages/curl:8.10.1
+          securityContext:
+            runAsUser: 0
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              PROPS=/data/server.properties
+              PW="$(cat /rcon/password)"
+              touch "$PROPS"
+              # Strip any existing copies of the keys, then append the values we
+              # want. Avoids in-place edits and is safe to repeat.
+              grep -vE '^(enable-rcon|rcon\.port|rcon\.password|broadcast-rcon-to-ops)=' "$PROPS" > "$PROPS.new" || true
+              {
+                echo "enable-rcon=true"
+                echo "rcon.port=25575"
+                echo "rcon.password=$PW"
+                echo "broadcast-rcon-to-ops=false"
+              } >> "$PROPS.new"
+              mv "$PROPS.new" "$PROPS"
+              chmod 0600 "$PROPS"
+              echo "rcon enabled on 25575 (password from secret)"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: rcon
+              mountPath: /rcon
+              readOnly: true
       containers:
         - name: sevtech
           # Pinned to the 3.2.3 tag's digest. Note :latest is a DIFFERENT digest
@@ -104,6 +142,11 @@ spec:
             # Dynmap's webserver, exposed at mc.tafu.casa via dynmap-ingress.
             - name: dynmap
               containerPort: 8123
+              protocol: TCP
+            # RCON. ClusterIP only — deliberately absent from the gateway
+            # instance's ports, so it is not reachable from the WAN.
+            - name: rcon
+              containerPort: 25575
               protocol: TCP
           resources:
             requests:
@@ -138,3 +181,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: sevtech-data
+        - name: rcon
+          secret:
+            secretName: sevtech-rcon

@@ -55,6 +55,33 @@ spec:
               prefix: index_
               period: 24h
 
+      # LOG-2: the ruler, so log-only events can alert.
+      #
+      # Some things only ever exist as a log line. fail2ban bans are the case
+      # that motivated this: the plugin keeps its state in memory and emits no
+      # metric, so the only evidence a ban happened is Traefik's stdout. Nothing
+      # in Prometheus can see it.
+      #
+      # The chart already runs the loki-sc-rules sidecar and mounts /rules — it
+      # was just never pointed anywhere. This supplies the missing half: where to
+      # read rules from, and which Alertmanager to notify.
+      rulerConfig:
+        wal:
+          dir: /var/loki/ruler-wal
+        storage:
+          type: local
+          local:
+            directory: /rules
+        rule_path: /var/loki/ruler-rules-tmp
+        # Same Alertmanager the Prometheus rules use, so Loki-sourced alerts get
+        # the same grouping, inhibition and Discord routing as everything else
+        # rather than a parallel notification path.
+        alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
+        enable_alertmanager_v2: true
+        ring:
+          kvstore:
+            store: inmemory
+
     singleBinary:
       replicas: 1
       persistence:

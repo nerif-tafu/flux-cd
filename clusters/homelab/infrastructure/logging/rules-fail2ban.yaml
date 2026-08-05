@@ -1,0 +1,67 @@
+# Loki alerting rules. Picked up by the chart's loki-sc-rules sidecar, which
+# watches for ConfigMaps carrying the `loki_rule` label and writes them into
+# /rules — the directory rulerConfig.storage.local points at.
+#
+# WHY LOKI AND NOT PROMETHEUS: the fail2ban plugin holds its ban table in
+# memory and exports no metric. The only trace of a ban is a line on Traefik's
+# stdout, so Prometheus has nothing to alert on. This is the one class of thing
+# the log store is genuinely the right source for.
+#
+# THE REGEX IS TAKEN FROM THE PLUGIN'S SOURCE, not guessed. Read out of the
+# running pod at
+#   /plugins-storage/sources/.../tomMoulard/fail2ban/pkg/fail2ban/fail2ban.go
+# (github.com/tomMoulard/fail2ban v0.8.9), which emits:
+#
+#   fmt.Printf("%q is banned for %d>=%d request", remoteIP, ip.Count+1, MaxRetry)
+#
+# so a real ban reads: "1.2.3.4" is banned for 5>=5 request
+#
+# Two neighbouring messages must NOT match, and the pattern is chosen to
+# exclude them:
+#   "1.2.3.4" is still banned since "..." , N request   — repeat hit, already banned
+#   1.2.3.4 is no longer banned                          — expiry
+#
+# The pattern is deliberately unanchored. Every one of those calls is Printf
+# with no trailing newline, so consecutive messages concatenate onto one line
+# and a ban can appear mid-line.
+#
+# UNVERIFIED BY FIRING: no ban has occurred in the last 7 days, and one cannot
+# easily be provoked — the allowlist covers 10.0.0.0/8, 192.168.0.0/16 and the
+# GB/CL allocations, so neither a pod, nor the LAN, nor the household WAN
+# address can trip it. The rule's plumbing was verified instead (rule loaded by
+# the ruler, ruler reaching Alertmanager); the regex rests on the source above.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-rules-fail2ban
+  namespace: logging
+  labels:
+    # The label the sidecar watches for. Without it this file is inert.
+    loki_rule: "true"
+data:
+  fail2ban.yaml: |
+    groups:
+      - name: fail2ban
+        interval: 1m
+        rules:
+          - alert: Fail2banIPBanned
+            expr: |
+              sum by (pod) (
+                count_over_time(
+                  {namespace="traefik", pod=~"traefik-public.*"}
+                  |~ `is banned for [0-9]+>=[0-9]+ request` [5m]
+                )
+              ) > 0
+            for: 0m
+            labels:
+              severity: warning
+            annotations:
+              summary: "fail2ban banned at least one IP in the last 5 minutes"
+              description: >-
+                The Traefik fail2ban plugin banned one or more source addresses
+                on the public entrypoint after repeated 401/403 responses
+                (maxretry 5 within findtime 10m, bantime 1h). Expected
+                occasionally from internet background noise. Investigate if it
+                is sustained or if the banned address should have been on the
+                allowlist. Query:
+                {namespace="traefik", pod=~"traefik-public.*"} |~ "is banned for"

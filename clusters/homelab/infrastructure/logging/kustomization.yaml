@@ -5,3 +5,4 @@ resources:
   - helmrepository.yaml
   - helmrelease-loki.yaml
   - helmrelease-alloy.yaml
+  - rules-fail2ban.yaml

@@ -94,6 +94,27 @@ spec:
               name: "SevTech Overworld"
               sorting: 0
               MAPCONF
+              # THE INITIAL RENDER MUST COMPLETE BEFORE WATCHING STARTS.
+              #
+              # With -u active from the outset, this never finishes. The live
+              # server rewrites the spawn region roughly once a minute, the
+              # watcher schedules an update for it, and the in-progress render
+              # restarts — region (-1,0) climbed to 73% and dropped back to 9%
+              # indefinitely. The map never reached "up-to-date" and, critically,
+              # never wrote a single hires tile: tiles/0 stayed empty while
+              # lowres 1/2/3 filled in. BlueMap's default perspective view draws
+              # from hires, so the web page was black no matter how correct the
+              # lowres data was.
+              #
+              # A plain -r pass has no watcher to preempt it and completes in a
+              # few minutes. Once hires tiles exist, incremental updates are
+              # cheap and the watcher can keep up. The marker makes this a
+              # one-time cost rather than something repeated on every restart.
+              if [ ! -f .initial-render-complete ]; then
+                echo "no completed render yet - doing a full pass without the watcher"
+                java -jar /jar/bluemap-cli.jar -r -v 1.12.2 -n /mcdata/mods \
+                  && touch .initial-render-complete
+              fi
               # -r render, -u keep watching and update as the world changes,
               # -w serve it. All three are needed: -ru alone renders but never
               # binds 8100, and -w alone serves without rendering.
@@ -123,16 +144,23 @@ spec:
             # dimensions is well above idle.
             limits:
               memory: 4Gi
+          # The webserver does not bind until the initial render finishes, so
+          # startup has to tolerate that. 60 x 30s allows half an hour, which is
+          # far more than the few minutes this world needs but leaves room as it
+          # grows. Liveness only applies once startup has succeeded once.
+          startupProbe:
+            tcpSocket:
+              port: 8100
+            periodSeconds: 30
+            failureThreshold: 60
           readinessProbe:
             tcpSocket:
               port: 8100
-            initialDelaySeconds: 30
             periodSeconds: 15
-            failureThreshold: 6
+            failureThreshold: 3
           livenessProbe:
             tcpSocket:
               port: 8100
-            initialDelaySeconds: 300
             periodSeconds: 30
             failureThreshold: 6
           volumeMounts:

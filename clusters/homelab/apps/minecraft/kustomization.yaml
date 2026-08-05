@@ -1,7 +1,16 @@
+# RETIRED 2026-08-05. The vanilla server was replaced by SevTech: Ages, which
+# now holds port 25565 (apps/sevtech + the gateway route).
+#
+# The Deployment and Service are gone, so nothing runs and nothing listens. The
+# namespace and PVC are deliberately kept: minecraft-data still holds the world
+# save, and removing the PVC from this list makes Flux prune it, which deletes
+# the Longhorn volume and the world with no way back.
+#
+# To finish the retirement and reclaim the ~5Gi, delete pvc.yaml and drop it
+# from the list below. Do that only when you are certain the world is not
+# wanted -- it is a one-way door.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - namespace.yaml
   - pvc.yaml
-  - deployment.yaml
-  - service.yaml

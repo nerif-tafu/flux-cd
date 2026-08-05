@@ -1,0 +1,98 @@
+# SevTech: Ages 3.2.3 (Minecraft 1.12.2 + Forge), following the same shape as
+# apps/minecraft: Recreate + RWO volume, ClusterIP Service, TCP exposure via the
+# gateway Traefik instance rather than a LoadBalancer of its own.
+#
+# Three things differ from the vanilla server, all forced by this image:
+#
+# 1. IT DOWNLOADS THE MODPACK AT RUNTIME. No Minecraft files ship in the image;
+#    first start fetches SevTech 3.2.3 and runs the Forge installer into /data.
+#    That takes a long time and it is the main risk here — the image has not
+#    been rebuilt in over a year, and if the upstream download location has
+#    moved the container will never come up. Watch the first start.
+#
+# 2. IT IS BUILT FOR UNRAID, running as uid 99 / gid 100. A freshly provisioned
+#    Longhorn volume mounts root-owned, so without fsGroup the install fails on
+#    permissions — the same failure tesco-protein hit. fsGroup makes the kubelet
+#    chown the volume to that group and set the setgid bit; OnRootMismatch keeps
+#    it from re-walking a large modded world on every start.
+#
+# 3. MEMORY. SevTech is heavy: 4GB of heap is the practical floor and the pack
+#    recommends more. JVM_OPTS sets the heap; the container limit has to sit
+#    above it, because a JVM's RSS is heap plus metaspace, code cache, GC
+#    structures and mod-loading overhead. 8GB heap under a 10Gi limit leaves
+#    room for that without the kernel OOM-killing the server mid-save.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sevtech
+  namespace: sevtech
+spec:
+  replicas: 1
+  # RWO volume: a rolling update would deadlock, new pod waiting on a volume the
+  # old pod still holds.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: sevtech
+  template:
+    metadata:
+      labels:
+        app: sevtech
+    spec:
+      securityContext:
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: sevtech
+          # Pinned to the 3.2.3 tag's digest. Note :latest is a DIFFERENT digest
+          # (a43285c6…) despite the description saying it also tracks 3.2.3, and
+          # :latest on a game server is how an upstream rebuild eats a world with
+          # no way back.
+          image: docker.io/goobaroo/sevtechages:3.2.3@sha256:c43ec6e97a09cc9d12689b2b1cf734f5b03f4d936138d598a69d8001974cb111
+          env:
+            - name: EULA
+              value: "true"
+            - name: MOTD
+              value: "SevTech: Ages - mc.tafu.casa"
+            - name: JVM_OPTS
+              value: "-Xms4096m -Xmx8192m"
+            - name: LEVEL
+              value: "world"
+          ports:
+            - name: game
+              containerPort: 25565
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 500m
+              memory: 5Gi
+            limits:
+              memory: 10Gi
+          # startupProbe rather than a long livenessProbe delay: first run has to
+          # download the pack and run the Forge installer, which can take tens of
+          # minutes, and a liveness probe would kill it repeatedly before it ever
+          # finished. 60 x 30s gives it up to 30 minutes to open the port, and
+          # liveness only begins once startup has succeeded once.
+          startupProbe:
+            tcpSocket:
+              port: 25565
+            periodSeconds: 30
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket:
+              port: 25565
+            periodSeconds: 15
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 25565
+            periodSeconds: 30
+            failureThreshold: 6
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: sevtech-data

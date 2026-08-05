@@ -1,0 +1,27 @@
+# Minecraft TCP on the gateway instance, now pointed at SevTech: Ages.
+# Replaces the vanilla server, which was retired 2026-08-05.
+#
+# The entrypoint is still called `minecraft` and still listens on 25565. That
+# name is left alone on purpose: renaming it would mean editing the gateway
+# HelmRelease's ports block as well, and the port is what the router forwards —
+# the WAN has exactly one 25565, which is the whole reason the two servers could
+# not coexist.
+#
+# HostSNI(`*`) because Minecraft is not TLS. Traefik cannot see the hostname in
+# the Minecraft handshake, so this entrypoint can serve exactly one backend.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: sevtech
+  namespace: traefik
+  labels:
+    traefik.tafu.casa/instance: gateway
+spec:
+  entryPoints:
+    - minecraft
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: sevtech
+          namespace: sevtech
+          port: 25565

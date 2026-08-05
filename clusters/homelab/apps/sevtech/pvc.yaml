@@ -1,0 +1,16 @@
+# 20Gi rather than the 5Gi the vanilla server uses. SevTech Ages is a ~1.5GB
+# modpack before a world exists, the container downloads and installs Forge plus
+# the pack into /data on first run, and 1.12.2 world saves with this many mods
+# grow considerably faster than vanilla.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sevtech-data
+  namespace: sevtech
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 20Gi

@@ -4,5 +4,5 @@ resources:
   - wg-easy-udp.yaml
   - kag-tcp.yaml
   - kag-udp.yaml
-  - minecraft-tcp.yaml
+  - sevtech-tcp.yaml
   - factorio-udp.yaml

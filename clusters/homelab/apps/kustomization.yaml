@@ -21,6 +21,7 @@ resources:
   - ./rust-breeder
   - ./kag
   - ./minecraft
+  - ./sevtech
   - ./factorio
   - ./webplayer
   - ./skate-streamer-reciever

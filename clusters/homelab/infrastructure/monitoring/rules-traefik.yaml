@@ -37,16 +37,29 @@ spec:
               the previous one. New or changed Ingress/IngressRoute objects are not
               taking effect. Check the Traefik pod logs for the parse error.
 
-        - alert: TraefikBackendDown
-          expr: traefik_service_server_up == 0
-          for: 10m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Traefik backend {{ $labels.service }} has no healthy servers"
-            description: >-
-              Traefik cannot reach {{ $labels.url }} for service {{ $labels.service }}.
-              Requests to it are returning 502.
+        # REMOVED 2026-08-05: TraefikBackendDown, which read
+        # `traefik_service_server_up == 0`.
+        #
+        # That metric does not exist. It was a Traefik v2 per-server health gauge
+        # and v3 does not emit it — so the rule stopped being able to fire during
+        # the 26.0.0 -> 41.1.0 chart upgrade (v2.10 -> v3.7) and nobody noticed,
+        # because a rule whose metric is missing reports health=ok and
+        # state=inactive. That is indistinguishable from a healthy alert with
+        # nothing to complain about.
+        #
+        # Traefik IS scraped (jobs traefik-public-metrics and
+        # traefik-internal-metrics, 30 metrics) — the metric is gone, not the
+        # target. There is no direct v3 replacement for per-backend health.
+        #
+        # What still covers the failure: a dead backend returns 502s, which are
+        # counted in traefik_service_requests_total{code=~"5.."} and caught by
+        # TraefikHigh5xxRate below. The residual gap is a backend that is down
+        # but receiving no traffic — no requests, so no 5xx, so no alert.
+        #
+        # Deleted rather than left in place because a rule that cannot fire is
+        # worse than no rule: it reads as coverage on a dashboard and provides
+        # none. If per-backend health is wanted back, it needs building on
+        # something v3 actually exposes.
 
         - alert: TraefikHigh5xxRate
           expr: |

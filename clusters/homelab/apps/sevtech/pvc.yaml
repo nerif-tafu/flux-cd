@@ -1,7 +1,18 @@
-# 20Gi rather than the 5Gi the vanilla server uses. SevTech Ages is a ~1.5GB
-# modpack before a world exists, the container downloads and installs Forge plus
-# the pack into /data on first run, and 1.12.2 world saves with this many mods
-# grow considerably faster than vanilla.
+# Expanded 20Gi -> 60Gi on 2026-08-05 to make room for the pregenerated world.
+#
+# The SpawnCircle task generates 305,236 chunks (a 10000-block-wide circle at
+# spawn). Measured during the first minutes of that run, world data grows at
+# roughly 6.3MB/min, projecting to ~8-9GB for the full task. Dynmap then renders
+# that same area across flat/surface/cave, adding a few GB more, and it renders
+# as chunks generate rather than waiting.
+#
+# 20Gi would probably have survived it, but "probably" is a poor basis when
+# running out mid-generation risks the world rather than just stopping it. The
+# extra 40Gi costs 120GB across the three replicas, against 320-520GB free per
+# node.
+#
+# EXPANSION IS ONE-WAY. Kubernetes PVCs cannot be shrunk, so this size is a
+# floor from here on. Longhorn does it online, with the volume attached.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -13,4 +24,4 @@ spec:
   storageClassName: longhorn
   resources:
     requests:
-      storage: 20Gi
+      storage: 60Gi

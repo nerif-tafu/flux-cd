@@ -82,6 +82,20 @@ spec:
           kvstore:
             store: inmemory
 
+    # The rules sidecar must write into a PER-TENANT directory, not the root of
+    # /rules. Loki's local ruler store looks for rules under
+    # <storage.local.directory>/<tenant>, and with auth_enabled: false the
+    # tenant is always "fake".
+    #
+    # The chart's default folder is /rules, which puts the file one level too
+    # high. The failure is silent and convincing: the sidecar logs
+    # "Writing /rules/fail2ban.yaml", the ruler logs "ruler up and running", and
+    # /prometheus/api/v1/rules returns {"groups":[]} — a rule that exists,
+    # is valid, and is never evaluated.
+    sidecar:
+      rules:
+        folder: /rules/fake
+
     singleBinary:
       replicas: 1
       persistence:

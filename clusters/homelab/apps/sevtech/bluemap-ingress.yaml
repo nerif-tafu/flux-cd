@@ -1,0 +1,30 @@
+# mc.tafu.casa over HTTPS. No conflict with the game server on the same
+# hostname: that is TCP 25565 on the gateway Traefik instance, this is 443 on
+# the public one. Different port, different instance, same name.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bluemap
+  namespace: sevtech
+  labels:
+    traefik.tafu.casa/instance: public
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-fail2ban-public@kubernetescrd
+spec:
+  ingressClassName: traefik-public
+  rules:
+    - host: mc.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bluemap
+                port:
+                  number: 8100
+  tls:
+    - hosts:
+        - mc.tafu.casa
+      secretName: bluemap-tls

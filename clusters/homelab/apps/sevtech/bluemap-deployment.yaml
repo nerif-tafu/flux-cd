@@ -1,0 +1,128 @@
+# BlueMap CLI rendering the SevTech world and serving it at mc.tafu.casa.
+#
+# WHY THE CLI AND NOT THE MOD: BlueMap's Forge/Fabric builds target modern
+# Minecraft only, and there is no 1.12.2 mod. The standalone CLI is a different
+# matter — it was tested against this exact world on 2026-08-05 and rendered it
+# start to finish in about five minutes with no format errors, despite BlueMap's
+# published table listing the CLI as "1.13.2 - 26.2". That table describes the
+# server-side integrations; the standalone renderer reads pre-flattening region
+# files fine.
+#
+# WHY IT MUST SIT NEXT TO THE SERVER: sevtech-data is ReadWriteOnce, so it can
+# only be attached to one NODE. podAffinity pins this alongside the SevTech pod
+# so both can mount it. If SevTech moves, this follows.
+#
+# The world is mounted READ-ONLY. BlueMap only needs to read region files, and
+# there is no reason to give a renderer write access to a live world.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bluemap
+  namespace: sevtech
+spec:
+  replicas: 1
+  # RWO on bluemap-data as well, so the same rolling-update deadlock applies.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: bluemap
+  template:
+    metadata:
+      labels:
+        app: bluemap
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: sevtech
+              topologyKey: kubernetes.io/hostname
+      initContainers:
+        # Fetched at a pinned release rather than baked in, because there is no
+        # official BlueMap container image. The URL is a GitHub release asset,
+        # which is immutable once published.
+        - name: fetch-bluemap
+          image: curlimages/curl:8.10.1
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              if [ ! -f /jar/bluemap-cli.jar ]; then
+                curl -fsSL -o /jar/bluemap-cli.jar \
+                  https://github.com/BlueMap-Minecraft/BlueMap/releases/download/v5.22/bluemap-5.22-cli.jar
+                echo "downloaded bluemap 5.22 cli"
+              else
+                echo "jar already present"
+              fi
+          volumeMounts:
+            - {name: jar, mountPath: /jar}
+      containers:
+        - name: bluemap
+          # BlueMap 5.22 is compiled for Java 25 (class file 69). The docs still
+          # say "Java 21 or newer"; that is stale, and 21 fails outright with
+          # UnsupportedClassVersionError.
+          image: docker.io/library/eclipse-temurin:25-jdk
+          command: ["/bin/bash", "-ec"]
+          args:
+            - |
+              cd /bluemap
+              # First run generates the default config tree, then exits.
+              if [ ! -f config/core.conf ]; then
+                java -jar /jar/bluemap-cli.jar || true
+              fi
+              # Required before BlueMap will fetch the Minecraft client jar it
+              # needs for block models and textures. This is an assertion about
+              # Mojang's EULA, which is already accepted for the server itself.
+              sed -i 's/accept-download: false/accept-download: true/' config/core.conf
+              # BlueMap ships a default map pointing at ./world, which does not
+              # exist here and only produces a warning on every start.
+              rm -f config/maps/world.conf
+              mkdir -p config/maps
+              printf 'world: "/mcdata/world"\n' > config/maps/overworld.conf
+              # -r render, -u then keep watching the world and update as it
+              # changes. The webserver starts alongside these; -w on its own
+              # means webserver ONLY, which would render nothing.
+              exec java -jar /jar/bluemap-cli.jar -ru
+          ports:
+            - name: http
+              containerPort: 8100
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            # Rendering is memory-hungry in bursts; a full pass over SevTech's
+            # dimensions is well above idle.
+            limits:
+              memory: 4Gi
+          readinessProbe:
+            tcpSocket:
+              port: 8100
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 6
+          livenessProbe:
+            tcpSocket:
+              port: 8100
+            initialDelaySeconds: 300
+            periodSeconds: 30
+            failureThreshold: 6
+          volumeMounts:
+            - name: jar
+              mountPath: /jar
+            - name: bluemap
+              mountPath: /bluemap
+            - name: mcdata
+              mountPath: /mcdata
+              readOnly: true
+      volumes:
+        - name: jar
+          emptyDir: {}
+        - name: bluemap
+          persistentVolumeClaim:
+            claimName: bluemap-data
+        - name: mcdata
+          persistentVolumeClaim:
+            claimName: sevtech-data
+            readOnly: true

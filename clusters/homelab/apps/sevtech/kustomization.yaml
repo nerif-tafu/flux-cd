@@ -5,3 +5,8 @@ resources:
   - pvc.yaml
   - deployment.yaml
   - service.yaml
+  # BlueMap: renders the world and serves it at mc.tafu.casa over HTTPS.
+  - bluemap-pvc.yaml
+  - bluemap-deployment.yaml
+  - bluemap-service.yaml
+  - bluemap-ingress.yaml

@@ -1,0 +1,16 @@
+# BlueMap's own storage: its config, the downloaded Minecraft client resources,
+# and the rendered tiles. Deliberately separate from sevtech-data so map output
+# never competes with the world for space, and so wiping the map to force a
+# re-render does not go anywhere near the save.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bluemap-data
+  namespace: sevtech
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi

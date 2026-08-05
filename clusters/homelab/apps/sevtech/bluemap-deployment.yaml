@@ -75,6 +75,18 @@ spec:
               # needs for block models and textures. This is an assertion about
               # Mojang's EULA, which is already accepted for the server itself.
               sed -i 's/accept-download: false/accept-download: true/' config/core.conf
+              # Open in the 2D view, because the 3D one has nothing to draw.
+              #
+              # BlueMap produces no hires geometry for this world: with
+              # enable-hires: true and a forced -f render that ran to
+              # "up-to-date", tiles/0 stayed empty and not a single .prbm exists
+              # on the volume. Lowres PNGs render correctly and serve 200. The
+              # renderer can build a top-down colour map of 1.12.2 chunks but not
+              # the block-model geometry the perspective view needs.
+              #
+              # Defaulting to perspective therefore shows a black screen over a
+              # perfectly good map, which is exactly how this looked.
+              sed -i 's/default-to-flat-view: false/default-to-flat-view: true/' config/webapp.conf
               # The map set is defined here and nowhere else. BlueMap generates
               # default configs (nether.conf, end.conf) pointing at a relative
               # "world" directory that does not exist in this layout. Those
@@ -115,9 +127,15 @@ spec:
               min-inhabited-time: 0
               render-edges: true
               edge-light-strength: 8
-              enable-perspective-view: true
+              # The two 3D modes are switched off because they cannot render:
+              # both draw from hires geometry, and BlueMap generates none for
+              # this world. Offering a mode that shows a black screen is worse
+              # than not offering it. enable-hires stays true so that if a future
+              # BlueMap gains 1.12.2 model support, the tiles start appearing and
+              # these can simply be flipped back on.
+              enable-perspective-view: false
               enable-flat-view: true
-              enable-free-flight-view: true
+              enable-free-flight-view: false
               enable-hires: true
               storage: "file"
               # SevTech is 261 mods deep and some 1.12.2 mods do not persist light

@@ -30,8 +30,30 @@ spec:
         replication_factor: 1
       storage:
         type: filesystem
-      # Homelab-friendly schema; switch to a real schemaConfig when you want stricter control.
-      useTestSchema: true
+      # Pinned to exactly what useTestSchema was already generating, verified
+      # against the live ConfigMap before the change — so this is a no-op today.
+      #
+      # The schema itself was never the problem: tsdb + v13 is the current
+      # recommended combination, not a degraded test setting. The problem was
+      # ownership. With useTestSchema the schema is whatever the CHART decides,
+      # so a chart upgrade can silently introduce a different schema period —
+      # and a schema that moves underneath existing data is how old logs become
+      # unreadable. Writing it down means an upgrade can change the chart
+      # without changing the storage contract.
+      #
+      # If a genuinely new schema is ever wanted, do NOT edit this entry. Append
+      # a second config with a future `from` date and leave this one intact:
+      # Loki reads each period with the schema in force at the time, so rewriting
+      # history is what breaks reads, not adding to it.
+      schemaConfig:
+        configs:
+          - from: "2024-04-01"
+            store: tsdb
+            object_store: filesystem
+            schema: v13
+            index:
+              prefix: index_
+              period: 24h
 
     singleBinary:
       replicas: 1

@@ -80,10 +80,23 @@ spec:
               rm -f config/maps/world.conf
               mkdir -p config/maps
               printf 'world: "/mcdata/world"\n' > config/maps/overworld.conf
-              # -r render, -u then keep watching the world and update as it
-              # changes. The webserver starts alongside these; -w on its own
-              # means webserver ONLY, which would render nothing.
-              exec java -jar /jar/bluemap-cli.jar -ru
+              # -r render, -u keep watching and update as the world changes,
+              # -w serve it. All three are needed: -ru alone renders but never
+              # binds 8100, and -w alone serves without rendering.
+              #
+              # -v 1.12.2 is not optional. Without it BlueMap defaults to "the
+              # latest compatible version" and downloads minecraft-client-26.2,
+              # then renders a 1.12.2 world with modern textures and block
+              # models. This is the client jar that makes the CLI version-
+              # agnostic; pointing it at the wrong version silently produces a
+              # wrong-looking map rather than an error.
+              #
+              # -n /mcdata/mods gives it SevTech's 261 mod jars as a resource
+              # source. Without it every modded block falls back to a default,
+              # which on a pack this size is most of the interesting map.
+              exec java -jar /jar/bluemap-cli.jar -r -u -w \
+                -v 1.12.2 \
+                -n /mcdata/mods
           ports:
             - name: http
               containerPort: 8100

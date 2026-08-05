@@ -88,11 +88,42 @@ spec:
               # previous BlueMap version's defaults.
               mkdir -p config/maps
               find config/maps -name '*.conf' -delete
+              # Mirrors BlueMap's generated defaults, not a minimal subset.
+              #
+              # A four-line config here produced a black map: omitting a key does
+              # NOT fall back to the value shown in the generated config. The
+              # generated file sets enable-hires: true explicitly, and with the
+              # key absent the internal default is false — so the renderer wrote
+              # lowres tiles only, tiles/0 stayed empty, and the default
+              # perspective view had no geometry to draw. ambient-light was
+              # likewise dropped, rendering at 0.0 instead of 0.1.
+              #
+              # Anything set here is deliberate. Do not trim it back.
               cat > config/maps/overworld.conf <<'MAPCONF'
               world: "/mcdata/world"
               dimension: "minecraft:overworld"
               name: "SevTech Overworld"
               sorting: 0
+              start-pos: { x: 0, z: 0 }
+              sky-color: "#7dabff"
+              void-color: "#000000"
+              sky-light: 1
+              ambient-light: 0.1
+              remove-caves-below-y: 55
+              cave-detection-ocean-floor: -5
+              cave-detection-uses-block-light: false
+              min-inhabited-time: 0
+              render-edges: true
+              edge-light-strength: 8
+              enable-perspective-view: true
+              enable-flat-view: true
+              enable-free-flight-view: true
+              enable-hires: true
+              storage: "file"
+              # SevTech is 261 mods deep and some 1.12.2 mods do not persist light
+              # data the way vanilla does. Tolerating that is preferable to
+              # rendering black patches where the data is absent.
+              ignore-missing-light-data: true
               MAPCONF
               # THE INITIAL RENDER MUST COMPLETE BEFORE WATCHING STARTS.
               #
@@ -110,10 +141,16 @@ spec:
               # few minutes. Once hires tiles exist, incremental updates are
               # cheap and the watcher can keep up. The marker makes this a
               # one-time cost rather than something repeated on every restart.
-              if [ ! -f .initial-render-complete ]; then
-                echo "no completed render yet - doing a full pass without the watcher"
-                java -jar /jar/bluemap-cli.jar -r -v 1.12.2 -n /mcdata/mods \
-                  && touch .initial-render-complete
+              # The marker is versioned. BlueMap tracks what it has rendered in
+              # rstate and will skip tiles it believes are current, so a config
+              # change that alters HOW tiles are drawn needs a forced pass —
+              # enable-hires in particular, whose own documentation says
+              # "requires a re-render of the map". Bumping the suffix is how that
+              # is requested: a new marker means one -f pass, once.
+              if [ ! -f .initial-render-complete-v2 ]; then
+                echo "forcing a full render (hires enabled, config v2)"
+                java -jar /jar/bluemap-cli.jar -r -f -v 1.12.2 -n /mcdata/mods \
+                  && touch .initial-render-complete-v2
               fi
               # -r render, -u keep watching and update as the world changes,
               # -w serve it. All three are needed: -ru alone renders but never

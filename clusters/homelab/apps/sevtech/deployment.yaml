@@ -111,8 +111,14 @@ spec:
                 echo "broadcast-rcon-to-ops=false"
               } >> "$PROPS.new"
               mv "$PROPS.new" "$PROPS"
+              # Ownership matters here. This container runs as root so it can
+              # write into the volume, but the server runs as uid 99 / gid 100
+              # and rewrites server.properties itself on startup. Leaving the
+              # file root-owned at 0600 locks the server out of its own config
+              # and it hangs before printing anything at all.
+              chown 99:100 "$PROPS"
               chmod 0600 "$PROPS"
-              echo "rcon enabled on 25575 (password from secret)"
+              echo "rcon enabled on 25575 (password from secret), props owned by 99:100"
           volumeMounts:
             - name: data
               mountPath: /data

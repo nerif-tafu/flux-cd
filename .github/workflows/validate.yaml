@@ -86,14 +86,20 @@ jobs:
           PY
 
       - name: Validate against the Alertmanager the operator actually runs
-        # Pinned to the version prometheus-operator v0.70.0 (chart 55.0.0)
-        # ships. The operator validates the config with its own parser of this
-        # vintage before generating the StatefulSet, so a pass here is what
-        # predicts the operator will accept it. Bump this when the chart moves.
+        # Must match the Alertmanager the cluster is running, because the point
+        # of this step is to predict what the operator's parser will accept.
+        # Verified against the live cluster on 2026-07-31: v0.33.1.
+        #
+        # This pin was stale for the whole of the 55.0.0 -> 87.21.0 upgrade: it
+        # still said v0.26.0 while the cluster ran v0.33.1, so the job was
+        # validating against a parser seven minor versions behind the one that
+        # actually gates the config. A pass meant nothing. That is precisely the
+        # false-pass this workflow exists to prevent, so when the chart moves,
+        # this line moves with it.
         run: |
           set -euo pipefail
           docker run --rm -v /tmp/alertmanager.yml:/cfg.yml:ro \
-            --entrypoint amtool quay.io/prometheus/alertmanager:v0.26.0 \
+            --entrypoint amtool quay.io/prometheus/alertmanager:v0.33.1 \
             check-config /cfg.yml
 
   rules:
@@ -115,10 +121,18 @@ jobs:
           PY
 
       - name: Validate PromQL
+        # Matches the running Prometheus (v3.13.1, verified 2026-07-31). Was
+        # pinned at v2.48.0 across the v2 -> v3 major upgrade, so it was
+        # checking PromQL against a parser from before the upgrade.
+        #
+        # NOTE: promtool checks that the PromQL parses, not that the metrics it
+        # references exist. Three rules in this repo passed this job for months
+        # while being permanently unable to fire, because their metrics are not
+        # present in this cluster at all. See MON-1.
         run: |
           set -euo pipefail
           docker run --rm -v /tmp/rules.yml:/rules.yml:ro \
-            --entrypoint promtool quay.io/prometheus/prometheus:v2.48.0 \
+            --entrypoint promtool quay.io/prometheus/prometheus:v3.13.1 \
             check rules /rules.yml
 
   sops:

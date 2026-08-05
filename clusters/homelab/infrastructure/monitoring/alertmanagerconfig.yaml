@@ -135,11 +135,18 @@ spec:
           # nobody; only content produces an actual Discord ping.
           content: "<@107411599001710592>"
           title: '{{ if eq .Status "firing" }}🔴 [CRITICAL x{{ .Alerts.Firing | len }}] {{ else }}✅ [RESOLVED] {{ end }}{{ .CommonLabels.alertname }}'
+          # `message` is the annotation Flux's notification-controller uses;
+          # summary/description are what Prometheus rules set. Both are rendered
+          # conditionally because an alert carries one set or the other, never
+          # both -- Flux alerts arriving through the alertmanager Provider were
+          # otherwise delivered with an empty body, which reads as a working
+          # alert that says nothing. Verified against a real Flux event.
           message: |-
             {{ range .Alerts -}}
-            **{{ .Annotations.summary }}**
-            {{ .Annotations.description }}
-            {{ if .Labels.node }}node=`{{ .Labels.node }}`{{ else }}{{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}`{{ end }}{{ end }}
+            {{ with .Annotations.summary }}**{{ . }}**
+            {{ end }}{{ with .Annotations.description }}{{ . }}
+            {{ end }}{{ with .Annotations.message }}{{ . }}
+            {{ end }}{{ if .Labels.node }}node=`{{ .Labels.node }}`{{ else }}{{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}`{{ end }}{{ end }}{{ with .Labels.kind }} {{ . }}/{{ $.CommonLabels.name }}{{ end }}
             {{ end }}
 
     - name: discord-warning
@@ -150,9 +157,14 @@ spec:
           sendResolved: true
           # No content: warnings post without pinging.
           title: '{{ if eq .Status "firing" }}🟠 [warning x{{ .Alerts.Firing | len }}] {{ else }}✅ [RESOLVED] {{ end }}{{ .CommonLabels.alertname }}'
+          # Same annotation fallback as discord-critical. This receiver matters
+          # more for it: Flux sets severity="error", which matches neither the
+          # critical nor the warning|info sub-route, so Flux alerts fall through
+          # to this one as the top-level default.
           message: |-
             {{ range .Alerts -}}
-            **{{ .Annotations.summary }}**
-            {{ .Annotations.description }}
-            {{ if .Labels.node }}node=`{{ .Labels.node }}`{{ else }}{{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}`{{ end }}{{ end }}
+            {{ with .Annotations.summary }}**{{ . }}**
+            {{ end }}{{ with .Annotations.description }}{{ . }}
+            {{ end }}{{ with .Annotations.message }}{{ . }}
+            {{ end }}{{ if .Labels.node }}node=`{{ .Labels.node }}`{{ else }}{{ with .Labels.namespace }}ns=`{{ . }}` {{ end }}{{ with .Labels.pod }}pod=`{{ . }}`{{ end }}{{ end }}{{ with .Labels.kind }} {{ . }}/{{ $.CommonLabels.name }}{{ end }}
             {{ end }}

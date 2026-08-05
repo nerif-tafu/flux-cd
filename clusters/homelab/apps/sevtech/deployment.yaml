@@ -43,6 +43,44 @@ spec:
       securityContext:
         fsGroup: 100
         fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+        # Dynmap: a server-side Forge mod that renders the world and serves its
+        # own web UI on 8123. Replaces BlueMap, which could not produce 3D
+        # geometry for 1.12.2 — it rendered lowres tiles only, so the page was
+        # black in BlueMap's default perspective view.
+        #
+        # Dynmap is the right tool for this Minecraft version: it targets 1.12.2
+        # directly, it is a mod rather than an offline renderer so it sees live
+        # server state (player positions, chunk updates) instead of lagging
+        # behind disk saves, and its isometric views work here.
+        #
+        # Clients need nothing installed — Dynmap is server-side only.
+        #
+        # Idempotent on purpose: re-fetching a jar on every restart would be
+        # wasteful and would fail whenever Modrinth is unreachable, taking the
+        # game server down with it.
+        - name: install-dynmap
+          image: curlimages/curl:8.10.1
+          securityContext:
+            # Root so the write into the mods directory cannot fail on
+            # ownership; fsGroup already handles the group.
+            runAsUser: 0
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              JAR=/data/mods/Dynmap-3.5-forge-1.12.2.jar
+              if [ -f "$JAR" ]; then
+                echo "dynmap already installed"
+              else
+                mkdir -p /data/mods
+                curl -fsSL -o "$JAR" \
+                  https://cdn.modrinth.com/data/fRQREgAc/versions/76EfaYa6/Dynmap-3.5-forge-1.12.2.jar
+                chmod 0644 "$JAR"
+                echo "installed Dynmap 3.5 for forge 1.12.2"
+              fi
+          volumeMounts:
+            - name: data
+              mountPath: /data
       containers:
         - name: sevtech
           # Pinned to the 3.2.3 tag's digest. Note :latest is a DIFFERENT digest
@@ -62,6 +100,10 @@ spec:
           ports:
             - name: game
               containerPort: 25565
+              protocol: TCP
+            # Dynmap's webserver, exposed at mc.tafu.casa via dynmap-ingress.
+            - name: dynmap
+              containerPort: 8123
               protocol: TCP
           resources:
             requests:

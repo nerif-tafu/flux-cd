@@ -5,8 +5,6 @@ resources:
   - pvc.yaml
   - deployment.yaml
   - service.yaml
-  # BlueMap: renders the world and serves it at mc.tafu.casa over HTTPS.
-  - bluemap-pvc.yaml
-  - bluemap-deployment.yaml
-  - bluemap-service.yaml
-  - bluemap-ingress.yaml
+  # Dynmap: a Forge mod inside the server, serving its web UI at mc.tafu.casa.
+  # Replaced BlueMap, which cannot render 1.12.2 in 3D — see the deployment.
+  - dynmap-ingress.yaml

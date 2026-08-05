@@ -12,3 +12,9 @@ spec:
       port: 25565
       targetPort: 25565
       protocol: TCP
+    # Dynmap's built-in webserver. Served inside the game server process, not a
+    # separate pod, so it hangs off this Service rather than one of its own.
+    - name: dynmap
+      port: 8123
+      targetPort: 8123
+      protocol: TCP

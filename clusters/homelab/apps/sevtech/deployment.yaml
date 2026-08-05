@@ -81,6 +81,34 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+        # Chunk-Pregenerator: generates terrain ahead of time so players are not
+        # waiting on SevTech's very heavy worldgen while exploring, and so Dynmap
+        # has something to render beyond spawn.
+        #
+        # Server-side only; clients need nothing. Same idempotent pattern as
+        # Dynmap — fetched once, and a failed download must not be able to take
+        # the game server down with it.
+        - name: install-pregenerator
+          image: curlimages/curl:8.10.1
+          securityContext:
+            runAsUser: 0
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              JAR=/data/mods/Chunk-Pregenerator-1.12.2-4.4.9.jar
+              if [ -f "$JAR" ]; then
+                echo "chunk-pregenerator already installed"
+              else
+                mkdir -p /data/mods
+                curl -fsSL -o "$JAR" \
+                  https://mediafilez.forgecdn.net/files/5632/153/Chunk-Pregenerator-1.12.2-4.4.9.jar
+                chown 99:100 "$JAR"
+                chmod 0644 "$JAR"
+                echo "installed Chunk-Pregenerator 4.4.9 for 1.12.2"
+              fi
+          volumeMounts:
+            - name: data
+              mountPath: /data
         # RCON, so the server console is reachable. Needed at minimum to issue
         # "dynmap fullrender": Dynmap renders on blockupdate/chunkpopulate/
         # chunkgenerate triggers, none of which ever fired for chunks that were

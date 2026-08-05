@@ -1,0 +1,53 @@
+# The same failures as alert-gitops-errors.yaml, sent to Alertmanager instead of
+# straight to Discord.
+#
+# Deliberately duplicated rather than switched over. Until this path is proven to
+# deliver something readable, the direct Discord Alert stays as-is — losing
+# coverage while testing a replacement is how the exclusionList mistake happened.
+# Once this is confirmed working, the direct one can be trimmed.
+#
+# eventSources mirrors alert-gitops-errors.yaml. The same caveat applies: an
+# omitted namespace defaults to the Alert's own, so every namespace holding a
+# HelmRelease has to be listed explicitly.
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: gitops-errors-alertmanager
+  namespace: flux-system
+spec:
+  providerRef:
+    name: alertmanager
+  eventSeverity: error
+  eventMetadata:
+    # Becomes a label on the Alertmanager alert. Matches the eventMetadata on
+    # the Discord Alert so both paths describe the same cluster.
+    cluster: homelab
+  eventSources:
+    - kind: GitRepository
+      name: '*'
+    - kind: HelmRepository
+      name: '*'
+    - kind: Kustomization
+      name: '*'
+    - kind: ImageRepository
+      name: '*'
+    - kind: ImagePolicy
+      name: '*'
+    - kind: HelmRelease
+      name: '*'
+      namespace: cert-manager
+    - kind: HelmRelease
+      name: '*'
+      namespace: logging
+    - kind: HelmRelease
+      name: '*'
+      namespace: longhorn-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: metallb-system
+    - kind: HelmRelease
+      name: '*'
+      namespace: monitoring
+    - kind: HelmRelease
+      name: '*'
+      namespace: traefik

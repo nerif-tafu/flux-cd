@@ -1,0 +1,42 @@
+# Routes Flux failures into Alertmanager as well as Discord.
+#
+# WHY: notification-controller has no grouping. It posts one Discord message per
+# event per object, so a single fault that stalls 24 ImageRepositories arrives as
+# 24 messages — which is what happened on 2026-07-31.
+#
+# The obvious fix was to suppress the duplicates on the notification side, on the
+# grounds that FluxReconciliationFailure covers anything persistent. That was
+# wrong and got reverted in 41b0a9f: FluxReconciliationFailure reads
+# gotk_reconcile_condition, which does not exist in this cluster, so it can never
+# fire. There is no Prometheus-side coverage of Flux object health at all.
+#
+# This closes the gap from the other end. Instead of inventing a metric, the
+# events themselves go into Alertmanager, which already has the grouping and
+# inhibition that notification-controller lacks.
+#
+# ROUTING, and why nothing here touches the AlertmanagerConfig:
+# notification-controller sets severity="error" on the alerts it posts (not
+# "critical" or "warning"). The homelab AlertmanagerConfig has sub-routes for
+# severity=critical and severity="warning|info", so severity=error matches
+# neither and falls through to the top-level default receiver, discord-warning.
+#
+# That is deliberate for now. It means these arrive grouped and inhibited but
+# without an @mention. Promoting them is a one-route change to the
+# AlertmanagerConfig — but that CRD gates ALL alerting and is flagged
+# experimental by the operator, so it is a separate, verified step rather than a
+# rider on this one.
+#
+# This ADDS a path. The existing Discord Provider and its Alerts are untouched,
+# so if this delivers nothing, nothing is lost.
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: alertmanager
+  namespace: flux-system
+spec:
+  type: alertmanager
+  # Trailing /alerts/ is what the Flux docs specify for the v2 API.
+  # No secretRef: Alertmanager here has no auth on its cluster-internal port,
+  # and flux-system's allow-egress policy is `egress: [{}]`, so the
+  # cross-namespace call is permitted.
+  address: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093/api/v2/alerts/

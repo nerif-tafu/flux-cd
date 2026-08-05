@@ -5,3 +5,5 @@ resources:
   - provider-discord-gitops.yaml
   - alert-gitops-errors.yaml
   - alert-image-updates.yaml
+  - provider-alertmanager.yaml
+  - alert-gitops-errors-alertmanager.yaml

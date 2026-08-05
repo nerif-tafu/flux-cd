@@ -88,6 +88,14 @@ spec:
         # Server-side only; clients need nothing. Same idempotent pattern as
         # Dynmap — fetched once, and a failed download must not be able to take
         # the game server down with it.
+        # Chunk-Pregenerator AND its dependency. Installing the first without
+        # the second crash-looped the server on startup:
+        #
+        #   MissingModsException: Mod chunkpregenerator requires [carbonconfig]
+        #
+        # Forge resolves dependencies at load and refuses to start when one is
+        # absent, so a missing library mod is a hard failure rather than a
+        # degraded feature. Both jars are fetched together for that reason.
         - name: install-pregenerator
           image: curlimages/curl:8.10.1
           securityContext:
@@ -95,17 +103,24 @@ spec:
           command: ["/bin/sh", "-ec"]
           args:
             - |
-              JAR=/data/mods/Chunk-Pregenerator-1.12.2-4.4.9.jar
-              if [ -f "$JAR" ]; then
-                echo "chunk-pregenerator already installed"
-              else
-                mkdir -p /data/mods
-                curl -fsSL -o "$JAR" \
-                  https://mediafilez.forgecdn.net/files/5632/153/Chunk-Pregenerator-1.12.2-4.4.9.jar
-                chown 99:100 "$JAR"
-                chmod 0644 "$JAR"
-                echo "installed Chunk-Pregenerator 4.4.9 for 1.12.2"
-              fi
+              mkdir -p /data/mods
+              fetch() {
+                jar="/data/mods/$1"; url="$2"
+                if [ -f "$jar" ]; then
+                  echo "already installed: $1"
+                else
+                  curl -fsSL -o "$jar" "$url"
+                  chown 99:100 "$jar"
+                  chmod 0644 "$jar"
+                  echo "installed: $1"
+                fi
+              }
+              # CarbonConfig first for readability; Forge does not care about
+              # order, only that both are present.
+              fetch CarbonConfig-1.12.2-1.2.4.jar \
+                https://mediafilez.forgecdn.net/files/5504/476/CarbonConfig-1.12.2-1.2.4.jar
+              fetch Chunk-Pregenerator-1.12.2-4.4.9.jar \
+                https://mediafilez.forgecdn.net/files/5632/153/Chunk-Pregenerator-1.12.2-4.4.9.jar
           volumeMounts:
             - name: data
               mountPath: /data

@@ -15,27 +15,30 @@ spec:
   eventSeverity: error
   eventMetadata:
     cluster: homelab
-  # Transient outbound-network failures are dropped here on purpose.
+  # DO NOT add an exclusionList here until the Prometheus backstop is real.
   #
-  # notification-controller has no grouping or aggregation: it posts one Discord
-  # message per event per object. So a single network fault that stalls every
-  # ImageRepository at once arrives as one message each — 24 of them on
-  # 2026-07-31, all describing the same wedged connection.
+  # An exclusionList for transient network errors was added on 2026-07-31 to cut
+  # the 24 Discord messages a single wedged connection produces, on the reasoning
+  # that anything persistent was still covered by FluxReconciliationFailure at
+  # critical severity. That reasoning was wrong, and the check that would have
+  # caught it was never run.
   #
-  # Nothing is lost by excluding them, because a failure that actually persists
-  # is already covered on the Prometheus path: FluxReconciliationFailure fires
-  # for any Flux object stuck Ready=False for 15m, at critical severity, which
-  # is the route that can @mention. Alertmanager groups those, so the same
-  # incident produces one notification instead of two dozen.
+  # FluxReconciliationFailure cannot fire. Its expression reads
+  # gotk_reconcile_condition, and that metric does not exist in this Prometheus —
+  # the flux-controllers job IS scraped, but the controllers at these versions
+  # emit only gotk_reconcile_duration_seconds, gotk_event_http_* and
+  # gotk_token_cache_*. The rule reports health=ok and state=inactive, which
+  # looks healthy and is why it went unnoticed. FluxSuspended is dead for the
+  # same reason (gotk_suspend_status).
   #
-  # The trade is that a fault which self-clears inside 15m is now silent. That
-  # is the intent: it self-cleared.
-  exclusionList:
-    - "context deadline exceeded"
-    - "connection refused"
-    - "no route to host"
-    - "TLS handshake timeout"
-    - "i/o timeout"
+  # So these notifications are not a duplicate of the Prometheus path. For
+  # ImageRepository and ImagePolicy failures they are currently the ONLY path.
+  # Excluding them meant the ghcr.io outage that morning would have produced
+  # silence rather than noise.
+  #
+  # The noise is real and worth fixing, but the order matters: make
+  # FluxReconciliationFailure actually fire first, prove it, and only then
+  # consider trimming here.
   eventSources:
     # Sources and Kustomizations (all live in flux-system)
     - kind: GitRepository

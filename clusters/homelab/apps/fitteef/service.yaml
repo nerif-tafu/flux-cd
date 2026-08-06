@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fitteef
+  namespace: fitteef
+spec:
+  selector:
+    app: fitteef
+  ports:
+    - port: 80
+      targetPort: 3000

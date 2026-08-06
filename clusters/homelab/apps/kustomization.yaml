@@ -9,6 +9,7 @@ resources:
   - ./rust-booter
   - ./rustplus-shop-helper-v2
   - ./fitv2
+  - ./fitteef
   - ./vocard
   - ./wg-easy
   - ./tafu-casa

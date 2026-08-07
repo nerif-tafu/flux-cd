@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fitteef-videos
+  namespace: fitteef
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    # yt-dlp cache for the exercise clips, ~116Mi for the current 99 videos.
+    # Sized for headroom because the app never prunes: an edited link leaves the
+    # old video behind and downloads a new one alongside it.
+    requests:
+      storage: 5Gi

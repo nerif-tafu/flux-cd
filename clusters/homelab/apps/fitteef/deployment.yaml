@@ -47,7 +47,15 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/data
+            # Without this the yt-dlp cache lives in the container layer, so every
+            # restart and image bump re-downloads all ~99 clips from YouTube on the
+            # stored cookies. Persisted, startup only fetches what is missing.
+            - name: videos
+              mountPath: /app/client/videos
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: fitteef-data
+        - name: videos
+          persistentVolumeClaim:
+            claimName: fitteef-videos

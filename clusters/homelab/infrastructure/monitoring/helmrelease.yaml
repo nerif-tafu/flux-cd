@@ -127,6 +127,35 @@ spec:
       enabled: true
     nodeExporter:
       enabled: true
+    # k3s has no separately scrapable control plane. The scheduler, controller
+    # manager and kube-proxy all run inside the single k3s server process, and
+    # there are no `component=kube-scheduler` pods in kube-system for the chart's
+    # Services to select -- all four had zero endpoints for the 157 days they
+    # existed. The Down alerts use absent(up{job="kube-scheduler"} == 1), which
+    # fires precisely *because* the target is missing, so they had been firing
+    # permanently and drowning real alerts in the Discord channel.
+    #
+    # These flags gate both the Service/ServiceMonitor and the matching rule
+    # groups, so turning them off removes the false targets and the alerts
+    # together. Verified with `helm template` at 87.21.0: 139 alerts -> 120, and
+    # the 19 dropped are exactly the kube-proxy/scheduler/controller-manager
+    # Down+InstanceUnreachable pairs plus the 13 etcd rules. Nothing else moves.
+    #
+    # etcd goes too because this cluster has one server node (silver-01), so k3s
+    # is on the default sqlite datastore -- there is no etcd to monitor.
+    #
+    # Reversing this is not enough on its own to get real metrics: k3s binds
+    # those endpoints to 127.0.0.1, so it would also need
+    # --kube-scheduler-arg=bind-address=0.0.0.0 (and the equivalents) in
+    # infrastructure/node-config.
+    kubeProxy:
+      enabled: false
+    kubeScheduler:
+      enabled: false
+    kubeControllerManager:
+      enabled: false
+    kubeEtcd:
+      enabled: false
     alertmanager:
       enabled: true
       alertmanagerSpec:

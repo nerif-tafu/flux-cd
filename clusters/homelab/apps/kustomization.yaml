@@ -21,7 +21,6 @@ resources:
   - ./filebrowser
   - ./rust-breeder
   - ./kag
-  - ./minecraft
   - ./sevtech
   - ./factorio
   - ./webplayer

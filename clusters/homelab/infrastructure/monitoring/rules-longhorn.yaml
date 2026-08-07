@@ -50,10 +50,10 @@ spec:
           # Longhorn reports robustness=unknown for every *detached* volume --
           # with no engine running it has nothing to measure. So this fires
           # forever on any volume whose workload is intentionally scaled to zero
-          # or retired (e.g. minecraft-data, kept for its world save after the
-          # server was replaced by SevTech). state 3 == detached; excluding it
-          # leaves the case this alert is actually for: an *attached* volume
-          # whose replicas longhorn-manager has lost track of.
+          # or retired, which is how it was found: it had been firing for days
+          # on the leftover minecraft-data world save. state 3 == detached;
+          # excluding it leaves the case this alert is actually for: an
+          # *attached* volume whose replicas longhorn-manager has lost track of.
           expr: longhorn_volume_robustness == 0 and longhorn_volume_state != 3
           for: 30m
           labels:

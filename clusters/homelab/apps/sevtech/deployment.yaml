@@ -19,8 +19,12 @@
 # 3. MEMORY. SevTech is heavy: 4GB of heap is the practical floor and the pack
 #    recommends more. JVM_OPTS sets the heap; the container limit has to sit
 #    above it, because a JVM's RSS is heap plus metaspace, code cache, GC
-#    structures and mod-loading overhead. 8GB heap under a 10Gi limit leaves
+#    structures and mod-loading overhead. 12GB heap under a 16Gi limit leaves
 #    room for that without the kernel OOM-killing the server mid-save.
+#
+#    Raised from 8GB/10Gi on 2026-08-09: after the Expand10k pregen the pod sat
+#    at 98% of the 10Gi limit and burned only 380m CPU on a 20-core node — GC
+#    thrash, not render work, was pacing Dynmap through its ~830k tile backlog.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -181,7 +185,7 @@ spec:
             - name: MOTD
               value: "SevTech: Ages - mc.tafu.casa"
             - name: JVM_OPTS
-              value: "-Xms4096m -Xmx8192m"
+              value: "-Xms8192m -Xmx12288m"
             - name: LEVEL
               value: "world"
           ports:
@@ -202,7 +206,7 @@ spec:
               cpu: 500m
               memory: 5Gi
             limits:
-              memory: 10Gi
+              memory: 16Gi
           # startupProbe rather than a long livenessProbe delay: first run has to
           # download the pack and run the Forge installer, which can take tens of
           # minutes, and a liveness probe would kill it repeatedly before it ever

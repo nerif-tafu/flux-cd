@@ -1,0 +1,22 @@
+# Track stable x.y.z tags from Docker Hub. The filter matters more than usual
+# here: this repository also publishes :latest, :main and the truncated :0 and
+# :0.0 aliases, none of which are a version Flux can order.
+#
+# The range takes every release because the project is pre-1.0 — under semver
+# 0.x carries no compatibility promise, so there is no "safe" subrange to pin
+# to and narrowing it would just mean pinning to one version by hand. If an
+# update ever breaks the dashboard, set the range to the last good version and
+# the setter in the deployment stops moving.
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: internet-monitor
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: internet-monitor
+  filterTags:
+    pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+  policy:
+    semver:
+      range: ">=0.0.1"

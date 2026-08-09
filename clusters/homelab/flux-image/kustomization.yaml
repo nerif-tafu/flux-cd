@@ -81,4 +81,6 @@ resources:
   - factorio-imagepolicy.yaml
   - tesco-protein-imagerepository.yaml
   - tesco-protein-imagepolicy.yaml
+  - internet-monitor-imagerepository.yaml
+  - internet-monitor-imagepolicy.yaml
   - imageupdateautomation.yaml

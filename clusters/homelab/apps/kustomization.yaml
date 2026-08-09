@@ -29,3 +29,4 @@ resources:
   - ./proxmox
   - ./tandem
   - ./tesco-protein
+  - ./internet-monitor

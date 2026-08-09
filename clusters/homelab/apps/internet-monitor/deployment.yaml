@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: internet-monitor
+  namespace: internet-monitor
+spec:
+  replicas: 1
+  # Recreate because the data volume is ReadWriteOnce: a rolling update would
+  # deadlock with the new pod waiting on a volume the old one still holds.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: internet-monitor
+  template:
+    metadata:
+      labels:
+        app: internet-monitor
+    spec:
+      containers:
+        - name: internet-monitor
+          image: docker.io/syntaxsorcerer7/internet-monitor:0.0.8 # {"$imagepolicy": "flux-system:internet-monitor"}
+          env:
+            # The Docker Hub page says to mount the volume at /app. Do not: /app
+            # is the image's WORKDIR and holds the application itself
+            # (monitor.py and templates/), so a volume there shadows the code
+            # and the container dies with "can't open file '/app/monitor.py'".
+            #
+            # DB_PATH defaults to the relative "data.db", which is what makes
+            # /app look like the data directory. Pointing it at an absolute path
+            # on its own mount gets the same persistence without burying the
+            # app. Verified against monitor.py: the value is handed straight to
+            # sqlite3.connect(), so an absolute path is fine, and the database
+            # is the only thing this app writes to disk.
+            - name: DB_PATH
+              value: /data/data.db
+            # Dashboard buckets samples by minute/hour/day, so the container's
+            # clock decides where the boundaries fall. Image defaults to UTC.
+            - name: TZ
+              value: America/Santiago
+            # Defaults from the image, set explicitly so a silent upstream
+            # change to them cannot quietly alter retention or sample rate.
+            - name: CHECK_INTERVAL_SEC
+              value: "20"
+            - name: RETENTION_DAYS
+              value: "60"
+            - name: TEST_URL
+              value: https://1.1.1.1
+          ports:
+            - name: http
+              containerPort: 8000
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          # Flask serves the dashboard from the same process that runs the
+          # monitor loop in a background thread. Probing the socket rather than
+          # a route keeps a slow /data query — which scans the full retention
+          # window — from being read as the app being down.
+          readinessProbe:
+            tcpSocket:
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 6
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: internet-monitor-data

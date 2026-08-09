@@ -1,0 +1,8 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: internet-monitor
+  namespace: flux-system
+spec:
+  image: docker.io/syntaxsorcerer7/internet-monitor
+  interval: 1h

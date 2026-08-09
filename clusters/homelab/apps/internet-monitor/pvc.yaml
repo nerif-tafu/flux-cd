@@ -1,0 +1,16 @@
+# Holds the SQLite database of connectivity samples. At the default 20s check
+# interval and 60 day retention that is ~260k rows, so 1Gi is far more than the
+# data needs — it is the floor Longhorn is worth provisioning at, not a sizing
+# estimate.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: internet-monitor-data
+  namespace: internet-monitor
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi

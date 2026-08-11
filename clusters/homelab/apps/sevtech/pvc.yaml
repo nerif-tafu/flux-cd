@@ -1,18 +1,34 @@
-# Expanded 20Gi -> 60Gi on 2026-08-05 to make room for the pregenerated world.
+# Expanded 60Gi -> 80Gi on 2026-08-11. THIS ONE IS ABOUT INODES, NOT BYTES.
 #
-# The SpawnCircle task generates 305,236 chunks (a 10000-block-wide circle at
-# spawn). Measured during the first minutes of that run, world data grows at
-# roughly 6.3MB/min, projecting to ~8-9GB for the full task. Dynmap then renders
-# that same area across flat/surface/cave, adding a few GB more, and it renders
-# as chunks generate rather than waiting.
+# The server wedged in Init:CrashLoopBackOff on "No space left on device" while
+# df -h showed the volume 64% full (37.8G of 58.9G). It had run out of inodes:
+# 3,932,160 used, 0 free. /data/dynmap held 3,928,396 of them -- 99.9% of every
+# inode on the volume -- against 1,534 for the actual world save.
 #
-# 20Gi would probably have survived it, but "probably" is a poor basis when
-# running out mid-generation risks the world rather than just stopping it. The
-# extra 40Gi costs 120GB across the three replicas, against 320-520GB free per
-# node.
+# Expanding fixes this, because ext4 adds block groups (each with its own inode
+# table) as it grows. Verified on this volume rather than assumed: the observed
+# 3,932,160 is exactly 60Gi/16384, three times the 1,310,720 it would have had
+# at 20Gi. So inodes scale at 65,536 per GiB, and 80Gi buys 5,242,880 -- about
+# 1.31M free, against the ~830k tile backlog left from the last render.
+#
+# It is a ceiling raise, not a cure. Tiles average 8,282 bytes but ext4
+# provisions one inode per 16,384, so this volume will always exhaust inodes at
+# roughly 60% bytes -- you buy inodes at about twice the disk cost, and half the
+# added space stays unused. That ratio is also why KubePersistentVolumeFillingUp
+# never fired; only the Inodes variant caught it, and only intermittently,
+# because kubelet stops publishing volume stats while the pod has no running
+# container. Fixing the ratio properly means a StorageClass with
+# mkfsParams "-i 8192", which only applies to new volumes and so needs a
+# migration.
+#
+# The earlier sizing note still holds: the SpawnCircle task generates 305,236
+# chunks (a 10000-block-wide circle at spawn), rendered across flat/surface/cave
+# as chunks generate rather than after.
 #
 # EXPANSION IS ONE-WAY. Kubernetes PVCs cannot be shrunk, so this size is a
-# floor from here on. Longhorn does it online, with the volume attached.
+# floor from here on. Longhorn does it online, with the volume attached. The
+# extra 20Gi costs 60GB across the three replicas (black-01/02/03), leaving the
+# tightest of them at ~151GB free.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -24,4 +40,4 @@ spec:
   storageClassName: longhorn
   resources:
     requests:
-      storage: 60Gi
+      storage: 80Gi

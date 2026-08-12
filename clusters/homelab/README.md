@@ -5,6 +5,59 @@
 - **flux-image/** — Flux image automation (ImageRepository + ImagePolicy)
 - **flux-system/** — Flux controllers and sync manifests
 
+## Storage layout
+
+Two backends. Pick by access pattern, not by size.
+
+| Class | Backing | Use for | Backed up |
+|---|---|---|---|
+| **longhorn** (default) | 3 replicas on the nodes' NVMe | Databases, config, state, anything small, hot, random-access or irreplaceable | Yes — nightly to the NAS |
+| **nfs-bulk** | Synology NAS, `/volume1/k8s-bulk`, 4TB quota | Large sequential files: media libraries, game assets, map tiles | **No — treat as expendable** |
+| local-path | Node-local, k3s built-in | Nothing. Present but unused. | No |
+
+**Never put a database on nfs-bulk.** SQLite relies on POSIX advisory locking
+that NFS implements loosely, and the NAS is RAID 6 on 5900rpm disks, which pays
+a read-modify-write penalty on every small write. filebrowser and convertx both
+straddle the two classes for exactly this reason: database on Longhorn, bulk
+directories on the NAS.
+
+**Sizes on nfs-bulk are advisory.** NFS enforces nothing per volume — a pod
+sees the whole share's free space in `df`. The only real limit is the btrfs
+quota on the share, set on the NAS, not in this repo.
+
+**PVCs cannot be shrunk.** Growing is online and easy; shrinking means delete
+and recreate. On nfs-bulk that is survivable because the class sets
+`reclaimPolicy: Retain`, `onDelete: retain`, and a `subDir` templated from
+namespace and claim name, so a recreated claim finds its old directory. On
+longhorn it means a real migration.
+
+### Backups
+
+| What | How | Where |
+|---|---|---|
+| Longhorn volume data | RecurringJob `daily-backup`, 02:00, retain 14 | `k8s-backup/longhorn` |
+| k3s datastore, cluster CA, all Secrets | CronJob `cluster-backup`, 01:00, retain 14 | `k8s-backup/cluster` |
+| nfs-bulk data | Nothing, deliberately | — |
+
+This cluster's datastore is **SQLite/kine, not etcd** — `k3s etcd-snapshot`
+does nothing here. The bundle is encrypted to a public certificate whose
+private key is held offline; without that key the backups are unrecoverable,
+and it is not in this repo or the cluster by design.
+
+### Cluster state not in git
+
+Like the Proxmox node labels, some storage config lives only on the machines:
+
+- **NFS export rules on the NAS.** Keyed on node addresses. The black-* nodes
+  are multi-homed and reach the NAS from their Proxmox `vmbr0` bridge address
+  (.23/.25/.27), *not* their node IP — a new node needs both added.
+- **The btrfs share quotas** (4TB bulk, 5.2TB backup).
+- **The default StorageClass annotation.** k3s ships `local-path` as default and
+  Longhorn also claims it; `local-path` was patched to `is-default-class: false`
+  so `longhorn` is unambiguous. k3s re-applies its bundled addon manifests on
+  restart, so this may need redoing — the durable fix is `--disable
+  local-storage` on the server.
+
 ## Traefik layout
 
 There are three Traefik instances, each with its own LoadBalancer IP:

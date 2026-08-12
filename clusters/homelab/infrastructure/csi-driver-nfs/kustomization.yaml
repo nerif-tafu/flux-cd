@@ -4,8 +4,4 @@ resources:
   - namespace.yaml
   - helmrepository.yaml
   - helmrelease.yaml
-  - recurringjobs.yaml
-  - ingress.yaml
-  - certificate.yaml
-  - ui-auth-secret.yaml
-  - ui-auth-middleware.yaml
+  - storageclass-nfs-bulk.yaml

@@ -114,7 +114,11 @@ spec:
             description: >-
               Replica rebuilds will start failing. Free space on {{ $labels.node }} now.
 
-# Not covered here: backup success/failure. Longhorn 1.6 exposes no usable
-# recurring-job metrics, and no backupTarget is configured on this cluster yet.
-# Once backups exist, the reliable signal is a Kubernetes CronJob/Job failure
-# alert rather than a Longhorn metric.
+# Not covered here: backup success/failure. Longhorn 1.6 still exposes no usable
+# recurring-job metrics — re-checked on 2026-08-12 against the live cluster, and
+# there is no longhorn_backup_* series of any kind.
+#
+# A backupTarget now exists (the NAS, see infrastructure/longhorn/helmrelease.yaml)
+# and the prediction above held: because Longhorn implements a RecurringJob as an
+# ordinary Kubernetes CronJob, the working signal is a Job failure alert. Those
+# rules live in rules-backup.yaml.

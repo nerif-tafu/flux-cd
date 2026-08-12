@@ -22,4 +22,28 @@ spec:
     metrics:
       serviceMonitor:
         enabled: true
+    # backupTarget is set here rather than as a longhorn.io/v1beta2 Setting
+    # resource because longhorn-manager owns the `.value` field of every
+    # Setting. Applying one from git fails with a server-side-apply conflict:
+    #
+    #   Apply failed with 1 conflict: conflict with "longhorn-manager"
+    #   using longhorn.io/v1beta2: .value
+    #
+    # Forcing it (kustomize.toolkit.fluxcd.io/ssa: Merge) would work but leaves
+    # Flux and longhorn-manager fighting over the field on every reconcile.
+    # The chart renders these into the longhorn-default-setting ConfigMap, which
+    # longhorn-manager reads itself, so there is no contested owner.
+    #
+    # CAVEAT, and it matters if you ever change this value: the manager applies
+    # the ConfigMap only to settings still at their default, and only at pod
+    # start. It took effect here because backup-target was empty. Changing the
+    # target later needs a manual `kubectl -n longhorn-system edit
+    # settings.longhorn.io backup-target` plus a longhorn-manager restart —
+    # editing this file alone will silently do nothing.
+    defaultSettings:
+      backupTarget: nfs://192.168.3.10:/volume1/k8s-backup/longhorn
+      # No credential secret: the NAS authorises by client IP (the four node
+      # IPs), not by user, so there is nothing to store. See
+      # infrastructure/csi-driver-nfs/helmrelease.yaml.
+      backupTargetCredentialSecret: ""
 

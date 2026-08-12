@@ -1,0 +1,36 @@
+# The media library, moved off Longhorn onto the NAS.
+#
+# WHY THE WHOLE OF /data AND NOT JUST THE VIDEOS: there is nothing else to
+# split off. The library is flat — one directory per title holding the video
+# and its sidecar files — and there is no database, index or state file
+# anywhere under /data. The app's entire state *is* the library.
+#
+# Splitting it would also walk straight back into a bug this deployment already
+# fixed once. deployment.yaml carries the note "TMP on same filesystem as
+# LIBRARY_ROOT — Node rename() from /tmp to /data fails with EXDEV", and
+# TMPDIR is set to /data/tmp for that reason. Keeping /data on one filesystem
+# keeps the rename intra-device. Putting .thumbnails or .previews on a separate
+# Longhorn volume for browse latency was considered and rejected on the same
+# grounds: any generated file renamed from tmp into a different mount is the
+# same EXDEV failure again.
+#
+# The 1Ti request is advisory and the number is close to meaningless: NFS has no
+# per-volume enforcement, so the real ceiling is the 4TB btrfs quota on the
+# k8s-bulk share. A pod here sees 3.7T free in `df` no matter what this says.
+# It is written as 1Ti to leave obvious room in the share for other bulk
+# consumers, not because 1Ti is allocated to webplayer.
+#
+# NOT BACKED UP — by design. See
+# infrastructure/csi-driver-nfs/storageclass-nfs-bulk.yaml.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: webplayer-media
+  namespace: webplayer
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-bulk
+  resources:
+    requests:
+      storage: 1Ti

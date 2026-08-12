@@ -4,6 +4,7 @@ resources:
   - namespace.yaml
   - ghcr-pull-secret.yaml
   - pvc.yaml
+  - pvc-media.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml

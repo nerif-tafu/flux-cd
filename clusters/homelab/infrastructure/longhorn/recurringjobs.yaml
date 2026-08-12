@@ -1,0 +1,61 @@
+# Nightly backups of every Longhorn volume to the NAS, plus a weekly snapshot
+# purge so the nodes' NVMe does not silently fill with backup leftovers.
+#
+# The `default` group is Longhorn's catch-all: it covers every volume that has
+# no other recurring job assigned to it. That means new PVCs are backed up from
+# the day they are created, with nothing to remember — the failure mode of an
+# explicit volume list is that someone adds an app and finds out it was never
+# covered on the day they need it.
+#
+# WHAT THIS DOES NOT COVER: the nfs-bulk StorageClass. Those volumes are not
+# Longhorn volumes, so no recurring job touches them, which is intended —
+# see infrastructure/csi-driver-nfs/storageclass-nfs-bulk.yaml.
+#
+# Backups are incremental at block level after the first full run, so the
+# nightly transfer is roughly the day's churn, not the 257Gi total. The first
+# run is the expensive one and will take hours over a single 1GbE link shared
+# with everything else — expect it to overrun the window once.
+#
+# If the nightly transfer proves too heavy, the volumes to exclude first are
+# prometheus and loki: ~30Gi of high-churn observability data that is
+# regenerable and worth less than the bandwidth. Excluding them means labelling
+# those volumes into their own group, which takes them out of `default`.
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: daily-backup
+  namespace: longhorn-system
+spec:
+  # 02:00, chosen against the 1GbE link rather than arbitrarily: the NAS serves
+  # video to webplayer over the same wire, so the backup runs when nobody is
+  # watching.
+  cron: "0 2 * * *"
+  task: backup
+  groups:
+    - default
+  # 14 dailies. Cheap because they are incremental, and two weeks is long enough
+  # that a corruption noticed "sometime last week" is still recoverable.
+  retain: 14
+  # Two volumes at a time. Higher just queues behind the 1GbE link while making
+  # each individual backup slower and the whole run harder to reason about.
+  concurrency: 2
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: weekly-snapshot-cleanup
+  namespace: longhorn-system
+spec:
+  # A backup takes a snapshot first and does not always clean it up. Left alone
+  # those accumulate on the nodes' NVMe, which is the scarce resource here —
+  # black-02 has ~254G free against a 1TB disk. Sunday 05:00, after Saturday's
+  # backup has finished.
+  cron: "0 5 * * 0"
+  task: snapshot-cleanup
+  groups:
+    - default
+  # Ignored for snapshot-cleanup; the task purges system-generated snapshots
+  # regardless. Longhorn requires the field to be present.
+  retain: 0
+  concurrency: 1

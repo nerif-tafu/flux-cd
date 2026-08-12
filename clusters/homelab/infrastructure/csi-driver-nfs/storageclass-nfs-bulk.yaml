@@ -1,0 +1,51 @@
+# Bulk storage on the NAS, for data that is large, sequentially accessed, and
+# expendable. Longhorn stays the default for everything else.
+#
+# WHICH CLASS TO USE
+#   longhorn  — small, hot, random-access, or irreplaceable. Lives on the nodes'
+#               NVMe with 3 replicas, and is covered by the backup jobs in
+#               infrastructure/longhorn/.
+#   nfs-bulk  — large and sequential. One 1GbE link to five 5900rpm drives in
+#               RAID 6: fine for streaming a video, bad for a database. Do not
+#               put SQLite, MySQL or Mongo here; RAID 6 pays a read-modify-write
+#               penalty on every small write.
+#
+# THIS DATA IS NOT BACKED UP. That was a deliberate call, not an oversight: the
+# k8s-backup share on the same NAS holds the cluster backups, and a copy of the
+# bulk data beside it would not survive the single event (NAS loss, fire, theft)
+# that the backup exists for. Anything placed here must be re-fetchable.
+#
+# reclaimPolicy: Retain is load-bearing for exactly that reason. With Delete, a
+# `flux` prune or a mistyped kubectl would erase a multi-terabyte library with
+# nothing to restore from. Retain leaves the PV and the directory behind, so a
+# deleted PVC is recoverable by hand. The cost is that stale directories under
+# /volume1/k8s-bulk accumulate and need occasional manual cleanup.
+#
+# The `storage:` request in a PVC against this class is advisory. NFS has no
+# per-volume size enforcement, so a 100Gi claim can write until the *share*
+# fills. The real ceiling is the 4TB btrfs quota on k8s-bulk, set on the NAS.
+# The client sees it: `df` inside a pod reports 3.7T, not the volume's request.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-bulk
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: 192.168.3.10
+  share: /volume1/k8s-bulk
+  # One directory per claim, named for where it came from, so the share stays
+  # legible over SMB when you go looking for a file by hand.
+  subDir: ${pvc.metadata.namespace}-${pvc.metadata.name}
+  # Belt and braces with reclaimPolicy: even if a PV is somehow deleted, the
+  # directory on the NAS survives.
+  onDelete: retain
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
+mountOptions:
+  # hard, not soft: on a NAS reboot IO blocks and then resumes. soft would
+  # return errors to the application mid-write, which for a media library means
+  # silently truncated files.
+  - hard
+  - nfsvers=4.1
+  - noatime

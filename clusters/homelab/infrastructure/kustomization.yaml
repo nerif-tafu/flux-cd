@@ -7,6 +7,8 @@ resources:
   - ./traefik
   - ./cloudflare-ddns
   - ./longhorn
+  - ./csi-driver-nfs
+  - ./cluster-backup
   - ./monitoring
   - ./logging
   - ./notifications

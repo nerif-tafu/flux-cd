@@ -1,0 +1,56 @@
+# The PUBLIC half of the backup recovery keypair. Safe to commit: it can only
+# encrypt. The private key is deliberately not in this repo and not in the
+# cluster — if it were, an attacker who reached the cluster could decrypt the
+# backups of that same cluster, and a total-loss event would take the key with
+# it.
+#
+# The private key lives offline (password manager / printed). Without it the
+# nightly bundles are unrecoverable ciphertext, so verify you still have it
+# before you ever need it.
+#
+# Fingerprint (SHA-256):
+#   14:C6:9D:EA:DD:1C:84:B0:73:B9:76:47:E2:FB:E3:98:DA:15:DE:81:9E:F4:5E:BF:8B:F8:54:8F:49:D8:29:90
+# Valid until 2046-08-07.
+#
+# To decrypt a bundle:
+#   openssl smime -decrypt -binary -inform DER \
+#     -in cluster-YYYY-MM-DD.tar.gz.enc \
+#     -inkey cluster-backup-recovery.key | tar xzf -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-recovery-cert
+  namespace: cluster-backup
+data:
+  recovery.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIFXTCCA0WgAwIBAgIUabKJLcdkaPQWi03wlc4HO8aodh0wDQYJKoZIhvcNAQEL
+    BQAwPjEoMCYGA1UEAwwfZmx1eC1jZCBjbHVzdGVyIGJhY2t1cCByZWNvdmVyeTES
+    MBAGA1UECgwJdGFmdS5jYXNhMB4XDTI2MDgxMjIwMDYzOFoXDTQ2MDgwNzIwMDYz
+    OFowPjEoMCYGA1UEAwwfZmx1eC1jZCBjbHVzdGVyIGJhY2t1cCByZWNvdmVyeTES
+    MBAGA1UECgwJdGFmdS5jYXNhMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKC
+    AgEAqffSpIvWmvS568o6ObmO0Y5DGRfKB82yH5UWOhGE3EEwjZUtfrKapcBhFzkQ
+    TvjLJ/LcNACnQgi2Qzja2pvy81In7q3efqvmsuOEcqplQQ+iwC1qvfSq9iHOKbOd
+    bPQG15n/eorDhsdwWx6X0XaSgvUtIxxeY7VWUkaPPxHvJiZlanDPhO4AgI6w1o6A
+    BPv8I2CHoCjRTgO9QPerfk+9vMuAbQAfhPGeYguMSG0t/pme9be3tcC4V/8+72Z1
+    1FMMd18tW+34tLdtI47mDN1N/v33NF+xzVJRzP+VCLcdXgD1d/eo0XAJc+CRUcCn
+    r/VekWEGCygBz0ycU00kl6uRFLST8JN7gJIZpknpgQqXUvu6RY98XJXsBS3PWy6a
+    mLb5zOP9MObeiHG7XZvhDHrbFmfpLr3Xz3Uh3l8m3vDPYzYiNmGefloc5PKXW17t
+    MbCp6K+Hg5khhkUNYvjMRIvFWPNP5NwPyFGssaAieMbfDm+RInMZB+Ocb5Ld23+2
+    oPbf5LkOZwsL3mhcr/d09C6kWwRDlF9AcIWYAcSv92fK1lvCIMB5wVhYELL2xOz5
+    Dica0bckjmdaF6Ti7Jji/Gf2/WtyRXzUAllTT5dPg15ih1msloewaFPOCY+5YV5D
+    NoxM5sUi0Z2Wb9shF96kbP9C50qPVOSCE5L3grlDRfNqFqECAwEAAaNTMFEwHQYD
+    VR0OBBYEFOPNgeskLD+C551P1l6GEcqiUuuWMB8GA1UdIwQYMBaAFOPNgeskLD+C
+    551P1l6GEcqiUuuWMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggIB
+    AKCp6KrEAtuChnE33bnOb0gXJGcc86vDq3K+s5I2n9BMc0N9v7RdRtagUokOWK0v
+    p1R23iv5tkUVrXOu08gHb2u82aJj5VjOQT/7Z5dTa0dXKVDgJ7Tg3T5yv/GMLptS
+    hKnVHKiHfFOrHzpVKl0Eqzqj+o6lo8hdv20V8bBV8fCrBkED6qqXxV/vitu1MG2/
+    1g9zryadO0tGSjjIZNkjA9Yybdhz2Ss925vkELu9p8aN0PKEMmvKVezSePTuj0dT
+    ja0xtm3MyUlwn37mT1UqrIB955nvo2jUsHt9EvfbA4j+FHWgBk2EqvZc9olPuk05
+    4AznLaS3UQ+h9byG7P25tJ1OSIlDEb09ZljFspxizRpxjI52r0CUHNcl2V+6GPrX
+    lM5kXn+NWm4czsrgJC7UD+o/4wVxmtxHdKNOEpcZD7N+E+xRL+aCOpuBPtNCz9jJ
+    atD1cfg53ybC90GtnYSjGHOnNkcDZ3eYur6h2s9i8Ij2slbGsI+yWt2qvBDXiQUg
+    zasmfQBTUBERNrt0hTjTRLchQQR4UFI8zc3sHDkx3NUyfaLzM3YUOyif/Av0AQjj
+    0CGPqEk559GPT9QTjJvMybm+WxPFIJkLOqNBYDuGZxaHUQu1M8whaBpqH/Xwt2oP
+    qSCEE/6vMJETRNWfQvj6qX53ereZcfzc85l/4wGnra60
+    -----END CERTIFICATE-----

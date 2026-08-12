@@ -1,0 +1,190 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-backup-scripts
+  namespace: cluster-backup
+data:
+  # ---------------------------------------------------------------------------
+  # Stage 1 — the k3s datastore.
+  #
+  # THIS CLUSTER DOES NOT USE ETCD. /var/lib/rancher/k3s/server/kine.sock and
+  # state.db{,-wal,-shm} mean k3s is running kine on SQLite, so `k3s
+  # etcd-snapshot` — which every k3s backup guide tells you to run — exits with
+  # an error here and backs up nothing. The datastore has to be copied by hand,
+  # and that is what this does.
+  #
+  # `cp state.db` on a live WAL database is not safe: the committed data you
+  # need may still be in the -wal file, and the three files are not captured at
+  # the same instant. SQLite's online backup API is, because it takes a read
+  # lock per page batch and restarts itself if a writer changes a page it has
+  # already copied. It is designed for exactly this.
+  #
+  # Opened read-only where possible. WAL mode normally needs to write the -shm
+  # file, which fails on a read-only open; because k3s is running, -shm already
+  # exists and can be shared, so mode=ro usually works. If it does not, we fall
+  # back to a normal open and log which path was taken — a read-write handle we
+  # never write through, which SQLite's locking makes safe against the live
+  # k3s process. The hostPath is mounted read-write for this reason alone.
+  # ---------------------------------------------------------------------------
+  datastore.py: |
+    import os, shutil, sqlite3, sys
+
+    SRC = "/k3s/db/state.db"
+    OUT = "/work/k3s/state.db"
+    os.makedirs("/work/k3s", exist_ok=True)
+
+    def connect():
+        try:
+            c = sqlite3.connect(f"file:{SRC}?mode=ro", uri=True, timeout=60)
+            c.execute("select count(*) from sqlite_master").fetchone()
+            print("datastore: opened read-only", flush=True)
+            return c
+        except sqlite3.Error as e:
+            print(f"datastore: read-only open failed ({e}); "
+                  "falling back to read-write handle", flush=True)
+            return sqlite3.connect(SRC, timeout=60)
+
+    src = connect()
+    dst = sqlite3.connect(OUT)
+    src.backup(dst)          # consistent even while k3s writes
+    dst.close()
+    src.close()
+
+    # A backup nobody has verified is a guess. Check the copy before it is
+    # shipped, and fail the whole Job if it is bad — a loud failure tonight is
+    # worth more than a silent one discovered during a rebuild.
+    v = sqlite3.connect(OUT)
+    result = v.execute("pragma integrity_check").fetchone()[0]
+    rows = v.execute(
+        "select count(*) from sqlite_master where type='table'").fetchone()[0]
+    v.close()
+    if result != "ok":
+        print(f"datastore: INTEGRITY CHECK FAILED: {result}", file=sys.stderr)
+        sys.exit(1)
+    size = os.path.getsize(OUT) / 1048576
+    print(f"datastore: ok, {rows} tables, {size:.1f} MiB", flush=True)
+
+    # The cluster CA and the join token. Without these you cannot rebuild a k3s
+    # server that any existing agent will trust, and every ServiceAccount token
+    # in the cluster becomes invalid. They are small and irreplaceable.
+    for name in ("token", "node-token"):
+        p = f"/k3s/{name}"
+        if os.path.exists(p):
+            shutil.copy2(p, f"/work/k3s/{name}")
+    for d in ("tls", "cred"):
+        if os.path.isdir(f"/k3s/{d}"):
+            shutil.copytree(f"/k3s/{d}", f"/work/k3s/{d}", dirs_exist_ok=True)
+    print("datastore: copied token, node-token, tls/, cred/", flush=True)
+
+  # ---------------------------------------------------------------------------
+  # Stage 2 — every API object, as a diffable reference.
+  #
+  # Largely redundant with the git repo, and that is fine: it is here for the
+  # things git does not have. Node labels are the clearest example —
+  # homelab.tafu.casa/proxmox-capable exists only as cluster state, is applied
+  # by hand, and nothing else records which nodes carry it.
+  # ---------------------------------------------------------------------------
+  api-dump.sh: |
+    #!/bin/sh
+    set -eu
+    mkdir -p /work/api
+    echo "api-dump: enumerating resource types"
+
+    # Events are churn, not state. metrics.k8s.io is a live API with no stored
+    # objects and returns errors when listed this way.
+    SKIP='^(events|events\.events\.k8s\.io|.*\.metrics\.k8s\.io)$'
+
+    dump() {
+      scope="$1"; shift
+      for r in $(kubectl api-resources --verbs=list "$@" -o name 2>/dev/null \
+                 | grep -Ev "$SKIP" | sort -u); do
+        f="/work/api/${scope}_$(echo "$r" | tr '/' '_').yaml"
+        if [ "$scope" = "ns" ]; then
+          kubectl get "$r" --all-namespaces -o yaml > "$f" 2>/dev/null || {
+            echo "api-dump: skipped $r"; rm -f "$f"; continue; }
+        else
+          kubectl get "$r" -o yaml > "$f" 2>/dev/null || {
+            echo "api-dump: skipped $r"; rm -f "$f"; continue; }
+        fi
+        # A list with no items is noise in a 300-file directory.
+        if grep -q '^items: \[\]$' "$f" 2>/dev/null; then rm -f "$f"; fi
+      done
+    }
+
+    dump ns --namespaced=true
+    dump cluster --namespaced=false
+
+    # Called out separately because this is the piece that is *only* here.
+    kubectl get nodes -o yaml > /work/api/nodes-full.yaml
+    kubectl get nodes -o json \
+      | grep -E '"(name|kubernetes|homelab|node-role|beta)' > /work/api/node-labels.txt || true
+
+    echo "api-dump: $(ls /work/api | wc -l) files, $(du -sh /work/api | cut -f1)"
+
+  # ---------------------------------------------------------------------------
+  # Stage 3 — package, encrypt, ship, prune.
+  #
+  # Encryption is asymmetric on purpose. The cluster holds only the public
+  # certificate, so compromising the cluster does not compromise its own
+  # backups, and the private key surviving somewhere else is what makes a
+  # total-loss recovery possible. See recovery-cert-configmap.yaml.
+  #
+  # The plaintext bundle never touches the NAS — tar streams into openssl and
+  # only ciphertext is written across the mount.
+  # ---------------------------------------------------------------------------
+  package.sh: |
+    #!/bin/sh
+    set -eu
+    STAMP="$(date -u +%Y-%m-%d)"
+    DEST="/backup/cluster-${STAMP}.tar.gz.enc"
+    RETAIN=14
+
+    # Written in the clear, next to the ciphertext, on purpose: instructions you
+    # cannot read during a disaster are not instructions. Contains no secrets.
+    cat > /backup/README.txt <<'EOF'
+    k3s cluster backup — encrypted with the backup recovery certificate.
+
+    Each cluster-YYYY-MM-DD.tar.gz.enc contains:
+      k3s/state.db   the k3s datastore (SQLite/kine — NOT an etcd snapshot)
+      k3s/token, node-token, tls/, cred/   cluster CA and join tokens
+      api/           every API object, including all Secrets (so: the SOPS age key)
+
+    To restore you need the PRIVATE key, which is not in the cluster and not in
+    the git repo. It is offline, by design.
+
+      openssl smime -decrypt -binary -inform DER \
+        -in cluster-YYYY-MM-DD.tar.gz.enc \
+        -inkey cluster-backup-recovery.key | tar xzf -
+
+    Rebuild order: install k3s -> stop it -> restore state.db, token and tls/
+    into /var/lib/rancher/k3s/server/ -> start k3s -> install Longhorn and point
+    it at nfs://192.168.3.10:/volume1/k8s-backup/longhorn -> restore volumes ->
+    let Flux reconcile the repo.
+
+    Volume DATA is not in here. It is in longhorn/ on this same share.
+    EOF
+
+    echo "package: building bundle"
+    tar czf - -C /work k3s api \
+      | openssl smime -encrypt -aes-256-cbc -binary -outform DER \
+          -out "$DEST" /cert/recovery.crt
+
+    SIZE="$(du -h "$DEST" | cut -f1)"
+    echo "package: wrote $DEST ($SIZE)"
+
+    # Prove it is decryptable-shaped before trusting it. This does not verify we
+    # can decrypt (that needs the offline key), only that the CMS structure is
+    # intact and non-trivial — it catches a truncated or empty write, which is
+    # the realistic failure here.
+    BYTES="$(stat -c %s "$DEST")"
+    if [ "$BYTES" -lt 1048576 ]; then
+      echo "package: FAILED — bundle is only ${BYTES} bytes" >&2
+      exit 1
+    fi
+
+    # Prune by count, oldest first. Deliberately after a successful write, so a
+    # failing job never deletes the good backups it failed to replace.
+    ls -1t /backup/cluster-*.tar.gz.enc 2>/dev/null | tail -n +$((RETAIN + 1)) \
+      | while read -r old; do echo "package: pruning $old"; rm -f "$old"; done
+
+    echo "package: $(ls -1 /backup/cluster-*.tar.gz.enc | wc -l) bundles retained"

@@ -1,0 +1,39 @@
+# Mounts NFS shares from the Synology NAS (192.168.3.10) as PersistentVolumes.
+# This is the second storage backend on the cluster, alongside Longhorn; see
+# storageclass-nfs-bulk.yaml for which workloads belong on which.
+#
+# The kubelet performs the mount on the node, not inside the pod, so the NAS
+# export ACL is keyed on the four node IPs (.20/.22/.24/.26) rather than on the
+# pod CIDR. Adding a node means adding its IP to the NFS rules on the NAS —
+# those rules are DSM state and not in this repo.
+#
+# externalSnapshotter is off: Longhorn already owns the VolumeSnapshot CRDs on
+# this cluster and two charts installing them fights over ownership. NFS
+# volumes here are not snapshotted at all — that is deliberate, see the
+# storageclass for why.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: csi-driver-nfs
+  namespace: csi-driver-nfs
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: csi-driver-nfs
+      version: "4.13.4"
+      sourceRef:
+        kind: HelmRepository
+        name: csi-driver-nfs
+        namespace: flux-system
+  values:
+    controller:
+      replicas: 1
+      # The controller only creates and deletes subdirectories on the share; it
+      # is not in the data path, so a single replica losing its node costs
+      # nothing that is running.
+      runOnControlPlane: false
+    externalSnapshotter:
+      enabled: false
+    feature:
+      enableFSGroupPolicy: true

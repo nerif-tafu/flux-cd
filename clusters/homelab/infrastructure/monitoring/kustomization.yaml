@@ -12,6 +12,7 @@ resources:
   - dashboard-homelab-main.yaml
   - podmonitor-flux.yaml
   - rules-longhorn.yaml
+  - rules-backup.yaml
   - rules-cert-manager.yaml
   - rules-traefik.yaml
   - rules-flux.yaml

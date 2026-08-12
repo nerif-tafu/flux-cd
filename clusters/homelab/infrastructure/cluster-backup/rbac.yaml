@@ -1,0 +1,38 @@
+# This ServiceAccount can read every object in the cluster, Secrets included.
+# That is the whole point — a backup that skips Secrets cannot rebuild the
+# cluster — but it does mean anyone who can create a pod in the cluster-backup
+# namespace can read every secret you have. Treat namespace access as
+# equivalent to cluster-admin-for-reading.
+#
+# Deliberately get/list/watch only: a backup job has no reason to be able to
+# modify or delete anything, and this way a bug in the dump script cannot
+# damage the cluster it is meant to protect.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cluster-backup
+  namespace: cluster-backup
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-backup-reader
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["get", "list"]
+  - nonResourceURLs: ["*"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-backup-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-backup-reader
+subjects:
+  - kind: ServiceAccount
+    name: cluster-backup
+    namespace: cluster-backup

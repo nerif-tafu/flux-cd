@@ -14,11 +14,18 @@
 # grounds: any generated file renamed from tmp into a different mount is the
 # same EXDEV failure again.
 #
-# The 1Ti request is advisory and the number is close to meaningless: NFS has no
-# per-volume enforcement, so the real ceiling is the 4TB btrfs quota on the
-# k8s-bulk share. A pod here sees 3.7T free in `df` no matter what this says.
-# It is written as 1Ti to leave obvious room in the share for other bulk
-# consumers, not because 1Ti is allocated to webplayer.
+# The 50Gi request is advisory and the number is close to meaningless: NFS has
+# no per-volume enforcement, so the real ceiling is the 4TB btrfs quota on the
+# k8s-bulk share, shared with sevtech's tiles, rust-api, filebrowser and
+# convertx. A pod here sees the share's free space in `df` — 3.6T — no matter
+# what this says. Treat it as documentation of intent, not a limit.
+#
+# Resized 1Ti -> 50Gi on 2026-08-12. PVCs cannot be shrunk, so this was done by
+# deleting and recreating the claim rather than editing it. That is only safe
+# because the class sets reclaimPolicy: Retain and onDelete: retain, and
+# because subDir is templated from namespace and claim name — the replacement
+# claim resolves to the same /volume1/k8s-bulk/webplayer-webplayer-media
+# directory and picks the existing 17.5G back up untouched.
 #
 # NOT BACKED UP — by design. See
 # infrastructure/csi-driver-nfs/storageclass-nfs-bulk.yaml.
@@ -33,4 +40,4 @@ spec:
   storageClassName: nfs-bulk
   resources:
     requests:
-      storage: 1Ti
+      storage: 50Gi

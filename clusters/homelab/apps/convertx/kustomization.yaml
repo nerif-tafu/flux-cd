@@ -4,6 +4,7 @@ resources:
   - namespace.yaml
   - convertx-secret.yaml
   - pvc.yaml
+  - pvc-files.yaml
   - deployment.yaml
   - service.yaml
   - ingress.yaml

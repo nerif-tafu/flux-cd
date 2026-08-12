@@ -1,0 +1,29 @@
+# The Rust client install and map assets, moved to the NAS.
+#
+# The whole of /data moves, not a subdirectory, because all of it is the same
+# thing: a Rust game client kept on disk so the API can render maps. 58G across
+# only 3,326 files — Bundles alone is 51G — which is the ideal NFS shape, large
+# sequential files rather than the many-small-files pattern that makes NFS hurt.
+#
+# This is the single biggest win available on Longhorn scheduling budget: the
+# old 60Gi claim was held three times over, so retiring it returns 180Gi.
+#
+# Reads during map generation now cross the 1GbE link instead of NVMe, so the
+# first render after a restart will be slower while the page cache is cold.
+# Steady state is unaffected — the node caches what it re-reads.
+#
+# Not backed up, and that is fine here: every byte is re-downloadable from
+# Steam, which is where it came from.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rust-api-bulk
+  namespace: rust-api
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-bulk
+  resources:
+    # Advisory; the real ceiling is the 4TB share quota. 58G in use today.
+    requests:
+      storage: 100Gi

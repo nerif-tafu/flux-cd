@@ -45,9 +45,23 @@ spec:
           ports:
             - containerPort: 3000
           volumeMounts:
+            # Keeps mydb.sqlite on Longhorn. It runs in WAL mode, which SQLite
+            # documents as unsafe on network filesystems.
             - name: data
               mountPath: /app/data
+            # Both from the same claim, so moving a finished conversion from
+            # uploads/ to output/ stays a same-filesystem rename. Two separate
+            # volumes would make it EXDEV.
+            - name: files
+              mountPath: /app/data/uploads
+              subPath: uploads
+            - name: files
+              mountPath: /app/data/output
+              subPath: output
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: convertx-data
+        - name: files
+          persistentVolumeClaim:
+            claimName: convertx-files

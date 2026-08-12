@@ -1,0 +1,30 @@
+# ConvertX's uploads and conversion output, on the NAS.
+#
+# uploads/ and output/ move; mydb.sqlite stays on the Longhorn claim. Same
+# reasoning as filebrowser — SQLite depends on advisory locking that NFS
+# implements loosely, and this database is actively written during every
+# conversion. Note it runs in WAL mode (mydb.sqlite-wal is present), which is
+# specifically documented as unsafe on network filesystems.
+#
+# Both directories are mounted from THIS ONE volume via subPath rather than
+# from two separate claims. That is deliberate: a conversion writes its result
+# and moves it from uploads/ to output/, and rename() across two different
+# mounts fails with EXDEV. Keeping them on one filesystem keeps the rename
+# intra-device — the same failure webplayer's deployment already carries a note
+# about.
+#
+# Both directories are empty today (8K each), so there is nothing to migrate;
+# these are working files that exist only between an upload and its download.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: convertx-files
+  namespace: convertx
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-bulk
+  resources:
+    # Advisory; the 4TB share quota is the real limit.
+    requests:
+      storage: 100Gi

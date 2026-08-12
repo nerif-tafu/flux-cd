@@ -28,11 +28,18 @@ spec:
             - sh
             - -ec
             - |
-              mkdir -p /data/files /data/tmp
+              mkdir -p /data/tmp
               chown -R 1000:1000 /data
+              # Not -R: /srv is now the NAS share, and a recursive chown over
+              # NFS walks every file on every pod start. The migrated tree
+              # already carries the right ownership, and filebrowser creates
+              # anything new as itself.
+              chown 1000:1000 /srv
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: files
+              mountPath: /srv
       containers:
         - name: filebrowser
           image: ghcr.io/gtsteffaniak/filebrowser:1.5.1-stable # {"$imagepolicy": "flux-system:filebrowser"}
@@ -72,13 +79,18 @@ spec:
             - name: config
               mountPath: /home/filebrowser/data/config.yaml
               subPath: config.yaml
-            - name: data
+            # The served files, on the NAS since 2026-08-12. Previously this was
+            # subPath `files` of the Longhorn claim; that claim now holds only
+            # database.db and config.yaml. See pvc-files.yaml.
+            - name: files
               mountPath: /srv
-              subPath: files
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: filebrowser-data
+        - name: files
+          persistentVolumeClaim:
+            claimName: filebrowser-files
         - name: config
           configMap:
             name: filebrowser-config

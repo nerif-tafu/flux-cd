@@ -1,0 +1,40 @@
+# Dynmap's rendered tiles, moved to the NAS. This is the fix the sizing note in
+# pvc.yaml called for and could not perform.
+#
+# THIS IS THE INODE PROBLEM, SOLVED PROPERLY. /data/dynmap held 3,925,195 files
+# — 99.8% of every inode on the 80Gi Longhorn volume — against 5.7G of actual
+# world save. ext4 provisions a fixed inode table at mkfs time (65,536 per GiB
+# here), so the volume was always going to exhaust inodes at ~60% bytes no
+# matter how large it grew; expanding 60Gi -> 80Gi bought headroom, not a cure,
+# and pvc.yaml says as much. btrfs allocates inodes dynamically, so on the NAS
+# the ceiling simply does not exist.
+#
+# Only `web/` is mounted here, not all of /data/dynmap. The 31G of tiles is
+# entirely under web/; configuration.txt, colorschemes (28M) and templates stay
+# on Longhorn where they are small, read at startup, and fast.
+#
+# THE TRADE-OFF, STATED PLAINLY: ~3.9M small files move from local NVMe to NFS
+# over a single 1GbE link to 5900rpm RAID 6. Every tile write becomes a network
+# round trip, so rendering will be materially slower than it was. That is the
+# price of never hitting the inode wall again. If render throughput turns out to
+# matter more than the ceiling, the alternative is a Longhorn StorageClass with
+# mkfsParams "-i 8192" — which only applies to new volumes and so needs this
+# same migration anyway.
+#
+# Tiles are regenerable by re-rendering, which is why they are acceptable on an
+# unbacked-up share. Re-rendering is slow (the SpawnCircle task is 305,236
+# chunks), so this is "recoverable", not "free".
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sevtech-dynmap
+  namespace: sevtech
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-bulk
+  resources:
+    # Advisory only — NFS does not enforce per-volume size, the 4TB share quota
+    # does. Sized to describe intent: 31G today, with room for a full render.
+    requests:
+      storage: 200Gi

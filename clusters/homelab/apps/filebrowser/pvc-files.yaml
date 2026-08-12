@@ -1,0 +1,33 @@
+# Bulk file storage for files.tafu.casa, on the NAS. This is exactly the move
+# pvc.yaml anticipated: "Bulk file storage for files.tafu.casa is destined for
+# the NAS, so this volume only ever needs to hold the database and config."
+#
+# ONLY /srv MOVES. The Longhorn claim stays and keeps the SQLite database
+# (FILEBROWSER_DATABASE=/home/filebrowser/data/database.db) and config.yaml.
+# That split is not tidiness — SQLite over NFS is a genuine corruption risk,
+# because it relies on POSIX advisory locking that NFS implements loosely. The
+# database stays on replicated NVMe where locking is real; only the files users
+# upload and download cross the wire.
+#
+# ⚠ THESE FILES ARE NOT BACKED UP. The nfs-bulk class is explicitly excluded
+# from both backup paths, on the reasoning that bulk data is re-fetchable. That
+# reasoning is weakest here: this is a general-purpose file server, and whatever
+# someone uploads to it may exist nowhere else. The share holds 0.6G today so
+# nothing is at risk yet, but if this becomes a place real documents live, it
+# needs a backup story of its own — the Longhorn RecurringJobs will not cover
+# it, and neither will the cluster-backup CronJob.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: filebrowser-files
+  namespace: filebrowser
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-bulk
+  resources:
+    # Advisory. NFS enforces nothing per-volume; the 4TB btrfs quota on the
+    # k8s-bulk share is the only real limit, and this claim shares it with
+    # sevtech's tiles, rust-api, convertx and webplayer.
+    requests:
+      storage: 1000Gi

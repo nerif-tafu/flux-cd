@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - pvc.yaml
+  - pvc-dynmap.yaml
   - rcon-secret.yaml
   - deployment.yaml
   - service.yaml

@@ -1,3 +1,10 @@
+# SUPERSEDED, PENDING DELETION. /data moved to the NAS on 2026-08-12 (see
+# pvc-bulk.yaml); nothing mounts this any more. Kept briefly as the
+# pre-migration copy.
+#
+# Deleting it returns 180Gi of Longhorn scheduling budget — the largest single
+# reclaim available on this cluster. The longhorn class reclaimPolicy is
+# Delete, so removing this file destroys the volume with no undo.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

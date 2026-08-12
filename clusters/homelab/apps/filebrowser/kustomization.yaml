@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - pvc.yaml
+  - pvc-files.yaml
   - configmap.yaml
   - filebrowser-secret.yaml
   - deployment.yaml

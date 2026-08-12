@@ -27,6 +27,10 @@ metadata:
   name: daily-backup
   namespace: longhorn-system
 spec:
+  # Longhorn's admission webhook requires spec.name and rejects the object
+  # without it ("invalid job {Name: ...}"), even though metadata.name is set.
+  # It must match metadata.name.
+  name: daily-backup
   # 02:00, chosen against the 1GbE link rather than arbitrarily: the NAS serves
   # video to webplayer over the same wire, so the backup runs when nobody is
   # watching.
@@ -47,6 +51,7 @@ metadata:
   name: weekly-snapshot-cleanup
   namespace: longhorn-system
 spec:
+  name: weekly-snapshot-cleanup
   # A backup takes a snapshot first and does not always clean it up. Left alone
   # those accumulate on the nodes' NVMe, which is the scarce resource here —
   # black-02 has ~254G free against a 1TB disk. Sunday 05:00, after Saturday's

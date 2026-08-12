@@ -44,6 +44,115 @@ does nothing here. The bundle is encrypted to a public certificate whose
 private key is held offline; without that key the backups are unrecoverable,
 and it is not in this repo or the cluster by design.
 
+### Disaster recovery
+
+**Read this before you need it.** The one thing that makes recovery possible is
+not on any machine here: the backup recovery **private key**, held offline. If
+it is gone, every `cluster-*.tar.gz.enc` is permanently unreadable and this
+runbook stops at step 3. Check once in a while that you can still open it.
+
+#### What you need
+
+| | Where |
+|---|---|
+| Recovery private key | Offline only — password manager |
+| Encrypted control-plane bundles | NAS, `/volume1/k8s-backup/cluster/` |
+| Longhorn volume backups | NAS, `/volume1/k8s-backup/longhorn/` |
+| Manifests | GitHub, `nerif-tafu/flux-cd` |
+| NAS admin access | DSM at 192.168.3.10 |
+
+Recovery does **not** need this cluster, a kubeconfig, or any credential stored
+in it. That is the point of the asymmetric encryption.
+
+#### What is NOT recoverable
+
+- Anything on `nfs-bulk` — webplayer's library, sevtech's dynmap tiles,
+  rust-api's assets, filebrowser's `/srv`, convertx's working files. It lives on
+  the NAS but is never copied anywhere else. **If the NAS is what you lost, this
+  is gone**, along with the backups themselves.
+- Longhorn data written since the last 02:00 run; control-plane state since 01:00.
+
+#### Restore
+
+**1 — Rebuild a k3s server.** Same version (`v1.34.3+k3s3`), on 192.168.3.20.
+Install, then stop it: `systemctl stop k3s`.
+
+**2 — Fetch and decrypt the newest bundle.** From any machine with the offline
+key:
+
+```
+mount -t nfs -o nfsvers=4.1 192.168.3.10:/volume1/k8s-backup /mnt/restore
+openssl smime -decrypt -binary -inform DER \
+  -in /mnt/restore/cluster/cluster-YYYY-MM-DD.tar.gz.enc \
+  -inkey cluster-backup-recovery.key | tar xzf -
+```
+
+Sanity-check before trusting it — a bundle that extracts is not necessarily a
+bundle that restores:
+
+```
+python3 -c "import sqlite3;print(sqlite3.connect('k3s/state.db').execute('pragma integrity_check').fetchone())"
+python3 -c "import sqlite3;print(sqlite3.connect('k3s/state.db').execute('select count(*) from kine').fetchone())"
+```
+
+**3 — Restore the datastore and identity.** With k3s stopped, copy `k3s/state.db`,
+`k3s/token`, `k3s/node-token`, `k3s/tls/` and `k3s/cred/` into
+`/var/lib/rancher/k3s/server/`. `tls/` and `token` are what make existing agents
+and every ServiceAccount token still valid — restoring `state.db` alone gives
+you a cluster that rejects its own nodes. Start k3s.
+
+**4 — Rejoin the agents.** black-01/02/03 with the restored `node-token`. They
+should return `Ready` without reinstalling.
+
+**5 — Reinstall Longhorn and point it at the NAS**, before letting Flux loose:
+
+```
+backup-target: nfs://192.168.3.10:/volume1/k8s-backup/longhorn
+```
+
+Longhorn scans the target and every `BackupVolume` reappears. Restore each one
+**to the PVC name it had** — Longhorn creates the volume, and the PVC in git
+then binds to it. Restoring after Flux has recreated empty PVCs means fighting
+it, so do this first.
+
+**6 — Recreate the SOPS age key**, or Flux cannot decrypt a single Secret:
+
+```
+kubectl -n flux-system create secret generic sops-age --from-file=age.agekey=<key>
+```
+
+The key is inside the bundle at `api/ns_secrets.yaml` (the `sops-age` Secret,
+base64 in `data`). Its public half is the recipient in `.sops.yaml` —
+`age1zxpvrp778wzdh73fq5k2yln24aechr8n69n66smtjvepd56q9g9sa0xw5g` — so you can
+confirm you have the right one before proceeding.
+
+**7 — Reinstall Flux** and point it at this repo. Everything else — Traefik,
+cert-manager, MetalLB, the apps — rebuilds from git on its own.
+
+**8 — Replace the state that was never in git.** From `api/nodes-full.yaml` in
+the bundle:
+
+```
+kubectl label node black-0{1,2,3} homelab.tafu.casa/proxmox-capable=true
+kubectl patch storageclass local-path -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+```
+
+Plus the NAS-side config, which no backup covers: the NFS export rules and the
+share quotas. See below.
+
+#### Partial failures
+
+- **One volume corrupted** — restore just it from the Longhorn UI; no cluster
+  rebuild.
+- **A node dies** — Longhorn rebuilds replicas onto the survivors. Nothing to
+  restore. Re-add the Proxmox label if it was a proxmox-capable node.
+- **The NAS dies** — the cluster keeps running; Longhorn volumes are on NVMe and
+  untouched. You lose all backups and everything on `nfs-bulk`. Rebuild the NAS,
+  recreate both shares and their export rules, and the next night's jobs
+  repopulate the backups. The bulk data does not come back.
+- **silver-01 dies** — this is the single control-plane node, so it is a full
+  rebuild from step 1 even though the workers are fine.
+
 ### Cluster state not in git
 
 Like the Proxmox node labels, some storage config lives only on the machines:

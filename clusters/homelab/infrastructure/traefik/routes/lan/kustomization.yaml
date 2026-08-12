@@ -9,6 +9,7 @@ resources:
   - companion-01.yaml
   - companion-02.yaml
   - backlight.yaml
+  - synology.yaml
 # commonLabels is deprecated in kustomize, but the reason to move is not the
 # warning: commonLabels also injects into spec.selector, which gave every
 # lan-* Service a selector it must not have. Those Services deliberately have

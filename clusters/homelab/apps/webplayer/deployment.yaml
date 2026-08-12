@@ -34,12 +34,26 @@ spec:
       containers:
         - name: webplayer
           image: ghcr.io/throwmyaway1038471/webplayer:1.2.0 # {"$imagepolicy": "flux-system:webplayer"}
+          # 1Gi -> 4Gi on 2026-08-12. Uploads were OOMKilled (exit 137) about 14s
+          # in, crash-looping the pod: the app buffers an incoming upload in
+          # memory before renaming it out of TMPDIR into the library, so peak
+          # RSS tracks the size of the file being uploaded rather than anything
+          # about the library. A 361MB upload was in flight when it died.
+          #
+          # Steady-state usage is ~120-250Mi, so the request stays where it was;
+          # this limit exists purely to survive the upload spike, which no
+          # 5-minute metrics scrape will ever show you.
+          #
+          # This is a ceiling, not a cure — the same failure returns for an
+          # upload larger than ~4GB, and the library has held files that big
+          # (a 4.2G title before it was re-uploaded). If it recurs on a large
+          # file, raise this again rather than assuming it is something new.
           resources:
             requests:
               cpu: 20m
               memory: 320Mi
             limits:
-              memory: 1Gi
+              memory: 4Gi
           readinessProbe:
             tcpSocket:
               port: 5173

@@ -65,6 +65,10 @@ spec:
             - name: data
               mountPath: /data
       volumes:
+        # Moved off Longhorn onto the NAS on 2026-08-12; see pvc-media.yaml for
+        # why the whole of /data went rather than just the video files. The old
+        # webplayer-data claim is still declared in pvc.yaml but no longer
+        # mounted — it holds the pre-migration copy until the move is trusted.
         - name: data
           persistentVolumeClaim:
-            claimName: webplayer-data
+            claimName: webplayer-media

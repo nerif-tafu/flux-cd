@@ -2,10 +2,35 @@
 # This is the second storage backend on the cluster, alongside Longhorn; see
 # storageclass-nfs-bulk.yaml for which workloads belong on which.
 #
-# The kubelet performs the mount on the node, not inside the pod, so the NAS
-# export ACL is keyed on the four node IPs (.20/.22/.24/.26) rather than on the
-# pod CIDR. Adding a node means adding its IP to the NFS rules on the NAS —
-# those rules are DSM state and not in this repo.
+# Both the controller and the node DaemonSet run with hostNetwork, so mounts
+# come from the node's own network stack and the NAS export ACL is keyed on
+# node addresses rather than the pod CIDR.
+#
+# "Node address" is not "the node IP", and getting that wrong cost an hour.
+# The black-* nodes are multi-homed: enp87s0 and enp88s0 are BOTH on
+# 192.168.3.0/24, because apps/proxmox/network-profiles.yaml bridges enp88s0
+# into vmbr0 with a second reserved LAN address. Source selection picks the
+# bridge, so black-01 arrives at the NAS as 192.168.3.23, not 192.168.3.22 —
+# confirmed by tcpdump on the NAS, after every NFS version had been ruled out
+# by mounting fine from silver-01 and failing from black-01:
+#
+#   IP 192.168.3.23.978 > 192.168.3.10.2049: Flags [S]
+#
+# mount.nfs reports this as a flat "access denied by server", which looks
+# nothing like a source-address problem. The ACL therefore lists both sets:
+#
+#   silver-01  .20            (no bridge)
+#   black-01   .22 and .23
+#   black-02   .24 and .25
+#   black-03   .26 and .27
+#
+# Adding a node means adding BOTH its addresses to the NFS rules on the NAS.
+# Those rules are DSM state and are not in this repo.
+#
+# The NAS also had NFSv4.1 supported but not enabled (DSM's enabled_minor_ver
+# was 0), which the mountOptions below require; it is enabled now. Changing it
+# restarts nfsd and triggers a 90-second NFSv4 grace period during which mounts
+# are refused, so expect a brief window of failures after touching it.
 #
 # externalSnapshotter is off: Longhorn already owns the VolumeSnapshot CRDs on
 # this cluster and two charts installing them fights over ownership. NFS

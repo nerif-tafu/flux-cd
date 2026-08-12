@@ -1,3 +1,12 @@
+# SUPERSEDED, PENDING DELETION. The library moved to the NAS on 2026-08-12
+# (see pvc-media.yaml); nothing mounts this any more. It is kept only as the
+# pre-migration copy — 133 files, verified identical to the new volume by an
+# rsync dry run before the cutover.
+#
+# Deleting it frees 150Gi of Longhorn scheduling budget, since the 50Gi request
+# is held three times over. Delete this file once webplayer has been used from
+# the NAS for long enough to trust it; the reclaimPolicy on the longhorn class
+# is Delete, so removing it destroys the volume and there is no undo.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

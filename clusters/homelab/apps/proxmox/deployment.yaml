@@ -98,6 +98,10 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/vz
+            # ISOs only. VM disks under /var/lib/vz/images stay on Longhorn —
+            # see pvc-iso.yaml for why that split is the whole point.
+            - name: iso
+              mountPath: /var/lib/vz/template/iso
             - name: config
               mountPath: /var/lib/pve-cluster
             - name: network-interfaces
@@ -140,6 +144,9 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: proxmox-data
+        - name: iso
+          persistentVolumeClaim:
+            claimName: proxmox-iso
         - name: config
           persistentVolumeClaim:
             claimName: proxmox-config

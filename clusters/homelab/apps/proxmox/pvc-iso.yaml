@@ -1,0 +1,33 @@
+# Installer ISOs, on the NAS. Mounted at /var/lib/vz/template/iso.
+#
+# ONLY THE ISOs MOVE. /var/lib/vz is 82G and splits cleanly in two:
+#
+#   template/iso   26G   write-once, read during an install, purely sequential
+#   images/        50G   live VM disks — random I/O in the guest's hot path
+#
+# The disks stay on Longhorn deliberately. Running a VM's virtual disk over NFS
+# to 5900rpm RAID 6 across a single 1GbE link would make the guests crawl:
+# every guest filesystem operation becomes a network round trip, and Windows in
+# particular is unforgiving about storage latency. ISOs have the opposite
+# profile — read once at install time, in large sequential chunks, which is
+# exactly what this link is good at.
+#
+# Not backed up, and that is fine: every one of these is a vendor download.
+#
+# Worth knowing: 8.5G of the 26G is
+# Win11_25H2_EnglishInternational_x64_v2.iso.bak, a byte-identical duplicate of
+# the ISO beside it. Deleting it would free a third of this volume, but it is
+# not this change's business to delete someone's file.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: proxmox-iso
+  namespace: proxmox
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-bulk
+  resources:
+    # Advisory — the 4TB share quota is the real limit. 26G in use.
+    requests:
+      storage: 200Gi

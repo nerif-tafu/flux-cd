@@ -15,11 +15,13 @@ Two backends. Pick by access pattern, not by size.
 | **nfs-bulk** | Synology NAS, `/volume1/k8s-bulk`, 4TB quota | Large sequential files: media libraries, game assets, map tiles | **No — treat as expendable** |
 | local-path | Node-local, k3s built-in | Nothing. Present but unused. | No |
 
-**Never put a database on nfs-bulk.** SQLite relies on POSIX advisory locking
-that NFS implements loosely, and the NAS is RAID 6 on 5900rpm disks, which pays
-a read-modify-write penalty on every small write. filebrowser and convertx both
-straddle the two classes for exactly this reason: database on Longhorn, bulk
-directories on the NAS.
+**Never put a database on nfs-bulk.** Embedded databases assume local-filesystem
+semantics NFS does not reliably provide: SQLite relies on POSIX advisory locking
+that NFS implements loosely, and BoltDB mmaps its whole file, which over NFS has
+no coherency guarantee. The NAS is also RAID 6 on 5900rpm disks, paying a
+read-modify-write penalty on every small write. filebrowser (BoltDB) and
+convertx (SQLite, in WAL mode) both straddle the two classes for exactly this
+reason: database on Longhorn, bulk directories on the NAS.
 
 **Sizes on nfs-bulk are advisory.** NFS enforces nothing per volume — a pod
 sees the whole share's free space in `df`. The only real limit is the btrfs

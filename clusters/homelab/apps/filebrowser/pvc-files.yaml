@@ -2,12 +2,15 @@
 # pvc.yaml anticipated: "Bulk file storage for files.tafu.casa is destined for
 # the NAS, so this volume only ever needs to hold the database and config."
 #
-# ONLY /srv MOVES. The Longhorn claim stays and keeps the SQLite database
+# ONLY /srv MOVES. The Longhorn claim stays and keeps the database
 # (FILEBROWSER_DATABASE=/home/filebrowser/data/database.db) and config.yaml.
-# That split is not tidiness — SQLite over NFS is a genuine corruption risk,
-# because it relies on POSIX advisory locking that NFS implements loosely. The
-# database stays on replicated NVMe where locking is real; only the files users
-# upload and download cross the wire.
+#
+# That database is **BoltDB, not SQLite** — verified from its magic number,
+# 0xED0CDAED at offset 16. An earlier version of this comment said SQLite; the
+# conclusion was right for the wrong reason. Bolt is if anything a worse fit for
+# NFS than SQLite: it mmaps the whole file and relies on flock, and mmap over
+# NFS has no coherency guarantees. So the database stays on replicated NVMe and
+# only the files users upload and download cross the wire.
 #
 # ⚠ THESE FILES ARE NOT BACKED UP. The nfs-bulk class is explicitly excluded
 # from both backup paths, on the reasoning that bulk data is re-fetchable. That

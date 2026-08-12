@@ -1,3 +1,22 @@
+# 2Gi, down from 30Gi (2026-08-12), which was itself down from 200Gi.
+#
+# This volume no longer holds files at all. /srv moved to the NAS
+# (see pvc-files.yaml), so what is left is database.db — a 131KB BoltDB, not
+# SQLite despite the name — plus config.yaml and filebrowser's working dirs.
+# 536K in total. The 30Gi claim was booking 90Gi of Longhorn budget to store
+# that, which is the same mistake the note below describes, one order of
+# magnitude smaller.
+#
+# Shrunk the only way a PVC can be: the claim was deleted and recreated, with
+# the contents tarred out and restored afterwards. Verified by sha256 on
+# database.db before and after, because a backup nobody checked is a guess.
+#
+# THE NAME IS NOW MISLEADING. "filebrowser-data" holds the database, not the
+# data; the data is on the NAS. Renaming needs another delete-and-recreate, so
+# it is worth doing at the same time as any future resize rather than on its
+# own.
+#
+# Historical note, still the reason this file has a comment at all:
 # 30Gi, down from 200Gi. The old size booked 600Gi of Longhorn scheduling
 # budget (3 replicas) to store 500KB: a 128KB SQLite database, a config.yaml
 # that comes from a ConfigMap anyway, and one cat.jpg. That was a third of the
@@ -19,4 +38,4 @@ spec:
   storageClassName: longhorn
   resources:
     requests:
-      storage: 30Gi
+      storage: 2Gi

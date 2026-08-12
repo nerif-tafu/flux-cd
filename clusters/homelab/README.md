@@ -162,10 +162,27 @@ Like the Proxmox node labels, some storage config lives only on the machines:
   (.23/.25/.27), *not* their node IP — a new node needs both added.
 - **The btrfs share quotas** (4TB bulk, 5.2TB backup).
 - **The default StorageClass annotation.** k3s ships `local-path` as default and
-  Longhorn also claims it; `local-path` was patched to `is-default-class: false`
-  so `longhorn` is unambiguous. k3s re-applies its bundled addon manifests on
-  restart, so this may need redoing — the durable fix is `--disable
-  local-storage` on the server.
+  Longhorn also claims it, which leaves two defaults; Kubernetes resolves that
+  by silently picking the newest rather than erroring. `local-path` was patched
+  to `is-default-class: false` so `longhorn` is unambiguous.
+
+  This **survives a k3s restart**, despite what you might expect from a
+  packaged addon. k3s tracks each bundled manifest with an
+  `addons.k3s.cattle.io` object carrying a checksum, and re-applies only when
+  that checksum changes — a restart re-extracts an identical
+  `local-storage.yaml`, the checksum matches, and it is skipped. What *does*
+  revert it is a k3s **upgrade** that ships a changed manifest, so re-check
+  after one:
+
+  ```
+  kubectl get sc   # longhorn should be the only (default)
+  ```
+
+  The permanent fix is `--disable local-storage` on the server, deliberately
+  not done: it deletes a working provisioner to settle what is currently a
+  cosmetic ambiguity, needs a k3s restart (an API outage — silver-01 is the
+  only server node), and nothing in this repo relies on the default anyway
+  because every PVC names its class.
 
 ## Traefik layout
 

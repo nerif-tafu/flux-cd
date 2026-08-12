@@ -1,0 +1,37 @@
+# Recording storage, on the NAS. Replaces the 50Gi Longhorn claim.
+#
+# The whole of /data moves rather than just recordings/, for the same reason as
+# webplayer: there is nothing else on the volume to keep local. It held an empty
+# recordings/ directory and lost+found — 0 files, 28K — so this was a swap
+# rather than a migration. Keeping /data whole also means anything the receiver
+# writes to a temp path and renames into recordings/ stays a same-filesystem
+# rename instead of an EXDEV failure.
+#
+# This is the right class for the workload: recorded video is large and written
+# sequentially, which is what NFS over 1GbE handles well, and it is the kind of
+# data that grows without bound on a volume that cannot be shrunk. Putting it on
+# the share means growth is bounded by the 4TB quota rather than by a Longhorn
+# claim that would have to be migrated to resize.
+#
+# ⚠ NOT BACKED UP. nfs-bulk is excluded from both backup paths on the reasoning
+# that bulk data is re-fetchable, and — as with filebrowser — that reasoning is
+# weaker here than it is for a media cache: a recording exists nowhere else once
+# it is made. The volume is empty today so nothing is at risk yet, but if these
+# recordings become something anyone wants to keep, they need a backup story of
+# their own. Neither the Longhorn RecurringJobs nor the cluster-backup CronJob
+# will cover them.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: skate-streamer-reciever-media
+  namespace: skate-streamer-reciever
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-bulk
+  resources:
+    # Advisory only — NFS enforces nothing per volume, the 4TB share quota does.
+    # 500Gi is a stated intent for a recording sink, not an allocation, and is
+    # cheap to change since nothing enforces it. The old claim was 50Gi.
+    requests:
+      storage: 500Gi

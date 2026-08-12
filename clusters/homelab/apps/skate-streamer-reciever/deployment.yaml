@@ -66,6 +66,8 @@ spec:
             - name: data
               mountPath: /data
       volumes:
+        # Moved off Longhorn onto the NAS on 2026-08-12; see pvc-media.yaml.
+        # The old volume was empty, so this was a swap rather than a migration.
         - name: data
           persistentVolumeClaim:
-            claimName: skate-streamer-reciever-data
+            claimName: skate-streamer-reciever-media

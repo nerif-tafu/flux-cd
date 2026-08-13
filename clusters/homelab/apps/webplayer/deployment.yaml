@@ -33,7 +33,7 @@ spec:
               mountPath: /data
       containers:
         - name: webplayer
-          image: ghcr.io/throwmyaway1038471/webplayer:1.2.0 # {"$imagepolicy": "flux-system:webplayer"}
+          image: ghcr.io/throwmyaway1038471/webplayer:1.3.0 # {"$imagepolicy": "flux-system:webplayer"}
           # 1Gi -> 4Gi on 2026-08-12. Uploads were OOMKilled (exit 137) about 14s
           # in, crash-looping the pod: the app buffers an incoming upload in
           # memory before renaming it out of TMPDIR into the library, so peak

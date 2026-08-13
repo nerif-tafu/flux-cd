@@ -52,13 +52,27 @@ spec:
               value: AUTO_CURSEFORGE
             - name: CF_SLUG
               value: all-the-mods-gravitas2
-            # Pinned to ATMGravitas2-server-0.9.3a.zip. An expert pack's
-            # progression is tied to its recipe and quest state, so letting the
-            # pack float means a restart can silently change the world's rules
-            # underneath a save. Bump this deliberately, and take a backup first.
-            # File IDs come from the CurseForge files page for the pack.
-            - name: CF_FILE_ID
-              value: "7618834"
+            # Pinned to the 0.9.4a CLIENT pack.
+            #
+            # IT MUST BE THE CLIENT FILE, NOT THE SERVER FILE. This was pinned
+            # to CF_FILE_ID 7618834 (ATMGravitas2-server-0.9.3a.zip) first and
+            # the container crash-looped on:
+            #
+            #   Modpack zip did not contain a manifest.json.
+            #   Only client modpack files contain manifest
+            #
+            # AUTO_CURSEFORGE reads the client pack's manifest.json and builds
+            # the server from it; the vendor's own "server" zip has no manifest
+            # and is unusable here. Counter-intuitive, hence the note.
+            #
+            # Matched by filename rather than file ID because the two variants
+            # differ only by prefix — client is `Gravitas2-0.9.4a.zip`, server is
+            # `ATMGravitas2-server-0.9.4a.zip` — so this substring selects the
+            # client unambiguously while still pinning the version. An expert
+            # pack's progression is tied to its recipe and quest state, so a
+            # floating version can change a live world's rules on restart.
+            - name: CF_FILENAME_MATCHER
+              value: "Gravitas2-0.9.4a"
             # BlueMap, pinned by exact Modrinth version ID rather than "latest".
             # The current BlueMap release (5.23) targets Forge 26.x — 1.20.1 is
             # Forge 47.x — so "latest" installs a jar that cannot load. 5.3 is

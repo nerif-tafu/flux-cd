@@ -124,8 +124,16 @@ spec:
             # explicitly "won't download additional mods" — with caelum absent
             # entirely, it had nothing to act on. Left unpinned so it resolves
             # to whatever satisfies ">= 1.20.1-2" for this loader and version.
+            #
+            # chunky is a pregeneration tool, added because the pack ships none.
+            # Pregenerating spawn matters more here than on a vanilla server:
+            # TerraFirmaCraft and GregTech worldgen is expensive, so generating
+            # chunks on demand as players explore is what causes the lag spikes.
+            # It also gives BlueMap something to render — BlueMap draws chunks
+            # that exist, so an unexplored world renders as empty space.
+            # Pinned to 1.3.146 (version ID 4FTDk9wv).
             - name: MODRINTH_PROJECTS
-              value: "bluemap:aHbq9KFB,caelum"
+              value: "bluemap:aHbq9KFB,caelum,chunky:4FTDk9wv"
             # Heap. Leaves headroom under the 16Gi limit for Forge's off-heap
             # and metaspace, which GregTech and TFC both use heavily.
             - name: MEMORY

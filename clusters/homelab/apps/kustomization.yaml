@@ -21,7 +21,7 @@ resources:
   - ./filebrowser
   - ./rust-breeder
   - ./kag
-  - ./sevtech
+  - ./gravitas
   - ./factorio
   - ./webplayer
   - ./skate-streamer-reciever

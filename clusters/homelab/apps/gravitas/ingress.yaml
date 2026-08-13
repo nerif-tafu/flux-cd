@@ -1,16 +1,11 @@
-# Dynmap's web UI at mc.tafu.casa.
-#
-# No conflict with the game server on the same hostname: that is TCP 25565 on
-# the gateway Traefik instance, this is 443 on the public one.
-#
-# The backend is the sevtech Service, not a separate one — Dynmap is a Forge mod
-# running inside the game server process and serves its own web UI on 8123, so
-# there is no second pod to point at.
+# mc.tafu.casa now serves BlueMap instead of Dynmap. Hostname and TLS secret
+# are reused deliberately: the certificate is already issued and trusted, and
+# the name describes the server rather than the map mod.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: dynmap
-  namespace: sevtech
+  name: bluemap
+  namespace: gravitas
   labels:
     traefik.tafu.casa/instance: public
   annotations:
@@ -26,10 +21,10 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: sevtech
+                name: gravitas
                 port:
-                  number: 8123
+                  number: 8100
   tls:
     - hosts:
         - mc.tafu.casa
-      secretName: dynmap-tls
+      secretName: bluemap-tls

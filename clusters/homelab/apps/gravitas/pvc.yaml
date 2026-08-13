@@ -1,0 +1,28 @@
+# World, config, mods and the downloaded modpack for All The Mods - Gravitas².
+#
+# 30Gi rather than the 15Gi SevTech ended up at, for two reasons. The pack is
+# downloaded and unpacked into this volume at first start rather than baked
+# into the image, so the modpack itself lives here; and TerraFirmaCraft world
+# generation is denser on disk than vanilla-ish generation.
+#
+# EXPANSION IS ONE-WAY. Longhorn grows a volume online, but Kubernetes cannot
+# shrink a PVC — undoing an over-estimate costs a full delete-and-recreate
+# migration with the world offline, which is exactly what sevtech-data needed.
+# Better to start here and grow than to book 80Gi again.
+#
+# INODES: ext4 provisions 65,536 per GiB, so this gives 1,966,080. Ample — but
+# only because the map tiles live on the NAS. Anything that writes millions of
+# small files into this volume will hit the same wall SevTech's Dynmap did.
+# See pvc-map.yaml.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gravitas-data
+  namespace: gravitas
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 30Gi

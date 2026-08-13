@@ -1,0 +1,30 @@
+# BlueMap's data directory — rendered tiles and the web app — on the NAS.
+#
+# Mounted at /data/bluemap, which is BlueMap's whole data folder rather than
+# just its webroot, so both the tile store and the web assets land here.
+#
+# This is the lesson from SevTech's Dynmap applied up front instead of after an
+# outage. That volume filled its ext4 inode table twice: 3.9M tile files against
+# an inode budget fixed at mkfs time, exhausting inodes at ~60% bytes. btrfs on
+# the NAS allocates inodes dynamically and has no such ceiling. Keeping the
+# renderer's output off Longhorn from day one means that failure mode cannot
+# recur here.
+#
+# NOT BACKED UP, and that is the right call: every tile is derived from the
+# world save, which is on Longhorn and backed up nightly. Losing the tiles costs
+# a re-render, not data.
+#
+# The size is advisory. NFS enforces nothing per volume; the real ceiling is the
+# 4TB btrfs quota on the k8s-bulk share, shared with the other bulk consumers.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gravitas-map
+  namespace: gravitas
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-bulk
+  resources:
+    requests:
+      storage: 200Gi

@@ -66,6 +66,14 @@ spec:
                 secretKeyRef:
                   name: rust-api-steam
                   key: STEAM_APP_ID
+            # Gates /api/logs and /debug/status. Unset, the app serves 503 on
+            # both with "Log access is not configured" — a 503 rather than a
+            # 401, so it reads as an outage. See logs-secret.yaml.
+            - name: LOGS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rust-api-logs
+                  key: LOGS_API_KEY
       volumes:
         # Moved off Longhorn onto the NAS on 2026-08-12; see pvc-bulk.yaml.
         # 58G of Rust client and map assets across only 3,326 files, which is

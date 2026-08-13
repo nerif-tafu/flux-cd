@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - secret.yaml
+  - logs-secret.yaml
   - pvc-bulk.yaml
   - deployment.yaml
   - service.yaml

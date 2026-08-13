@@ -11,11 +11,23 @@
 # down is therefore no longer needed for this workload — moving the tiles off
 # ext4 entirely was the cheaper fix, and it did not require a new StorageClass.
 #
-# THIS CLAIM IS NOW BADLY OVERSIZED: 80Gi holding 7.6G, which books 240Gi of
-# Longhorn scheduling budget for ~23Gi of real need. Shrinking it means the
-# usual delete-and-recreate migration, and unlike the 2026-08-11 expansion there
-# is now a working backup to fall back on. Worth doing; ~220Gi is the largest
-# single reclaim left on this cluster.
+# Shrunk 80Gi -> 15Gi on 2026-08-13, once the tiles were gone: the claim was
+# holding 7.5G and booking 240Gi of Longhorn budget to do it. Now 51% used with
+# 7.1G free, and 195Gi of scheduling budget returned.
+#
+# Done as delete-and-recreate, because PVCs cannot shrink. Unlike the other
+# migrations this one moved THE WORLD SAVE, so it was treated accordingly:
+# `save-all flush` and `save-off` over RCON first (the pod's
+# terminationGracePeriodSeconds is the default 30s, which is not enough for a
+# modpack this heavy to flush on SIGTERM), then staged to the NAS and verified
+# by file count AND a byte comparison of world/level.dat before the old volume
+# was destroyed, then verified again after restore.
+#
+# NOTE THE INODE BUDGET CHANGED. ext4 scales its inode table with volume size at
+# 65,536 per GiB, so 15Gi provides 983,040 inodes rather than the 5,242,880 that
+# 80Gi did. That is ~979k free against 3,827 in use, which is fine — but only
+# because the tiles now live on the NAS. Anything that puts millions of small
+# files back on this volume will hit the wall far sooner than it used to.
 #
 # One thing the move cost, recorded so it is not rediscovered the hard way: the
 # first pod start after the cutover took ~45 minutes of downtime because kubelet
@@ -70,4 +82,4 @@ spec:
   storageClassName: longhorn
   resources:
     requests:
-      storage: 80Gi
+      storage: 15Gi

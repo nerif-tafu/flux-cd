@@ -83,6 +83,18 @@ spec:
             # MODRINTH_PROJECTS survives AUTO_CURSEFORGE's cleanup of files not
             # in the pack manifest. If BlueMap disappears from mods/ after a
             # restart, that is why — fall back to CURSEFORGE_FILES.
+            # Forge refused to start: "Mod tfccaelum requires caelum
+            # 1.20.1-2 or above". AUTO_CURSEFORGE drops mods it believes are
+            # client-only, and that heuristic depends on authors tagging their
+            # projects correctly — caelum is tagged in a way that gets it
+            # dropped, which strands tfccaelum's mandatory dependency.
+            # CF_FORCE_INCLUDE_MODS re-includes it from the manifest.
+            #
+            # If a later pack bump strands a different dependency, the symptom
+            # is identical: a ModLoadingException naming the missing mod. Add
+            # its slug here.
+            - name: CF_FORCE_INCLUDE_MODS
+              value: "caelum"
             - name: MODRINTH_PROJECTS
               value: "bluemap:aHbq9KFB"
             # Heap. Leaves headroom under the 16Gi limit for Forge's off-heap

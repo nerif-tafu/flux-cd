@@ -149,6 +149,23 @@ spec:
                   key: password
             - name: TZ
               value: Etc/UTC
+            # Death leaderboard. `deathCount` is a vanilla scoreboard criterion,
+            # so this needs no mod — the sidebar sorts descending on its own,
+            # which is the leaderboard.
+            #
+            # Declared here rather than only run once by hand because a
+            # scoreboard lives in the world save (scoreboard.dat), not in git:
+            # it survives restarts, but a rebuilt world would come back without
+            # it and nobody would notice until someone asked where the counter
+            # went.
+            #
+            # Re-running `objectives add` on an existing objective logs "An
+            # objective already exists by that name" and does nothing else, so
+            # this is safe on every boot. Commands must NOT be prefixed with /.
+            - name: RCON_CMDS_STARTUP
+              value: |-
+                scoreboard objectives add deaths deathCount "Deaths"
+                scoreboard objectives setdisplay sidebar deaths
           ports:
             - name: game
               containerPort: 25565

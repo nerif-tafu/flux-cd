@@ -42,6 +42,37 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+        # BlueMap ships with accept-download: false and refuses to render until
+        # it is true — it downloads Mojang's client jar for block textures, so
+        # you are agreeing to Mojang's EULA. Without this the server runs fine
+        # and the map is simply never generated, with the reason only visible
+        # in the log:
+        #
+        #   BlueMap is missing important resources!
+        #   You must accept the required file download in order for BlueMap
+        #   to work! Please check: /data/config/bluemap/core.conf
+        #
+        # Patched here rather than by hand so a volume rebuild does not
+        # silently produce a server with no map. Idempotent, and a no-op on the
+        # very first boot when BlueMap has not written its config yet — that
+        # run creates the file, and the next start flips it.
+        - name: bluemap-accept-download
+          image: alpine:3.21
+          command:
+            - sh
+            - -c
+            - |
+              f=/data/config/bluemap/core.conf
+              if [ -f "$f" ]; then
+                sed -i 's/^accept-download: false/accept-download: true/' "$f"
+                echo "bluemap: $(grep '^accept-download' "$f")"
+              else
+                echo "bluemap: core.conf absent (first boot) — will patch next start"
+              fi
+          volumeMounts:
+            - name: data
+              mountPath: /data
       containers:
         - name: gravitas
           image: itzg/minecraft-server:java17

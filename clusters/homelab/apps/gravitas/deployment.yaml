@@ -150,8 +150,13 @@ spec:
             - name: TZ
               value: Etc/UTC
             # Death leaderboard. `deathCount` is a vanilla scoreboard criterion,
-            # so this needs no mod — the sidebar sorts descending on its own,
-            # which is the leaderboard.
+            # so this needs no mod.
+            #
+            # Shown in the `list` slot — the tab player list — rather than
+            # `sidebar`. Sidebar is always on screen; list appears only while a
+            # player holds Tab, which is what you want for a stat nobody needs
+            # to stare at. The trade-off is that `list` shows a bare number next
+            # to each name rather than a sorted table.
             #
             # Declared here rather than only run once by hand because a
             # scoreboard lives in the world save (scoreboard.dat), not in git:
@@ -165,7 +170,7 @@ spec:
             - name: RCON_CMDS_STARTUP
               value: |-
                 scoreboard objectives add deaths deathCount "Deaths"
-                scoreboard objectives setdisplay sidebar deaths
+                scoreboard objectives setdisplay list deaths
           ports:
             - name: game
               containerPort: 25565

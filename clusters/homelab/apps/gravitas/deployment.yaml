@@ -73,30 +73,28 @@ spec:
             # floating version can change a live world's rules on restart.
             - name: CF_FILENAME_MATCHER
               value: "Gravitas2-0.9.4a"
-            # BlueMap, pinned by exact Modrinth version ID rather than "latest".
-            # The current BlueMap release (5.23) targets Forge 26.x — 1.20.1 is
-            # Forge 47.x — so "latest" installs a jar that cannot load. 5.3 is
-            # the newest build that supports 1.20.1 Forge on Java 17; the next
-            # one up (5.12) requires Java 21.
+            # Extra mods installed from Modrinth on top of the CurseForge pack.
+            # VERIFIED to work alongside AUTO_CURSEFORGE: both jars are present
+            # in mods/ after install, so the earlier doubt about whether the
+            # pack's cleanup would strip them is settled — it does not.
             #
-            # UNVERIFIED INTERACTION: the itzg docs do not state whether
-            # MODRINTH_PROJECTS survives AUTO_CURSEFORGE's cleanup of files not
-            # in the pack manifest. If BlueMap disappears from mods/ after a
-            # restart, that is why — fall back to CURSEFORGE_FILES.
-            # Forge refused to start: "Mod tfccaelum requires caelum
-            # 1.20.1-2 or above". AUTO_CURSEFORGE drops mods it believes are
-            # client-only, and that heuristic depends on authors tagging their
-            # projects correctly — caelum is tagged in a way that gets it
-            # dropped, which strands tfccaelum's mandatory dependency.
-            # CF_FORCE_INCLUDE_MODS re-includes it from the manifest.
+            # bluemap is pinned by exact version ID, not "latest". The current
+            # BlueMap release (5.23) targets Forge 26.x, and 1.20.1 is Forge
+            # 47.x, so "latest" installs a jar that cannot load. 5.3 is the
+            # newest build supporting 1.20.1 Forge on Java 17; 5.12 needs 21.
             #
-            # If a later pack bump strands a different dependency, the symptom
-            # is identical: a ModLoadingException naming the missing mod. Add
-            # its slug here.
-            - name: CF_FORCE_INCLUDE_MODS
-              value: "caelum"
+            # caelum is a MISSING PACK DEPENDENCY, not a preference. Forge
+            # refused to start with "Mod tfccaelum requires caelum 1.20.1-2 or
+            # above": the pack ships TFCCaelum but its manifest omits caelum
+            # itself, so nothing installed it.
+            #
+            # CF_FORCE_INCLUDE_MODS does NOT fix that, which cost a deploy to
+            # learn. It only un-excludes mods already in the manifest and
+            # explicitly "won't download additional mods" — with caelum absent
+            # entirely, it had nothing to act on. Left unpinned so it resolves
+            # to whatever satisfies ">= 1.20.1-2" for this loader and version.
             - name: MODRINTH_PROJECTS
-              value: "bluemap:aHbq9KFB"
+              value: "bluemap:aHbq9KFB,caelum"
             # Heap. Leaves headroom under the 16Gi limit for Forge's off-heap
             # and metaspace, which GregTech and TFC both use heavily.
             - name: MEMORY

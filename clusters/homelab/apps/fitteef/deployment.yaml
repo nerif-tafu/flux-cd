@@ -23,7 +23,7 @@ spec:
         - name: fitteef
           # Second instance of the fitv2 app; shares the fitv2 ImagePolicy so both
           # deployments are bumped by the same image automation run.
-          image: ghcr.io/nerif-tafu/fitv2:v1.3.3 # {"$imagepolicy": "flux-system:fitv2"}
+          image: ghcr.io/nerif-tafu/fitv2:v1.3.4 # {"$imagepolicy": "flux-system:fitv2"}
           resources:
             requests:
               cpu: 10m

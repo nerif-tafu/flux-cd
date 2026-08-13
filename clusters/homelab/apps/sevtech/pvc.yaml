@@ -1,4 +1,34 @@
-# Expanded 60Gi -> 80Gi on 2026-08-11. THIS ONE IS ABOUT INODES, NOT BYTES.
+# RESOLVED 2026-08-13 — the inode problem this file documents is gone. The
+# Dynmap tiles moved to the NAS (see pvc-dynmap.yaml) and the old copy was
+# deleted from this volume after both sides were counted and matched exactly at
+# 3,925,145 files. Result on the live volume:
+#
+#     inodes  3,932,163 -> 3,827 used   (76% -> 1%)
+#     bytes          38G -> 7.6G used   (49% -> 10%)
+#
+# btrfs allocates inodes dynamically, so the ceiling described below simply does
+# not exist on the NAS. The mkfsParams "-i 8192" StorageClass mentioned further
+# down is therefore no longer needed for this workload — moving the tiles off
+# ext4 entirely was the cheaper fix, and it did not require a new StorageClass.
+#
+# THIS CLAIM IS NOW BADLY OVERSIZED: 80Gi holding 7.6G, which books 240Gi of
+# Longhorn scheduling budget for ~23Gi of real need. Shrinking it means the
+# usual delete-and-recreate migration, and unlike the 2026-08-11 expansion there
+# is now a working backup to fall back on. Worth doing; ~220Gi is the largest
+# single reclaim left on this cluster.
+#
+# One thing the move cost, recorded so it is not rediscovered the hard way: the
+# first pod start after the cutover took ~45 minutes of downtime because kubelet
+# applied fsGroup: 100 across all 3.9M files on the NFS volume at ~97,000
+# files/min. fsGroupChangePolicy: OnRootMismatch was already set and did not
+# help, because rsync --numeric-ids had preserved root:root on the share's root
+# directory, so the root mismatched and it recursed anyway. chown the
+# destination to the right gid DURING the migration, while the app is still up,
+# and the cutover restart costs seconds instead.
+#
+# --- historical, kept because the reasoning is still the reference ---
+#
+# Expanded 60Gi -> 80Gi on 2026-08-11. THIS ONE WAS ABOUT INODES, NOT BYTES.
 #
 # The server wedged in Init:CrashLoopBackOff on "No space left on device" while
 # df -h showed the volume 64% full (37.8G of 58.9G). It had run out of inodes:

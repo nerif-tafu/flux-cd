@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: rust-breeder
-          image: ghcr.io/nerif-tafu/rust-breeder:v3.3.0 # {"$imagepolicy": "flux-system:rust-breeder"}
+          image: ghcr.io/nerif-tafu/rust-breeder:v3.3.1 # {"$imagepolicy": "flux-system:rust-breeder"}
           resources:
             requests:
               cpu: 10m

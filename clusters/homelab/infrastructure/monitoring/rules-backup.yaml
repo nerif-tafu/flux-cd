@@ -66,6 +66,17 @@ spec:
           # has never produced a completed Job, which is what you see if it was
           # deployed but is silently not scheduling. Fires once after install
           # and is the intended way to notice the job never started.
+          #
+          # GOTCHA, observed rather than predicted: `kubectl delete job` on the
+          # completed Jobs re-arms this. The metric exists only while the Job
+          # objects do, so tidying up history looks identical to "the CronJob
+          # has never run" and this fires 3h later. It did exactly that on
+          # 2026-08-12 after a manual test Job was cleaned up, and resolved as
+          # soon as a real run completed.
+          #
+          # So: leave the Job history alone. successfulJobsHistoryLimit on the
+          # CronJob already caps it at 3, and those three are what keep both
+          # this alert and ClusterBackupStale able to see anything at all.
           expr: absent(kube_job_status_completion_time{namespace="cluster-backup"})
           for: 3h
           labels:

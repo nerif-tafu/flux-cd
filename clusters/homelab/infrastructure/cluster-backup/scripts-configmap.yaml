@@ -188,3 +188,42 @@ data:
       | while read -r old; do echo "package: pruning $old"; rm -f "$old"; done
 
     echo "package: $(ls -1 /backup/cluster-*.tar.gz.enc | wc -l) bundles retained"
+
+    # ---- capacity guard on the backup share --------------------------------
+    #
+    # Nothing else watches this share. The nfs-bulk PVCs get capacity alerting
+    # for free, because kubelet publishes volume stats and NFS reports the
+    # share's quota, so KubePersistentVolumeFillingUp covers them. This share
+    # has no PVC at all — the CronJob mounts it as a raw nfs volume and Longhorn
+    # mounts it internally — so kubelet never sees it and no stock alert can.
+    # Without this check, a full backup share is discovered only when a backup
+    # has already failed.
+    #
+    # DELIBERATELY AFTER THE BUNDLE IS WRITTEN. Checking first and refusing to
+    # run would throw away a backup we could still have taken, which is the
+    # wrong trade every time: low space is a reason to be woken up, not a reason
+    # to skip tonight's backup. So the ordering is write, prune, then complain.
+    #
+    # A non-zero exit here therefore means "the backup SUCCEEDED but the share
+    # is nearly full" — the Job goes Failed, BackupJobFailed fires to Discord,
+    # and the bundle it just wrote is still perfectly good. That is confusing
+    # unless you know, hence this comment and the message below.
+    AVAIL_KB="$(df -P /backup | awk 'NR==2 {print $4}')"
+    AVAIL_GI=$((AVAIL_KB / 1024 / 1024))
+    echo "package: backup share has ${AVAIL_GI}Gi free"
+
+    # 500Gi warn / 100Gi fail, against a 5.2TB share. Sized against what
+    # actually consumes it: 14 encrypted bundles are well under 1Gi, so the
+    # space goes almost entirely to Longhorn's 14 daily volume backups. Those
+    # are incremental after the first, but a full re-baseline is ~180Gi, which
+    # is why the failure threshold sits comfortably above it.
+    if [ "$AVAIL_GI" -lt 100 ]; then
+      echo "package: FAILING — only ${AVAIL_GI}Gi free on the backup share." >&2
+      echo "package: tonight's bundle WAS written successfully; this exit is" >&2
+      echo "package: the capacity alarm, not a backup failure." >&2
+      exit 1
+    fi
+    if [ "$AVAIL_GI" -lt 500 ]; then
+      echo "package: WARNING — only ${AVAIL_GI}Gi free; Longhorn backups will" \
+           "outgrow this before the bundles do."
+    fi

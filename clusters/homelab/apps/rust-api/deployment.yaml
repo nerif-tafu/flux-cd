@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: rust-api
-          image: ghcr.io/nerif-tafu/rust-api:v1.5.0 # {"$imagepolicy": "flux-system:rust-api"}
+          image: ghcr.io/nerif-tafu/rust-api:v1.5.1 # {"$imagepolicy": "flux-system:rust-api"}
           resources:
             requests:
               cpu: 20m

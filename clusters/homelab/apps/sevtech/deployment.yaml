@@ -230,10 +230,18 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            # Only the tiles. /data/dynmap keeps its config, colorschemes and
+            # templates on Longhorn; web/ is the 31G of 3.9M small files that
+            # exhausted this volume's inode table twice. See pvc-dynmap.yaml.
+            - name: dynmap-tiles
+              mountPath: /data/dynmap/web
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: sevtech-data
+        - name: dynmap-tiles
+          persistentVolumeClaim:
+            claimName: sevtech-dynmap
         - name: rcon
           secret:
             secretName: sevtech-rcon

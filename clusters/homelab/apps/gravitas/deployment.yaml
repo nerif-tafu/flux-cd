@@ -134,10 +134,24 @@ spec:
             # Pinned to 1.3.146 (version ID 4FTDk9wv).
             - name: MODRINTH_PROJECTS
               value: "bluemap:aHbq9KFB,caelum,chunky:4FTDk9wv"
-            # Heap. Leaves headroom under the 16Gi limit for Forge's off-heap
+            # Heap. Leaves headroom under the 22Gi limit for Forge's off-heap
             # and metaspace, which GregTech and TFC both use heavily.
             - name: MEMORY
               value: "10G"
+            # Minecraft's watchdog kills the server when one tick exceeds
+            # max-tick-time. At the default 60s it did exactly that on
+            # 2026-08-13 during a Chunky run with players online:
+            #
+            #   ServerHangWatchdog detected that a single server tick took
+            #   60.00 seconds (should be max 0.05)
+            #
+            # TerraFirmaCraft/GregTech worldgen can legitimately stall a tick
+            # that long, so the watchdog is firing on healthy-but-slow work.
+            # Raised to 15 minutes rather than disabled (-1): a genuinely hung
+            # server should still die, and the liveness probe will not catch it
+            # because a hung server keeps 25565 open and the TCP check passes.
+            - name: MAX_TICK_TIME
+              value: "900000"
             - name: USE_AIKAR_FLAGS
               value: "true"
             - name: ENABLE_RCON
@@ -186,7 +200,16 @@ spec:
               cpu: 500m
               memory: 5Gi
             limits:
-              memory: 16Gi
+              # 16Gi was not enough and the container was OOMKilled (exit 137)
+              # during pregeneration on 2026-08-14. The limit has to cover the
+              # 10G heap PLUS Forge's metaspace, direct buffers, GC overhead and
+              # mod native allocations — for a pack this size that overhead runs
+              # to several GB, and chunk generation is its peak.
+              #
+              # black-02 has 32.5Gi allocatable and only 6.8Gi of requests on it,
+              # so this is comfortable. The request stays at 5Gi: this is
+              # headroom for a burst, not a reservation.
+              memory: 22Gi
           # First start has to download the pack, unpack it, and generate a
           # TerraFirmaCraft world — tens of minutes, and longer on a cold NAS.
           # 120 x 30s gives it an hour before anything gives up; liveness only

@@ -42,7 +42,7 @@ spec:
               mountPath: /srv
       containers:
         - name: filebrowser
-          image: ghcr.io/gtsteffaniak/filebrowser:1.5.1-stable # {"$imagepolicy": "flux-system:filebrowser"}
+          image: ghcr.io/gtsteffaniak/filebrowser:1.5.2-stable # {"$imagepolicy": "flux-system:filebrowser"}
           resources:
             requests:
               cpu: 10m

@@ -1,0 +1,24 @@
+# AFFiNE publishes three tag streams to the same repository: plain semver
+# (0.27.3) for stable, `-beta.N` suffixes, and canary builds tagged by date
+# (2026.8.17-canary.914). The pattern below keeps us on stable only — the
+# suffixed tags cannot match it.
+#
+# The upper bound is doing real work, not just future-proofing: if upstream
+# ever publishes a bare date-style tag such as `2026.8.17`, it would match the
+# pattern and outrank every 0.x release by semver, silently moving the cluster
+# onto a canary build. Bounding at <1.0.0 makes that impossible. The cost is
+# that a genuine 1.0 release will not be picked up until this range is raised.
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: affine
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: affine
+  filterTags:
+    pattern: '^(?P<version>[0-9]+\.[0-9]+\.[0-9]+)$'
+    extract: '$version'
+  policy:
+    semver:
+      range: ">=0.27.0 <1.0.0"

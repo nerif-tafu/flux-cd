@@ -83,4 +83,6 @@ resources:
   - tesco-protein-imagepolicy.yaml
   - internet-monitor-imagerepository.yaml
   - internet-monitor-imagepolicy.yaml
+  - affine-imagerepository.yaml
+  - affine-imagepolicy.yaml
   - imageupdateautomation.yaml

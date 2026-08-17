@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: affine
+  namespace: affine
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: affine
+  template:
+    metadata:
+      labels:
+        app: affine
+    spec:
+      initContainers:
+        - name: wait-for-deps
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z affine-postgres 5432; do echo waiting for postgres; sleep 2; done
+              until nc -z affine-redis 6379; do echo waiting for redis; sleep 2; done
+        # Upstream ships this as a separate compose service that runs to
+        # completion before the server starts, on every `compose up`. An init
+        # container is the same contract: it runs the prisma + data migrations
+        # on every rollout, and the server does not start if they fail.
+        # It also generates config/private.key on first boot, which is why it
+        # needs the data volume and not just the database.
+        - name: migrate
+          image: ghcr.io/toeverything/affine:0.27.3 # {"$imagepolicy": "flux-system:affine"}
+          command: ["sh", "-c", "node ./scripts/self-host-predeploy.js"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: affine-secret
+                  key: DATABASE_URL
+            - name: REDIS_SERVER_HOST
+              value: affine-redis
+            - name: AFFINE_INDEXER_ENABLED
+              value: "false"
+          volumeMounts:
+            - name: data
+              mountPath: /root/.affine/storage
+              subPath: storage
+            - name: data
+              mountPath: /root/.affine/config
+              subPath: config
+      containers:
+        - name: affine
+          image: ghcr.io/toeverything/affine:0.27.3 # {"$imagepolicy": "flux-system:affine"}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 768Mi
+            limits:
+              memory: 2Gi
+          ports:
+            - name: http
+              containerPort: 3010
+          env:
+            # externalUrl is what AFFiNE puts in invite links and OAuth
+            # redirects; host/https are what it checks incoming requests
+            # against. All three have to agree with the ingress or logins
+            # bounce.
+            - name: AFFINE_SERVER_EXTERNAL_URL
+              value: https://notes.tafu.casa
+            - name: AFFINE_SERVER_HOST
+              value: notes.tafu.casa
+            - name: AFFINE_SERVER_HTTPS
+              value: "true"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: affine-secret
+                  key: DATABASE_URL
+            - name: REDIS_SERVER_HOST
+              value: affine-redis
+            # The full-text indexer needs an external Elasticsearch or
+            # Manticore. Off, as upstream's self-host compose has it — search
+            # falls back to the in-document client-side index.
+            - name: AFFINE_INDEXER_ENABLED
+              value: "false"
+          volumeMounts:
+            - name: data
+              mountPath: /root/.affine/storage
+              subPath: storage
+            - name: data
+              mountPath: /root/.affine/config
+              subPath: config
+          readinessProbe:
+            httpGet:
+              path: /info
+              port: 3010
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /info
+              port: 3010
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: affine-data

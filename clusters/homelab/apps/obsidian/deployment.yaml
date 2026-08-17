@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: couchdb
+  namespace: obsidian
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: couchdb
+  template:
+    metadata:
+      labels:
+        app: couchdb
+    spec:
+      containers:
+        - name: couchdb
+          image: couchdb:3.5.2 # {"$imagepolicy": "flux-system:couchdb"}
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          ports:
+            - name: http
+              containerPort: 5984
+          env:
+            # The admin lives in config, not in the data volume: the entrypoint
+            # appends it to docker.ini from these vars on every start, so this
+            # secret is the source of truth and changing it changes the login.
+            - name: COUCHDB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: couchdb-secret
+                  key: COUCHDB_USER
+            - name: COUCHDB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: couchdb-secret
+                  key: COUCHDB_PASSWORD
+            # Without this CouchDB generates a random cookie secret at every
+            # start, invalidating sessions on each restart. LiveSync uses basic
+            # auth so it would survive either way, but Fauxton logins would not.
+            - name: COUCHDB_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: couchdb-secret
+                  key: COUCHDB_SECRET
+            # NODENAME is deliberately unset. The entrypoint only appends
+            # `-name couchdb@$NODENAME` to vm.args when it is set; leaving it
+            # alone keeps the Erlang node name fixed. Setting it to the pod IP
+            # — the obvious thing to do in Kubernetes — renames the node on
+            # every reschedule, and the shards on disk still reference the old
+            # name, which reads as total data loss.
+          volumeMounts:
+            - name: data
+              mountPath: /opt/couchdb/data
+            # subPath, so this drops one file into local.d without hiding the
+            # docker.ini the entrypoint writes there.
+            - name: config
+              mountPath: /opt/couchdb/etc/local.d/00-livesync.ini
+              subPath: 00-livesync.ini
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /_up
+              port: 5984
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /_up
+              port: 5984
+            initialDelaySeconds: 45
+            periodSeconds: 20
+            timeoutSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: couchdb-data
+        - name: config
+          configMap:
+            name: couchdb-config

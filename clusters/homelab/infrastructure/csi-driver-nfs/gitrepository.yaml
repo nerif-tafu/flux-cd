@@ -1,0 +1,36 @@
+# csi-driver-nfs is the one upstream here that has no real chart repository: it
+# serves its index.yaml straight out of the git tree via
+# https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts.
+# That host is GitHub's Fastly asset edge, and it rate-limits per source IP with
+# no way to authenticate past it. From 2026-08-15 this cluster's egress address
+# has been stuck in that penalty box: every raw.githubusercontent.com path,
+# for every repository, returns 429/502/503, while api.github.com sits at a
+# clean 60/60 and git-over-HTTPS to github.com works fine. It is the CDN edge,
+# not us, and not something a longer interval fixes -- source-controller kept
+# the last good index, so nothing broke, but the alert channel filled up.
+#
+# codeload.github.com is the same edge and also 429s, so chart tarballs are out
+# too. Cloning is the only path to this chart that does not touch it.
+#
+# Hence a GitRepository instead of a HelmRepository: helm-controller packages
+# the chart out of the checkout. The rendered objects are identical to what the
+# published .tgz produced -- diffed against the live release before the switch,
+# and the only delta was the helm.toolkit.fluxcd.io labels Flux adds itself.
+#
+# The tag is the version pin, so it replaces chart.spec.version on the
+# HelmRelease. Upgrading means bumping the tag AND the chart path below, since
+# upstream keeps each release's chart in a directory named for its own version.
+# sparseCheckout keeps this to ~2MB of a repo that is otherwise ~90MB of Go
+# vendor tree.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: csi-driver-nfs
+  namespace: flux-system
+spec:
+  interval: 12h
+  url: https://github.com/kubernetes-csi/csi-driver-nfs
+  ref:
+    tag: v4.13.4
+  sparseCheckout:
+    - charts/v4.13.4/csi-driver-nfs

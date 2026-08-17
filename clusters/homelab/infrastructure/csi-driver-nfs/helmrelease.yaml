@@ -45,10 +45,13 @@ spec:
   interval: 15m
   chart:
     spec:
-      chart: csi-driver-nfs
-      version: "4.13.4"
+      # Packaged out of a git checkout, not pulled from a chart repo -- see
+      # gitrepository.yaml for why raw.githubusercontent.com is unusable here.
+      # The version pin lives on that GitRepository's tag; chart.spec.version
+      # does not apply to a git source and is deliberately absent.
+      chart: charts/v4.13.4/csi-driver-nfs
       sourceRef:
-        kind: HelmRepository
+        kind: GitRepository
         name: csi-driver-nfs
         namespace: flux-system
   values:

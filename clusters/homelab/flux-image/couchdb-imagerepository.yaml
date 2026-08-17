@@ -1,0 +1,8 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: couchdb
+  namespace: flux-system
+spec:
+  image: docker.io/library/couchdb
+  interval: 1h

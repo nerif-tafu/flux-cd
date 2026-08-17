@@ -1,0 +1,8 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: affine
+  namespace: flux-system
+spec:
+  image: ghcr.io/toeverything/affine
+  interval: 1h

@@ -1,21 +1,29 @@
-# csi-driver-nfs is the one upstream here that has no real chart repository: it
-# serves its index.yaml straight out of the git tree via
+# csi-driver-nfs is the one upstream here with no real chart repository: it
+# serves index.yaml straight out of its git tree at
 # https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts.
-# That host is GitHub's Fastly asset edge, and it rate-limits per source IP with
-# no way to authenticate past it. From 2026-08-15 this cluster's egress address
-# has been stuck in that penalty box: every raw.githubusercontent.com path,
-# for every repository, returns 429/502/503, while api.github.com sits at a
-# clean 60/60 and git-over-HTTPS to github.com works fine. It is the CDN edge,
-# not us, and not something a longer interval fixes -- source-controller kept
-# the last good index, so nothing broke, but the alert channel filled up.
+# There is no OCI chart either -- checked registry.k8s.io and ghcr.io.
 #
-# codeload.github.com is the same edge and also 429s, so chart tarballs are out
-# too. Cloning is the only path to this chart that does not touch it.
+# Sourcing it that way works, but it pins to whatever `master` happens to be
+# serving rather than to a release, and it puts a CDN in the path of a storage
+# driver's chart. A GitRepository on an immutable tag is the more reproducible
+# shape, so that is what this is. helm-controller packages the chart out of the
+# checkout; the rendered objects were byte-identical to what the published .tgz
+# produced, diffed against the live release before the switch, with the only
+# delta being the helm.toolkit.fluxcd.io labels Flux adds itself.
 #
-# Hence a GitRepository instead of a HelmRepository: helm-controller packages
-# the chart out of the checkout. The rendered objects are identical to what the
-# published .tgz produced -- diffed against the live release before the switch,
-# and the only delta was the helm.toolkit.fluxcd.io labels Flux adds itself.
+# What actually prompted the change was a burst of FluxHelmRepositoryFailed
+# alerts on 2026-08-17. Those were a GitHub-wide incident -- raw content and
+# archive downloads at ~50% error rate, githubstatus.com had it -- and not, as
+# first diagnosed, a rate-limit on this cluster's egress IP. It would have
+# cleared on its own, and nothing was ever broken: source-controller kept the
+# last good index throughout. Do not read this comment as evidence that
+# raw.githubusercontent.com is unreachable from here; it is not.
+#
+# Note for anyone debugging a similar alert: a HelmRepository's
+# status.artifact.lastUpdateTime is NOT the last successful fetch.
+# source-controller only rewrites the artifact when the index digest changes,
+# so a stale timestamp just means upstream has not cut a release. Use the Ready
+# condition's lastTransitionTime instead.
 #
 # The tag is the version pin, so it replaces chart.spec.version on the
 # HelmRelease. Upgrading means bumping the tag AND the chart path below, since

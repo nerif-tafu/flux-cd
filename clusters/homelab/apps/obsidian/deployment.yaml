@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: couchdb
-          image: couchdb:3.5.2 # {"$imagepolicy": "flux-system:couchdb"}
+          image: docker.io/library/couchdb:3.5.2 # {"$imagepolicy": "flux-system:couchdb"}
           resources:
             requests:
               cpu: 50m
@@ -49,12 +49,12 @@ spec:
                 secretKeyRef:
                   name: couchdb-secret
                   key: COUCHDB_SECRET
-            # NODENAME is deliberately unset. The entrypoint only appends
-            # `-name couchdb@$NODENAME` to vm.args when it is set; leaving it
-            # alone keeps the Erlang node name fixed. Setting it to the pod IP
-            # — the obvious thing to do in Kubernetes — renames the node on
-            # every reschedule, and the shards on disk still reference the old
-            # name, which reads as total data loss.
+                  # NODENAME is deliberately unset. The entrypoint only appends
+                  # `-name couchdb@$NODENAME` to vm.args when it is set; leaving it
+                  # alone keeps the Erlang node name fixed. Setting it to the pod IP
+                  # — the obvious thing to do in Kubernetes — renames the node on
+                  # every reschedule, and the shards on disk still reference the old
+                  # name, which reads as total data loss.
           volumeMounts:
             - name: data
               mountPath: /opt/couchdb/data

@@ -24,7 +24,7 @@ spec:
             - until nc -z joplin-postgres 5432; do echo waiting for postgres; sleep 2; done
       containers:
         - name: joplin
-          image: joplin/server:3.7.1 # {"$imagepolicy": "flux-system:joplin"}
+          image: docker.io/joplin/server:3.7.1 # {"$imagepolicy": "flux-system:joplin"}
           resources:
             requests:
               cpu: 100m

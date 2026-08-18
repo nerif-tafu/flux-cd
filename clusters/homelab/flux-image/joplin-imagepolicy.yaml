@@ -1,0 +1,21 @@
+# Bounded to 3.x. Joplin Server runs its own schema migrations on startup, and
+# they are one-way — rolling an image back does not roll the database back, so
+# a major that changes the schema is a decision to make deliberately rather
+# than one to wake up to.
+#
+# Only the app is on a policy; its postgres is digest-pinned, as ghost's mysql
+# is.
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: joplin
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: joplin
+  filterTags:
+    pattern: '^(?P<version>[0-9]+\.[0-9]+\.[0-9]+)$'
+    extract: '$version'
+  policy:
+    semver:
+      range: ">=3.7.0 <4.0.0"

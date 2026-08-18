@@ -1,0 +1,36 @@
+# Joplin Server at https://notes.tafu.casa, inherited from the AFFiNE and
+# CouchDB attempts. tafu.casa has no wildcard — notes.tafu.casa is an explicit
+# CNAME to cl.tafu.casa and is the only record that exists, so reusing it is
+# what avoids a Cloudflare change.
+#
+# NOTE: Joplin Server creates a default admin (admin@localhost / admin) on
+# first boot and has no environment variable to preset it. On a public
+# hostname that is a live credential until it is changed, so change it at the
+# first login, before announcing the URL anywhere.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: joplin
+  namespace: joplin
+  labels:
+    traefik.tafu.casa/instance: public
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-fail2ban-public@kubernetescrd
+spec:
+  ingressClassName: traefik-public
+  rules:
+    - host: notes.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: joplin
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - notes.tafu.casa
+      secretName: joplin-tls

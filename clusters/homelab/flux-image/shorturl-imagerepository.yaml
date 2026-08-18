@@ -5,4 +5,6 @@ metadata:
   namespace: flux-system
 spec:
   image: ghcr.io/nerif-tafu/shorturl
-  interval: 5m
+  interval: 5m59s
+  secretRef:
+    name: ghcr-registry-secret

@@ -5,4 +5,6 @@ metadata:
   namespace: flux-system
 spec:
   image: ghcr.io/nerif-tafu/rust-api
-  interval: 5m
+  interval: 5m31s
+  secretRef:
+    name: ghcr-registry-secret

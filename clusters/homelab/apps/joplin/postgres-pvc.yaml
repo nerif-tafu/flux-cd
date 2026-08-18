@@ -1,0 +1,16 @@
+# The only volume in this app. Joplin's STORAGE_DRIVER defaults to
+# Type=Database, so note content and attachments live in Postgres rather than
+# on a separate disk — there is no app volume to lose track of, and Longhorn's
+# `default` recurring-job group backs this up nightly with nothing declared.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: joplin-postgres-data
+  namespace: joplin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi

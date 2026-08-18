@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: joplin
+  namespace: joplin
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: joplin
+  template:
+    metadata:
+      labels:
+        app: joplin
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - until nc -z joplin-postgres 5432; do echo waiting for postgres; sleep 2; done
+      containers:
+        - name: joplin
+          image: joplin/server:3.7.1 # {"$imagepolicy": "flux-system:joplin"}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1536Mi
+          ports:
+            - name: http
+              containerPort: 22300
+          env:
+            - name: APP_PORT
+              value: "22300"
+            # Must match the public URL exactly. Joplin builds share links and
+            # the sync target URL from it, and the clients compare what they
+            # were configured with against what the server reports.
+            - name: APP_BASE_URL
+              value: https://notes.tafu.casa
+            - name: DB_CLIENT
+              value: pg
+            - name: POSTGRES_HOST
+              value: joplin-postgres
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_USER
+              value: joplin
+            - name: POSTGRES_DATABASE
+              value: joplin
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: joplin-secret
+                  key: POSTGRES_PASSWORD
+            # No volume anywhere in this app: the default STORAGE_DRIVER is
+            # Type=Database, so note content and attachments go to Postgres.
+            # Stated explicitly because changing it later to Type=Filesystem
+            # without adding a PVC would put uploads on ephemeral container
+            # disk, where they survive exactly until the next rollout.
+            - name: STORAGE_DRIVER
+              value: Type=Database
+          readinessProbe:
+            httpGet:
+              # Declared `router.public = true` upstream, so it answers without
+              # a session — no credentials needed in the probe.
+              path: /api/ping
+              port: 22300
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/ping
+              port: 22300
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5

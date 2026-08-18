@@ -64,12 +64,20 @@ spec:
             # disk, where they survive exactly until the next rollout.
             - name: STORAGE_DRIVER
               value: Type=Database
+          # Both probes must send a Host header. Joplin checks the incoming
+          # Host against APP_BASE_URL and answers anything else with 404
+          # "Invalid origin" — and the kubelet probes by pod IP, so without
+          # this the endpoint 404s forever and the pod never goes Ready while
+          # the server itself is perfectly healthy. Same treatment as ghost.
           readinessProbe:
             httpGet:
               # Declared `router.public = true` upstream, so it answers without
               # a session — no credentials needed in the probe.
               path: /api/ping
               port: 22300
+              httpHeaders:
+                - name: Host
+                  value: notes.tafu.casa
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
@@ -77,6 +85,9 @@ spec:
             httpGet:
               path: /api/ping
               port: 22300
+              httpHeaders:
+                - name: Host
+                  value: notes.tafu.casa
             initialDelaySeconds: 60
             periodSeconds: 30
             timeoutSeconds: 5

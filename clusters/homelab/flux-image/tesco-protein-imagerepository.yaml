@@ -5,7 +5,9 @@ metadata:
   namespace: flux-system
 spec:
   image: ghcr.io/nerif-tafu/tesco-protein
-  # 30m rather than the 1m most entries here use. 29 repositories scanning
-  # every minute is roughly 42k registry calls a day for images that ship
-  # weekly at most; there is no reason to add another.
-  interval: 5m
+  # Prime-numbered interval, like the other ghcr entries here, so the scans
+  # don't re-align into one burst against ghcr.io/token. This image ships
+  # weekly at most, so the extra ~80s of latency over a flat 5m costs nothing.
+  interval: 6m23s
+  secretRef:
+    name: ghcr-registry-secret

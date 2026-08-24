@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scholarsome-redis
+  namespace: scholarsome
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: scholarsome-redis
+  template:
+    metadata:
+      labels:
+        app: scholarsome-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
+          # Flags copied from upstream's compose. The password is read from the
+          # environment rather than written into the args so it does not sit in
+          # the pod spec, where any get-pod would show it. `exec` keeps redis as
+          # PID 1 so it still receives SIGTERM on shutdown.
+          command: ["sh", "-c"]
+          args:
+            - >-
+              exec redis-server
+              --save 900 1
+              --appendonly yes
+              --appendfilename appendonly.aof
+              --dir /data
+              --requirepass "$REDIS_PASSWORD"
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          ports:
+            - name: redis
+              containerPort: 6379
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: scholarsome-secret
+                  key: REDIS_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", 'redis-cli -a "$REDIS_PASSWORD" ping']
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", 'redis-cli -a "$REDIS_PASSWORD" ping']
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 3
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: scholarsome-redis-data

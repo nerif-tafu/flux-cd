@@ -1,0 +1,31 @@
+# Scholarsome at https://spanish.cl.tafu.casa, LAN only (internal Traefik).
+# *.cl.tafu.casa already resolves there, so no new DNS record is needed, and
+# the certificate is issued over DNS-01 so it needs no public A record either.
+#
+# Internal rather than public, unlike the notes.tafu.casa apps: nothing here
+# needs to be reachable off-LAN, and this app has open registration by default
+# with no mailer to gate it.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: scholarsome
+  namespace: scholarsome
+  labels:
+    traefik.tafu.casa/instance: internal
+spec:
+  ingressClassName: traefik-internal
+  rules:
+    - host: spanish.cl.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: scholarsome
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - spanish.cl.tafu.casa
+      secretName: scholarsome-cl-tafu-casa-tls

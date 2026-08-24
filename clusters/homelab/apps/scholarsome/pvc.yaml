@@ -1,0 +1,15 @@
+# Uploaded media (set images, avatars) — this is STORAGE_LOCAL_DIR, the 1Gi
+# that was asked for. The database and redis have their own volumes below;
+# they are required for the app to run at all and are sized separately.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: scholarsome-data
+  namespace: scholarsome
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi

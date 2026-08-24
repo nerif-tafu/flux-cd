@@ -1,0 +1,15 @@
+# Sessions and cache. Given a volume rather than an emptyDir because upstream's
+# compose runs redis with AOF persistence enabled, and losing the AOF logs
+# every user out on each pod restart.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: scholarsome-redis-data
+  namespace: scholarsome
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi

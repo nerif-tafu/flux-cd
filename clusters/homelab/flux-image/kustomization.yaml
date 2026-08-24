@@ -85,4 +85,6 @@ resources:
   - internet-monitor-imagepolicy.yaml
   - joplin-imagerepository.yaml
   - joplin-imagepolicy.yaml
+  - scholarsome-imagerepository.yaml
+  - scholarsome-imagepolicy.yaml
   - imageupdateautomation.yaml

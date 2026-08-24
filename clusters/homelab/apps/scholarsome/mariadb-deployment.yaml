@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scholarsome-mariadb
+  namespace: scholarsome
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: scholarsome-mariadb
+  template:
+    metadata:
+      labels:
+        app: scholarsome-mariadb
+    spec:
+      containers:
+        - name: mariadb
+          # Digest-pinned like ghost's mysql: a pod reschedule should not be
+          # able to bring up a different database build than the one that wrote
+          # the volume. Upstream's compose uses mariadb:latest, which is worse
+          # for exactly that reason. Only the app carries an image policy.
+          image: mariadb:11.4@sha256:4f1d8d202fcf7bcb3902f63af09f9c1a050c2922a89652f22abaec0d4f015e83
+          resources:
+            requests:
+              cpu: 20m
+              memory: 384Mi
+            limits:
+              memory: 1Gi
+          ports:
+            - name: mysql
+              containerPort: 3306
+          env:
+            # Matches upstream: no fixed root password, and root reachable only
+            # over the container's own loopback. The app connects as the
+            # unprivileged scholarsome user, so nothing needs root remotely.
+            - name: MARIADB_RANDOM_ROOT_PASSWORD
+              value: "yes"
+            - name: MARIADB_ROOT_HOST
+              value: localhost
+            - name: MARIADB_DATABASE
+              value: scholarsome
+            - name: MARIADB_USER
+              value: scholarsome
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: scholarsome-secret
+                  key: DATABASE_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          readinessProbe:
+            exec:
+              command: ["healthcheck.sh", "--connect", "--innodb_initialized"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["healthcheck.sh", "--connect", "--innodb_initialized"]
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: scholarsome-mariadb-data

@@ -1,0 +1,16 @@
+# Flashcard sets, users, sessions. 2Gi is not a sizing estimate — the dataset
+# for a personal instance is megabytes — it is headroom so the volume never
+# becomes the thing that needs attention. Longhorn is thin-provisioned, so
+# unused capacity is not paid for up front.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: scholarsome-mariadb-data
+  namespace: scholarsome
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 2Gi

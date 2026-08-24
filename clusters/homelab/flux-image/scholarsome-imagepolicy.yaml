@@ -1,0 +1,26 @@
+# Tags here carry a leading v (v1.2.1), which the pattern strips for ordering
+# only — Flux writes the full original tag back to the deployment, so the image
+# line stays v-prefixed. The alternative `latest` tag is deliberately not used:
+# it pins nothing and moves without a commit.
+#
+# Bounded below 2.0.0 because the app runs `prisma migrate deploy` on every
+# start and those migrations are one-way — an image rollback does not roll the
+# schema back, so a major version is a decision to take deliberately.
+#
+# Worth knowing this project is slow-moving: v1.2.0 was released in March 2024
+# and v1.2.1 exists only as a Docker tag with no matching GitHub release. This
+# policy will sit still for long stretches; that is the upstream, not a fault.
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: scholarsome
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: scholarsome
+  filterTags:
+    pattern: '^v(?P<version>[0-9]+\.[0-9]+\.[0-9]+)$'
+    extract: '$version'
+  policy:
+    semver:
+      range: ">=1.2.1 <2.0.0"

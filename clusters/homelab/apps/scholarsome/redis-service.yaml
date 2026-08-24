@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: scholarsome-redis
+  namespace: scholarsome
+spec:
+  type: ClusterIP
+  selector:
+    app: scholarsome-redis
+  ports:
+    - name: tcp
+      port: 6379
+      targetPort: 6379

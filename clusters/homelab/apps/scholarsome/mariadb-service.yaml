@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: scholarsome-mariadb
+  namespace: scholarsome
+spec:
+  type: ClusterIP
+  selector:
+    app: scholarsome-mariadb
+  ports:
+    - name: tcp
+      port: 3306
+      targetPort: 3306

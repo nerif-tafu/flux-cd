@@ -36,7 +36,7 @@ spec:
           # No init container for migrations: the image's CMD is
           # `npm run serve:node`, which is `prisma migrate deploy` followed by
           # the server, so schema changes are applied on every start already.
-          image: hwgilbert16/scholarsome:v1.2.1 # {"$imagepolicy": "flux-system:scholarsome"}
+          image: docker.io/hwgilbert16/scholarsome:v1.2.1 # {"$imagepolicy": "flux-system:scholarsome"}
           resources:
             requests:
               cpu: 100m
@@ -84,11 +84,11 @@ spec:
               value: local
             - name: STORAGE_LOCAL_DIR
               value: /data
-            # SMTP is deliberately unset. Upstream's behaviour without it is
-            # that new accounts are verified automatically instead of waiting
-            # on a confirmation mail, which is what is wanted on a LAN-only
-            # instance with no mail server behind it. The trade is that
-            # password reset, which mails a link, cannot work.
+              # SMTP is deliberately unset. Upstream's behaviour without it is
+              # that new accounts are verified automatically instead of waiting
+              # on a confirmation mail, which is what is wanted on a LAN-only
+              # instance with no mail server behind it. The trade is that
+              # password reset, which mails a link, cannot work.
           volumeMounts:
             - name: data
               mountPath: /data

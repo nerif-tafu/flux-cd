@@ -21,7 +21,7 @@ spec:
           command: ["sh", "-c", "until nc -z vocard-db 27017; do echo waiting for mongo; sleep 2; done"]
       containers:
         - name: vocard-dashboard
-          image: ghcr.io/chocomeow/vocard-dashboard:beta@sha256:08f1b8097fbf9822b555aea7a05c41007d5fb2b0189742b52f779d5d2b9ef8c8 # {"$imagepolicy": "flux-system:vocard-dashboard"}
+          image: ghcr.io/chocomeow/vocard-dashboard:beta@sha256:f86a2c53ff304fcdc9589cf20aa8bb9c67662bb9ef8b1f3e39f75e99f13dd9c6 # {"$imagepolicy": "flux-system:vocard-dashboard"}
           resources:
             requests:
               cpu: 20m

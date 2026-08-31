@@ -32,7 +32,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: tesco-protein
-          image: ghcr.io/nerif-tafu/tesco-protein:v1.2.5 # {"$imagepolicy": "flux-system:tesco-protein"}
+          image: ghcr.io/nerif-tafu/tesco-protein:v1.2.6 # {"$imagepolicy": "flux-system:tesco-protein"}
           env:
             # The image defaults to /data already; set explicitly so the mount
             # below and the app cannot drift apart.

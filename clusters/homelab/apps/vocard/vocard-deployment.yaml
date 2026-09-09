@@ -20,7 +20,7 @@ spec:
           image: busybox:1.36
           command: ["sh", "-c", "until nc -z vocard-db 27017; do echo waiting for mongo; sleep 2; done"]
         - name: copy-app-and-settings
-          image: ghcr.io/chocomeow/vocard:beta@sha256:76d75848047efee06f35f426ee54951a7439bf270caf267ab7b6654c2851649a # {"$imagepolicy": "flux-system:vocard"}
+          image: ghcr.io/chocomeow/vocard:beta@sha256:474642880b784c88448dc6cc0c36f6a843c921a67c67fdb9345b90da8d8ba815 # {"$imagepolicy": "flux-system:vocard"}
           command: ["sh", "-c", "cp -r /app/. /app-writable/ && cp /app-secret/settings.json /app-writable/settings.json"]
           volumeMounts:
             - name: app-data
@@ -30,7 +30,7 @@ spec:
               readOnly: true
       containers:
         - name: vocard
-          image: ghcr.io/chocomeow/vocard:beta@sha256:76d75848047efee06f35f426ee54951a7439bf270caf267ab7b6654c2851649a # {"$imagepolicy": "flux-system:vocard"}
+          image: ghcr.io/chocomeow/vocard:beta@sha256:474642880b784c88448dc6cc0c36f6a843c921a67c67fdb9345b90da8d8ba815 # {"$imagepolicy": "flux-system:vocard"}
           resources:
             requests:
               cpu: 20m

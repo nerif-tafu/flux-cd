@@ -32,3 +32,4 @@ resources:
   - ./internet-monitor
   - ./joplin
   - ./scholarsome
+  - ./hd-stream

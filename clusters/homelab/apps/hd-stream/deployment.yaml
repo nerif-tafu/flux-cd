@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hd-stream
+  namespace: hd-stream
+spec:
+  replicas: 1
+  # Recreate rather than rolling: the server holds the single broadcaster slot
+  # in memory, so two pods behind one Service would give viewers a coin-flip
+  # between the pod with the stream and an empty one.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: hd-stream
+  template:
+    metadata:
+      labels:
+        app: hd-stream
+    spec:
+      containers:
+        - name: hd-stream
+          image: ghcr.io/nerif-tafu/hd-stream:1.0.0 # {"$imagepolicy": "flux-system:hd-stream"}
+          # The relay never decodes anything, but every frame sits in Node's
+          # heap on its way through, and a viewer that reads slower than the
+          # broadcaster sends accumulates a backlog in ws's send buffer. 4K RGBA
+          # is ~33MB a frame, so the limit is headroom for that, not steady
+          # state (tens of MiB when idle).
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              memory: 1Gi
+          env:
+            - name: PORT
+              value: "3000"
+            # STREAM_KEY deliberately unset: anyone who reaches the page can
+            # claim the broadcaster slot. That is the intended mode for this
+            # instance. To gate it, add a sops secret and set STREAM_KEY from it.
+          ports:
+            - name: http
+              containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 6

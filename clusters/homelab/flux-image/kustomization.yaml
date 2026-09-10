@@ -87,4 +87,6 @@ resources:
   - joplin-imagepolicy.yaml
   - scholarsome-imagerepository.yaml
   - scholarsome-imagepolicy.yaml
+  - hd-stream-imagerepository.yaml
+  - hd-stream-imagepolicy.yaml
   - imageupdateautomation.yaml

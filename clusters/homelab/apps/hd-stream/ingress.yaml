@@ -1,0 +1,38 @@
+# hd-stream at https://stream.tafu.casa on the public Traefik.
+#
+# Public because the point is that anyone can watch; TLS is not optional
+# either way, since browsers refuse camera access on a non-HTTPS origin. The
+# stream.tafu.casa CNAME to cl.tafu.casa already exists, so no Cloudflare
+# change is needed.
+#
+# The whole stream rides a WebSocket on /ws, which Traefik upgrades on the
+# same router as the page — no separate route, and nothing here buffers
+# frames, so the raw-frame sizes (tens of MB a message) are only ever a
+# bandwidth problem, not a proxy one.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hd-stream
+  namespace: hd-stream
+  labels:
+    traefik.tafu.casa/instance: public
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-fail2ban-public@kubernetescrd
+spec:
+  ingressClassName: traefik-public
+  rules:
+    - host: stream.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hd-stream
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - stream.tafu.casa
+      secretName: hd-stream-tls

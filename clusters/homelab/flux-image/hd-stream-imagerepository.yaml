@@ -1,0 +1,10 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: hd-stream
+  namespace: flux-system
+spec:
+  image: ghcr.io/nerif-tafu/hd-stream
+  interval: 5m
+  secretRef:
+    name: ghcr-registry-secret

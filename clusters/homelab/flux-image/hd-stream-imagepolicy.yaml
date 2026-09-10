@@ -1,0 +1,17 @@
+# The release workflow pushes bare semver (1.0.0) alongside the floating
+# 1.0, 1, latest and sha-<commit> tags. The filter keeps only the full
+# three-part version so the deployment is always pinned to a real release,
+# not a tag that moves under it on the next push to main.
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: hd-stream
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: hd-stream
+  filterTags:
+    pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+  policy:
+    semver:
+      range: ">=1.0.0"

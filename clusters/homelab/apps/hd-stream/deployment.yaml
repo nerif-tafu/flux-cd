@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: hd-stream
-          image: ghcr.io/nerif-tafu/hd-stream:1.0.0 # {"$imagepolicy": "flux-system:hd-stream"}
+          image: ghcr.io/nerif-tafu/hd-stream:1.1.0 # {"$imagepolicy": "flux-system:hd-stream"}
           # The relay never decodes anything, but every frame sits in Node's
           # heap on its way through, and a viewer that reads slower than the
           # broadcaster sends accumulates a backlog in ws's send buffer. 4K RGBA
@@ -35,9 +35,9 @@ spec:
           env:
             - name: PORT
               value: "3000"
-            # STREAM_KEY deliberately unset: anyone who reaches the page can
-            # claim the broadcaster slot. That is the intended mode for this
-            # instance. To gate it, add a sops secret and set STREAM_KEY from it.
+              # STREAM_KEY deliberately unset: anyone who reaches the page can
+              # claim the broadcaster slot. That is the intended mode for this
+              # instance. To gate it, add a sops secret and set STREAM_KEY from it.
           ports:
             - name: http
               containerPort: 3000

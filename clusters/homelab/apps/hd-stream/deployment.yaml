@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: hd-stream
-          image: ghcr.io/nerif-tafu/hd-stream:1.1.0 # {"$imagepolicy": "flux-system:hd-stream"}
+          image: ghcr.io/nerif-tafu/hd-stream:1.2.0 # {"$imagepolicy": "flux-system:hd-stream"}
           # The relay never decodes anything, but every frame sits in Node's
           # heap on its way through, and a viewer that reads slower than the
           # broadcaster sends accumulates a backlog in ws's send buffer. 4K RGBA

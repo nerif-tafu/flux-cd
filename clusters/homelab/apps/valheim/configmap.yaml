@@ -1,0 +1,14 @@
+# Seeded into the save directory on every start by the init container, the
+# same way factorio's lists are. Steam64 IDs, one per line; the server logs
+# "Got connection SteamID <id>" when someone joins, which is where to find
+# them. Only the admin list is seeded -- bans and the permitted list are
+# left to whatever is on the volume so in-game changes to them survive.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: valheim-config
+  namespace: valheim
+data:
+  adminlist.txt: |
+    // List admin players ID  ONE per line
+    76561198311836041

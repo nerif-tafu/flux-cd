@@ -24,19 +24,37 @@ spec:
       # a save on a small world but not with any margin, and a truncated save
       # is the one thing a game server volume must never hold.
       terminationGracePeriodSeconds: 90
+      initContainers:
+        - name: seed-config
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /saves
+              cp /seed/adminlist.txt /saves/adminlist.txt
+              chown 1000:1000 /saves/adminlist.txt
+          volumeMounts:
+            - name: data
+              mountPath: /saves
+              subPath: saves
+            - name: config
+              mountPath: /seed
       containers:
         - name: valheim
           image: docker.io/mbround18/valheim:3.8.3 # {"$imagepolicy": "flux-system:valheim"}
-          # Valheim's dedicated server is single-threaded for the world tick
-          # and holds the loaded world in memory: ~2-3Gi with a few players
-          # and a mid-sized world. The first start also runs steamcmd, which
-          # is CPU-heavy for a few minutes.
+          # Observed 730m / 1.5Gi idle with the world freshly generated. The
+          # tick is single-threaded but Unity and Steam networking take more
+          # cores as players and explored terrain grow, and the loaded world
+          # only gets bigger. Tripled from the initial 500m/2Gi/6Gi on
+          # 2026-09-13; the node has 20 cores and 32Gi, so the request is
+          # affordable and the limit is a ceiling, not a target.
           resources:
             requests:
-              cpu: 500m
-              memory: 2Gi
-            limits:
+              cpu: 1500m
               memory: 6Gi
+            limits:
+              memory: 18Gi
           env:
             - name: TZ
               value: Europe/London
@@ -111,3 +129,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: valheim-data
+        - name: config
+          configMap:
+            name: valheim-config

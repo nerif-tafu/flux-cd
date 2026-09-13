@@ -43,18 +43,16 @@ spec:
       containers:
         - name: valheim
           image: docker.io/mbround18/valheim:3.8.3 # {"$imagepolicy": "flux-system:valheim"}
-          # Observed 730m / 1.5Gi idle with the world freshly generated. The
-          # tick is single-threaded but Unity and Steam networking take more
-          # cores as players and explored terrain grow, and the loaded world
-          # only gets bigger. Tripled from the initial 500m/2Gi/6Gi on
-          # 2026-09-13; the node has 20 cores and 32Gi, so the request is
-          # affordable and the limit is a ceiling, not a target.
+          # Valheim's dedicated server is single-threaded for the world tick
+          # and holds the loaded world in memory: ~2-3Gi with a few players
+          # and a mid-sized world. The first start also runs steamcmd, which
+          # is CPU-heavy for a few minutes. Observed 730m / 1.5Gi idle.
           resources:
             requests:
-              cpu: 1500m
-              memory: 6Gi
+              cpu: 500m
+              memory: 2Gi
             limits:
-              memory: 18Gi
+              memory: 6Gi
           env:
             - name: TZ
               value: Europe/London
@@ -71,6 +69,11 @@ spec:
               value: "1"
             - name: ENABLE_CROSSPLAY
               value: "0"
+            # World modifiers (-modifier flags). resources=most is the 3x
+            # gather rate; the scale is less/more/muchmore/most = 0.5/1.5/2/3.
+            # Applies to the running world on restart; nothing is baked in.
+            - name: MODIFIERS
+              value: "resources=most"
             - name: PASSWORD
               valueFrom:
                 secretKeyRef:

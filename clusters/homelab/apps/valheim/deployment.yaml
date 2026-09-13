@@ -67,8 +67,12 @@ spec:
             # flags below -- with PUBLIC=0 they are silently ignored.
             - name: PUBLIC
               value: "1"
+            # Crossplay routes through PlayFab so Xbox/Game Pass clients can
+            # join; the server prints a join code in its log on start. Costs
+            # the backup pause-when-empty flag, which cannot count players in
+            # this mode.
             - name: ENABLE_CROSSPLAY
-              value: "0"
+              value: "1"
             # World modifiers (-modifier flags). resources=most is the 3x
             # gather rate; the scale is less/more/muchmore/most = 0.5/1.5/2/3.
             # Applies to the running world on restart; nothing is baked in.
@@ -107,8 +111,8 @@ spec:
               value: "1"
             - name: AUTO_BACKUP_ON_SHUTDOWN
               value: "1"
-            - name: AUTO_BACKUP_PAUSE_WITH_NO_PLAYERS
-              value: "1"
+            # AUTO_BACKUP_PAUSE_WITH_NO_PLAYERS not set: Odin ignores it when
+            # ENABLE_CROSSPLAY=1 and warns every run. Idle backups are ~200ms.
           ports:
             - name: game
               containerPort: 2456

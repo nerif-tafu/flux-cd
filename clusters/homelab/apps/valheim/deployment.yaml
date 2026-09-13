@@ -46,10 +46,11 @@ spec:
               value: "HopHop Valheim"
             - name: WORLD
               value: "HopHop"
-            # Not listed on the Steam server browser; friends join by
-            # tafu.casa:2456 with the password. Same posture as factorio.
+            # Listed on the Steam server browser (password-protected). Also
+            # what lets Odin count players for the two PAUSE_WITH_PLAYERS
+            # flags below -- with PUBLIC=0 they are silently ignored.
             - name: PUBLIC
-              value: "0"
+              value: "1"
             - name: ENABLE_CROSSPLAY
               value: "0"
             - name: PASSWORD
@@ -60,16 +61,15 @@ spec:
             # Two layers of auto-update: Flux bumps the container image via the
             # image policy, and the container itself checks Steam for a game
             # update on this schedule (and on every start), restarting the
-            # server only if one exists. 05:00 because it cannot check for
-            # players first: AUTO_UPDATE_PAUSE_WITH_PLAYERS reads the count
-            # from the Steam server list, which PUBLIC=0 keeps us off, so the
-            # flag is a no-op here and the schedule is the whole protection.
+            # server only if one exists and nobody is online.
             - name: UPDATE_ON_STARTUP
               value: "1"
             - name: AUTO_UPDATE
               value: "1"
             - name: AUTO_UPDATE_SCHEDULE
               value: "0 5 * * *"
+            - name: AUTO_UPDATE_PAUSE_WITH_PLAYERS
+              value: "1"
             # In-container backups: compressed copies of the save directory,
             # every 15 minutes, kept 3 days, plus one before each update and
             # on shutdown. This is the point-in-time safety net for a corrupt
@@ -86,10 +86,8 @@ spec:
               value: "1"
             - name: AUTO_BACKUP_ON_SHUTDOWN
               value: "1"
-            # AUTO_BACKUP_PAUSE_WITH_NO_PLAYERS deliberately not set: like the
-            # update flag it needs PUBLIC=1 to count players and otherwise
-            # warns on every run. Backups of an idle world are ~200ms and are
-            # pruned after 3 days, so running them unconditionally is fine.
+            - name: AUTO_BACKUP_PAUSE_WITH_NO_PLAYERS
+              value: "1"
           ports:
             - name: game
               containerPort: 2456

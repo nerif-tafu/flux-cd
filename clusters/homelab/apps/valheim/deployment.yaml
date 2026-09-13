@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: valheim
+  namespace: valheim
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: valheim
+  template:
+    metadata:
+      labels:
+        app: valheim
+    spec:
+      # The image runs as steam (1000:1000) and chowns its directories on
+      # start via sudo; fsGroup makes the Longhorn mount group-writable to it
+      # from the first boot rather than relying on that.
+      securityContext:
+        fsGroup: 1000
+      # The server writes the world on SIGTERM. The default 30s is enough for
+      # a save on a small world but not with any margin, and a truncated save
+      # is the one thing a game server volume must never hold.
+      terminationGracePeriodSeconds: 90
+      containers:
+        - name: valheim
+          image: docker.io/mbround18/valheim:3.8.3 # {"$imagepolicy": "flux-system:valheim"}
+          # Valheim's dedicated server is single-threaded for the world tick
+          # and holds the loaded world in memory: ~2-3Gi with a few players
+          # and a mid-sized world. The first start also runs steamcmd, which
+          # is CPU-heavy for a few minutes.
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              memory: 6Gi
+          env:
+            - name: TZ
+              value: Europe/London
+            - name: PORT
+              value: "2456"
+            - name: NAME
+              value: "HopHop Valheim"
+            - name: WORLD
+              value: "HopHop"
+            # Not listed on the Steam server browser; friends join by
+            # tafu.casa:2456 with the password. Same posture as factorio.
+            - name: PUBLIC
+              value: "0"
+            - name: ENABLE_CROSSPLAY
+              value: "0"
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: valheim-secret
+                  key: PASSWORD
+            # Two layers of auto-update: Flux bumps the container image via the
+            # image policy, and the container itself checks Steam for a game
+            # update on this schedule (and on every start), restarting the
+            # server only if one exists and nobody is online.
+            - name: UPDATE_ON_STARTUP
+              value: "1"
+            - name: AUTO_UPDATE
+              value: "1"
+            - name: AUTO_UPDATE_SCHEDULE
+              value: "0 5 * * *"
+            - name: AUTO_UPDATE_PAUSE_WITH_PLAYERS
+              value: "1"
+            # In-container backups: compressed copies of the save directory,
+            # every 15 minutes, kept 3 days, plus one before each update and
+            # on shutdown. This is the point-in-time safety net for a corrupt
+            # world; the nightly Longhorn NAS backup is the disaster one.
+            - name: AUTO_BACKUP
+              value: "1"
+            - name: AUTO_BACKUP_SCHEDULE
+              value: "*/15 * * * *"
+            - name: AUTO_BACKUP_REMOVE_OLD
+              value: "1"
+            - name: AUTO_BACKUP_DAYS_TO_LIVE
+              value: "3"
+            - name: AUTO_BACKUP_ON_UPDATE
+              value: "1"
+            - name: AUTO_BACKUP_ON_SHUTDOWN
+              value: "1"
+            - name: AUTO_BACKUP_PAUSE_WITH_NO_PLAYERS
+              value: "1"
+          ports:
+            - name: game
+              containerPort: 2456
+              protocol: UDP
+            - name: query
+              containerPort: 2457
+              protocol: UDP
+          # No probes, same reasoning as factorio: UDP only, and a tcpSocket
+          # probe against a port nothing binds would keep the pod un-Ready.
+          volumeMounts:
+            - name: data
+              mountPath: /home/steam/valheim
+              subPath: server
+            - name: data
+              mountPath: /home/steam/.config/unity3d/IronGate/Valheim
+              subPath: saves
+            - name: data
+              mountPath: /home/steam/backups
+              subPath: backups
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: valheim-data

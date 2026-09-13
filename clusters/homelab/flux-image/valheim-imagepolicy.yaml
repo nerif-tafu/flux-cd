@@ -1,0 +1,22 @@
+# mbround18/valheim is the one maintained Valheim image with real semver
+# tags; lloesche/valheim-server only publishes latest and sha-*, which Flux
+# cannot order. The filter drops mbround18's floating 3 / 3.8 / latest and
+# sha-* tags so only full releases are candidates.
+#
+# This is the image wrapper's version (Odin, the steamcmd/backup tooling),
+# not Valheim's — the game itself is updated by steamcmd inside the container
+# on AUTO_UPDATE_SCHEDULE. Bounded below 4.0.0 because the wrapper owns the
+# on-disk layout under /home/steam and a major bump is where that changes.
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: valheim
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: valheim
+  filterTags:
+    pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+  policy:
+    semver:
+      range: ">=3.8.3 <4.0.0"

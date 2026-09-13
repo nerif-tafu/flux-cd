@@ -1,0 +1,35 @@
+# Valheim listens on PORT and PORT+1 (2456 game, 2457 Steam query); 2458 is a
+# legacy port the current server no longer uses. One IngressRouteUDP per
+# entrypoint because Traefik's UDP router has no port passthrough — each
+# entrypoint maps to exactly one backend port.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: valheim-game
+  namespace: traefik
+  labels:
+    traefik.tafu.casa/instance: gateway
+spec:
+  entryPoints:
+    - valheimgame
+  routes:
+    - services:
+        - name: valheim
+          namespace: valheim
+          port: 2456
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: valheim-query
+  namespace: traefik
+  labels:
+    traefik.tafu.casa/instance: gateway
+spec:
+  entryPoints:
+    - valheimquery
+  routes:
+    - services:
+        - name: valheim
+          namespace: valheim
+          port: 2457

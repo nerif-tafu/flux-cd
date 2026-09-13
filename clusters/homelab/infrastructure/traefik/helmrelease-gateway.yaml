@@ -1,4 +1,4 @@
-# TCP/UDP gateway at 192.168.3.63: WireGuard only (51820/udp), KAG (50301), Minecraft (25565). wg-easy frontend via vpn.cl.tafu.casa only.
+# TCP/UDP gateway at 192.168.3.63: WireGuard only (51820/udp), KAG (50301), Minecraft (25565), Factorio (34197/udp), Valheim (2456-2457/udp). wg-easy frontend via vpn.cl.tafu.casa only.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -107,6 +107,19 @@ spec:
           default: true
         exposedPort: 25565
         protocol: TCP
+      # Valheim: game on 2456, Steam query on 2457
+      valheimgame:
+        port: 2456
+        expose:
+          default: true
+        exposedPort: 2456
+        protocol: UDP
+      valheimquery:
+        port: 2457
+        expose:
+          default: true
+        exposedPort: 2457
+        protocol: UDP
     providers:
       kubernetesCRD:
         labelSelector: "traefik.tafu.casa/instance=gateway"

@@ -1,0 +1,8 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: valheim
+  namespace: flux-system
+spec:
+  image: docker.io/mbround18/valheim
+  interval: 1h

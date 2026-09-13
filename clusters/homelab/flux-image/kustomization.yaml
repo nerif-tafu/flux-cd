@@ -89,4 +89,6 @@ resources:
   - scholarsome-imagepolicy.yaml
   - hd-stream-imagerepository.yaml
   - hd-stream-imagepolicy.yaml
+  - valheim-imagerepository.yaml
+  - valheim-imagepolicy.yaml
   - imageupdateautomation.yaml

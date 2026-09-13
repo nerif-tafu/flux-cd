@@ -1,0 +1,19 @@
+# One volume, three subPaths (server/, saves/, backups/) rather than three
+# claims. The steam install under server/ is the bulk of it at ~1.5GB, and it
+# lives on the volume so a pod restart does not re-download the game every
+# time. Saves are tens of MB; backups are compressed saves, pruned by the
+# container after 3 days. 10Gi is headroom, thin-provisioned as usual.
+#
+# Longhorn's nightly NAS backup covers the whole volume, world included.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: valheim-data
+  namespace: valheim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi

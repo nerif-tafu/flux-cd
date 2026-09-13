@@ -6,3 +6,4 @@ resources:
   - kag-udp.yaml
   - gravitas-tcp.yaml
   - factorio-udp.yaml
+  - valheim-udp.yaml

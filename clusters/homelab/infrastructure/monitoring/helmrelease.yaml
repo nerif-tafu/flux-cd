@@ -78,6 +78,17 @@ spec:
         ruleNamespaceSelector: {}
         ruleSelectorNilUsesHelmValues: false
         ruleSelector: {}
+    # The chart's bundled KubeJobFailed fires on the same kube_job_failed
+    # series as our BackupJobFailed, and it has the same flaw: a failed Job
+    # object is kept by failedJobsHistoryLimit until the next failure, so it
+    # keeps paging after later runs have succeeded. The only CronJobs on this
+    # cluster are the backup ones (cluster-backup, daily-backup,
+    # weekly-snapshot-cleanup), all covered by rules-backup.yaml, which knows
+    # to stand down once a newer run completes. Re-enable this, or add a rule,
+    # if unrelated CronJobs are ever added.
+    defaultRules:
+      disabled:
+        KubeJobFailed: true
     grafana:
       enabled: true
       # Credentials from a SOPS secret rather than the chart default

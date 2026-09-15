@@ -29,10 +29,50 @@ spec:
   groups:
     - name: backup.jobs
       rules:
+        # A failed Job object outlives its failure. failedJobsHistoryLimit keeps
+        # the most recent failed Job around until the *next failure* replaces
+        # it, so kube_job_failed stays at 1 through any number of later
+        # successes. Alerting on it directly therefore paged for two days after
+        # a k3s restart on 2026-09-13 fired the missed runs into a half-up
+        # cluster, even though every scheduled run since had completed.
+        #
+        # The two recording rules below carry the owning CronJob's name onto
+        # each Job (kube_job_owner) so a failure can be compared with the latest
+        # success of the *same* CronJob. Only a failure newer than that success
+        # alerts; once a later run completes, the alert resolves on its own.
+        - record: backup:job_failed_start_seconds
+          # Start time of every failed backup Job, labelled with its CronJob.
+          expr: >-
+            (
+              kube_job_status_start_time{namespace=~"cluster-backup|longhorn-system"}
+              and on (namespace, job_name) (kube_job_failed > 0)
+            )
+            * on (namespace, job_name) group_left (owner_name) kube_job_owner
+        - record: backup:job_last_success_seconds
+          # Most recent successful completion per CronJob.
+          expr: >-
+            max by (namespace, owner_name) (
+              kube_job_status_completion_time{namespace=~"cluster-backup|longhorn-system"}
+              * on (namespace, job_name) group_left (owner_name) kube_job_owner
+            )
+
         - alert: BackupJobFailed
           # Covers both paths. A backoffLimit is exhausted before kube_job_failed
           # goes to 1, so this is a real failure, not a single flaky attempt.
-          expr: kube_job_failed{namespace=~"cluster-backup|longhorn-system"} > 0
+          # Fires only while the failure is the CronJob's latest outcome: either
+          # it started after the last success, or there has been no success at
+          # all (the `unless` arm — a CronJob that has only ever failed).
+          expr: >-
+            (
+              backup:job_failed_start_seconds
+              > on (namespace, owner_name) group_left ()
+              backup:job_last_success_seconds
+            )
+            or
+            (
+              backup:job_failed_start_seconds
+              unless on (namespace, owner_name) backup:job_last_success_seconds
+            )
           for: 5m
           labels:
             severity: critical
@@ -40,9 +80,11 @@ spec:
             summary: "Backup job {{ $labels.job_name }} failed ({{ $labels.namespace }})"
             description: >-
               Job {{ $labels.job_name }} in {{ $labels.namespace }} exhausted its
-              retries. Until this is fixed the cluster is running without a
-              current backup. Check `kubectl -n {{ $labels.namespace }} logs
-              job/{{ $labels.job_name }}`.
+              retries and no later run of {{ $labels.owner_name }} has succeeded.
+              Until this is fixed the cluster is running without a current
+              backup. Check `kubectl -n {{ $labels.namespace }} logs
+              job/{{ $labels.job_name }}`. This resolves by itself once a newer
+              run completes.
 
     - name: backup.freshness
       rules:

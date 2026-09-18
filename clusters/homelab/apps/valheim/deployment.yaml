@@ -42,7 +42,7 @@ spec:
               mountPath: /seed
       containers:
         - name: valheim
-          image: docker.io/mbround18/valheim:3.8.5 # {"$imagepolicy": "flux-system:valheim"}
+          image: docker.io/mbround18/valheim:3.8.6 # {"$imagepolicy": "flux-system:valheim"}
           # Valheim's dedicated server is single-threaded for the world tick
           # and holds the loaded world in memory: ~2-3Gi with a few players
           # and a mid-sized world. The first start also runs steamcmd, which

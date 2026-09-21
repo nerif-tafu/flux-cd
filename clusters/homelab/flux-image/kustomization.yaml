@@ -91,4 +91,6 @@ resources:
   - hd-stream-imagepolicy.yaml
   - valheim-imagerepository.yaml
   - valheim-imagepolicy.yaml
+  - ontime-imagerepository.yaml
+  - ontime-imagepolicy.yaml
   - imageupdateautomation.yaml

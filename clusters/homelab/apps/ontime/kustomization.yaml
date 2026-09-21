@@ -1,0 +1,16 @@
+# Two independent Ontime (rundown timer) servers in one namespace, dsm and
+# gfx, each with its own database volume so a project loaded on one never
+# shows up on the other. They share nothing but the image policy, so the
+# pair is a flat set of per-instance files rather than a base/overlay.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - dsm-pvc.yaml
+  - dsm-deployment.yaml
+  - dsm-service.yaml
+  - dsm-ingress.yaml
+  - gfx-pvc.yaml
+  - gfx-deployment.yaml
+  - gfx-service.yaml
+  - gfx-ingress.yaml

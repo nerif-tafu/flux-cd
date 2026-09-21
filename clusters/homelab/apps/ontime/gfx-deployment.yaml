@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ontime-gfx
+  namespace: ontime
+spec:
+  replicas: 1
+  # Recreate because the data volume is ReadWriteOnce: a rolling update would
+  # deadlock with the new pod waiting on a volume the old one still holds.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ontime-gfx
+  template:
+    metadata:
+      labels:
+        app: ontime-gfx
+    spec:
+      containers:
+        - name: ontime
+          image: docker.io/getontime/ontime:v4.13.0 # {"$imagepolicy": "flux-system:ontime"}
+          env:
+            # Rundown times are wall-clock; the image defaults to UTC, which
+            # would put every scheduled start an hour out in summer.
+            - name: TZ
+              value: Europe/London
+          ports:
+            - name: http
+              containerPort: 4001
+          volumeMounts:
+            # The image sets ONTIME_DATA=/data/, so this holds the project
+            # database, uploaded projects and the restore point.
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 512Mi
+          # Both routes are served by the express app in front of the auth
+          # middleware, so they answer without a session cookie. /ready flips
+          # to 503 during shutdown, which is what we want readiness to track.
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 4001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4001
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 6
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ontime-gfx-data

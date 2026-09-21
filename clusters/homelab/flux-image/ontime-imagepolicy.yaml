@@ -1,0 +1,22 @@
+# getontime/ontime tags releases as v4.13.0 but has slipped and pushed a bare
+# 4.0.2 once, so the v is optional. Anchoring the pattern drops the floating
+# latest / v4 / nightly tags and the -beta.N prereleases. Bounded below 5.0.0
+# because the 3 -> 4 jump changed the on-disk database format; a major bump
+# should be a deliberate migration, not something Flux does at 3am.
+#
+# One policy feeds both instances: the same image is written into
+# dsm-deployment.yaml and gfx-deployment.yaml on the same commit.
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: ontime
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: ontime
+  filterTags:
+    pattern: '^v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)$'
+    extract: '$version'
+  policy:
+    semver:
+      range: ">=4.13.0 <5.0.0"

@@ -1,0 +1,32 @@
+# dsm.ontime.tafu.casa on the public Traefik. The name is two labels
+# under tafu.casa, but the existing *.tafu.casa wildcard still catches it
+# (a wildcard matches any depth when no closer name exists), so there is
+# no Cloudflare change to make. Ontime's editor and views ride a WebSocket
+# on the same port as the page, which Traefik upgrades on this one router.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ontime-dsm
+  namespace: ontime
+  labels:
+    traefik.tafu.casa/instance: public
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-fail2ban-public@kubernetescrd
+spec:
+  ingressClassName: traefik-public
+  rules:
+    - host: dsm.ontime.tafu.casa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ontime-dsm
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - dsm.ontime.tafu.casa
+      secretName: ontime-dsm-tls

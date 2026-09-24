@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: ontime
-          image: docker.io/getontime/ontime:v4.13.0 # {"$imagepolicy": "flux-system:ontime"}
+          image: docker.io/getontime/ontime:v4.14.0 # {"$imagepolicy": "flux-system:ontime"}
           env:
             # Rundown times are wall-clock; the image defaults to UTC, which
             # would put every scheduled start an hour out in summer.

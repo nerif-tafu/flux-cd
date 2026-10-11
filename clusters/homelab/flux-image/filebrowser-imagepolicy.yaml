@@ -11,4 +11,7 @@ spec:
   policy:
     semver:
       # Range includes prerelease-style tags like 1.2.3-stable (see Masterminds/semver x.y.z-0).
-      range: ">=1.0.0-0"
+      # Capped below 2.0: 2.0.0 moves the database to SQLite and restructures the
+      # config, and the automated bump crash-looped the pod (2026-10-11). Raise
+      # the cap only alongside a planned migration.
+      range: ">=1.0.0-0 <2.0.0-0"

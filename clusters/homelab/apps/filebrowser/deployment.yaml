@@ -1,4 +1,4 @@
-# FileBrowser Quantum: persist config/db/cache on PVC at /home/filebrowser/data, files at /srv.
+# FileBrowser Quantum: persist config/db (SQLite since 2.0)/cache on PVC at /home/filebrowser/data, files at /srv.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -42,7 +42,7 @@ spec:
               mountPath: /srv
       containers:
         - name: filebrowser
-          image: ghcr.io/gtsteffaniak/filebrowser:1.5.8-stable # {"$imagepolicy": "flux-system:filebrowser"}
+          image: ghcr.io/gtsteffaniak/filebrowser:2.0.1-stable # {"$imagepolicy": "flux-system:filebrowser"}
           resources:
             requests:
               cpu: 10m
@@ -64,8 +64,11 @@ spec:
           env:
             - name: FILEBROWSER_CONFIG
               value: /home/filebrowser/data/config.yaml
-            - name: FILEBROWSER_DATABASE
-              value: /home/filebrowser/data/database.db
+            # FILEBROWSER_DATABASE (v1) must not be set: 2.x refuses to start
+            # with it. The SQLite path lives in config.yaml (server.database.path);
+            # this env var is the documented override and kept in step with it.
+            - name: FILEBROWSER_DATABASE_PATH
+              value: /home/filebrowser/data/filebrowser.sqlite
             - name: FILEBROWSER_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:

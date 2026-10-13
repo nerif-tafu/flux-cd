@@ -1,4 +1,18 @@
 # Persisted via PVC at /home/filebrowser/data/config.yaml (see deployment volumeMounts).
+#
+# v2 layout (2.0.0 upgrade, 2026-10-13). HTTP options moved from `server` to
+# `http`, the database moved from BoltDB (database.db) to SQLite, and the old
+# flat userDefaults format was removed. The four file permissions that used to
+# live in userDefaults.permissions are per-source in v2, so they are now
+# sources[].config.defaultPermissions; api/admin/share/realtime stay global
+# under userDefaults.account.permissions.
+#
+# Every field set under userDefaults is locked in Settings -> User defaults in
+# the UI. That is intended: this file stays the source of truth.
+#
+# The BoltDB was imported once via server.database.migrateFrom, which has since
+# been removed. database.db.old stays on the PVC as an offline rollback copy
+# (with a second copy off-cluster); nothing reads it.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,10 +20,15 @@ metadata:
   namespace: filebrowser
 data:
   config.yaml: |
-    server:
+    http:
       port: 80
       baseURL: "/"
-      database: /home/filebrowser/data/database.db
+      # Behind traefik-public. Traefik overwrites X-Forwarded-*/X-Real-IP from
+      # untrusted clients, so these headers carry the real client address.
+      trustProxyHeaders: true
+    server:
+      database:
+        path: /home/filebrowser/data/filebrowser.sqlite
       cacheDir: /home/filebrowser/data/tmp
       logging:
         - levels: "info|warning|error"
@@ -17,6 +36,12 @@ data:
         - path: /srv
           config:
             defaultEnabled: true
+            defaultPermissions:
+              view: true
+              download: true
+              modify: false
+              create: false
+              delete: false
     auth:
       adminUsername: admin
       methods:
@@ -24,13 +49,14 @@ data:
           enabled: true
           signup: false
     userDefaults:
-      darkMode: true
-      stickySidebar: true
-      viewMode: normal
-      singleClick: false
-      showHidden: false
-      lockPassword: false
-      disableSettings: false
+      ui:
+        darkMode: true
+      sidebar:
+        sticky: true
+      listing:
+        viewMode: normal
+        singleClick: false
+        showHidden: false
       preview:
         image: true
         video: true
@@ -38,15 +64,15 @@ data:
         motionVideoPreview: true
         office: true
         popup: true
-        autoplayMedia: true
         folder: true
         models: true
-      permissions:
-        api: false
-        admin: false
-        modify: false
-        share: false
-        realtime: false
-        delete: false
-        create: false
-        download: true
+      fileViewer:
+        autoplayMedia: true
+      account:
+        lockPassword: false
+        disableSettings: false
+        permissions:
+          api: false
+          admin: false
+          share: false
+          realtime: false

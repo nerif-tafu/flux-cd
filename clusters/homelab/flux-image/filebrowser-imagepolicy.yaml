@@ -11,7 +11,8 @@ spec:
   policy:
     semver:
       # Range includes prerelease-style tags like 1.2.3-stable (see Masterminds/semver x.y.z-0).
-      # Capped below 2.0: 2.0.0 moves the database to SQLite and restructures the
-      # config, and the automated bump crash-looped the pod (2026-10-11). Raise
-      # the cap only alongside a planned migration.
-      range: ">=1.0.0-0 <2.0.0-0"
+      # Held to 2.x. 2.0.0 was a deliberate migration (BoltDB -> SQLite, config
+      # restructure; see apps/filebrowser/configmap.yaml). An unattended bump
+      # crash-looped the pod for 32h on 2026-10-11, so a 3.0 gets the same
+      # treatment: raise the cap only alongside a planned migration.
+      range: ">=2.0.0-0 <3.0.0-0"

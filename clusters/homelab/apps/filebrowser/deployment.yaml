@@ -48,7 +48,10 @@ spec:
               cpu: 10m
               memory: 128Mi
             limits:
-              memory: 512Mi
+              # Video thumbnails run ffmpeg in this container, and it starts a thread
+              # per core: a single 4K HEVC iPhone clip peaked at ~1GiB, and up to
+              # two run at once. 512Mi was OOMKilled on 2026-10-13.
+              memory: 4Gi
           readinessProbe:
             tcpSocket:
               port: 80

@@ -3,14 +3,16 @@
 # the NAS, so this volume only ever needs to hold the database and config."
 #
 # ONLY /srv MOVES. The Longhorn claim stays and keeps the database
-# (FILEBROWSER_DATABASE=/home/filebrowser/data/database.db) and config.yaml.
+# (server.database.path=/home/filebrowser/data/filebrowser.sqlite since the
+# 2.0 upgrade on 2026-10-13) and config.yaml.
 #
-# That database is **BoltDB, not SQLite** — verified from its magic number,
+# At the time of this move the database was **BoltDB, not SQLite** — verified from its magic number,
 # 0xED0CDAED at offset 16. An earlier version of this comment said SQLite; the
 # conclusion was right for the wrong reason. Bolt is if anything a worse fit for
 # NFS than SQLite: it mmaps the whole file and relies on flock, and mmap over
-# NFS has no coherency guarantees. So the database stays on replicated NVMe and
-# only the files users upload and download cross the wire.
+# NFS has no coherency guarantees. 2.x replaced it with SQLite, which is still a
+# poor fit for NFS (its locking is unreliable there). So the database stays on
+# replicated NVMe and only the files users upload and download cross the wire.
 #
 # ⚠ THESE FILES ARE NOT BACKED UP. The nfs-bulk class is explicitly excluded
 # from both backup paths, on the reasoning that bulk data is re-fetchable. That

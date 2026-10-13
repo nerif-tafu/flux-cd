@@ -1,8 +1,10 @@
 # 2Gi, down from 30Gi (2026-08-12), which was itself down from 200Gi.
 #
 # This volume no longer holds files at all. /srv moved to the NAS
-# (see pvc-files.yaml), so what is left is database.db — a 131KB BoltDB, not
-# SQLite despite the name — plus config.yaml and filebrowser's working dirs.
+# (see pvc-files.yaml), so what is left is the database plus config.yaml and
+# filebrowser's working dirs. The database was database.db, a 131KB BoltDB; since
+# the 2.0 upgrade (2026-10-13) it is filebrowser.sqlite, with the old BoltDB kept
+# alongside as database.db.old for rollback.
 # 536K in total. The 30Gi claim was booking 90Gi of Longhorn budget to store
 # that, which is the same mistake the note below describes, one order of
 # magnitude smaller.
